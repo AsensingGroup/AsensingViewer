@@ -8,6 +8,7 @@
 #include <vtkUnsignedIntArray.h>
 
 #include "laser_ts.h"
+#include "AsensingPacketFormat.h"
 
 #include <memory>
 
@@ -121,6 +122,7 @@ private:
 #endif
 
   int current_pt_id = 0;
+  int points_per_frame = ASENSING_POINT_NUM;
   uint32_t current_frame_id = 0;
 };
 

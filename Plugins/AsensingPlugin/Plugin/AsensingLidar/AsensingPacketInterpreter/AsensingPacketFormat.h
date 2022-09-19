@@ -40,7 +40,7 @@
 #define MAX_BLOCK_NUM             (4)
 #define ROLL_NUM                  (3)         /* 配置的回波次数，最大3回波 */
 
-#define ASENSING_POINT_NUM        (4800 * 8)
+#define ASENSING_POINT_NUM        (4800 * 8)  /* 忽略，使用动态计算 */
 #define ASENSING_LASER_NUM        TEST_CHANNEL_NUM
 #define ASENSING_BLOCK_NUM        TEST_BLOCK_NUM
 
@@ -190,9 +190,9 @@ private:
   boost::endian::little_uint8_t  MemsTemp;      /* Temperature of MEMS */
   boost::endian::little_uint8_t  SlotNum;
 
+  boost::endian::little_uint16_t PointNum;      /* The number of points in a frame */
   boost::endian::little_uint16_t Reserved1;     /* e.g DistUnit, Flags ... */
   boost::endian::little_uint16_t Reserved2;
-  boost::endian::little_uint16_t Reserved3;
 
 public:
   GET_NATIVE_UINT(32, Sob)
@@ -243,12 +243,12 @@ public:
   GET_NATIVE_UINT(8, SlotNum)
   SET_NATIVE_UINT(8, SlotNum)
 
+  GET_NATIVE_UINT(16, PointNum)
+  SET_NATIVE_UINT(16, PointNum)
   GET_NATIVE_UINT(16, Reserved1)
   SET_NATIVE_UINT(16, Reserved1)
   GET_NATIVE_UINT(16, Reserved2)
   SET_NATIVE_UINT(16, Reserved2)
-  GET_NATIVE_UINT(16, Reserved3)
-  SET_NATIVE_UINT(16, Reserved3)
 };
 #pragma pack(pop)
 

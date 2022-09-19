@@ -1,8 +1,6 @@
 #include "vtkAsensingPacketInterpreter.h"
-#include "AsensingPacketFormat.h"
-//#include "private_format.h"
-#include "vtkHelper.h"
 
+#include "vtkHelper.h"
 #include <vtkPoints.h>
 #include <vtkPointData.h>
 #include <vtkDoubleArray.h>
@@ -337,6 +335,8 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
   double timestamp = unix_second + (timestampPacket / 1000000.0);
 
   current_frame_id = dataPacket->header.GetFrameID();
+  
+  points_per_frame = dataPacket->header.GetPointNum() == 0 ? ASENSING_POINT_NUM : dataPacket->header.GetPointNum();
 
   // [HACK start] Proccess only one return in case of dual mode for performance issue
   int start_block = 0;
@@ -358,7 +358,7 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
          reinterpret_cast<AsensingSpecificFrameInformation*>(this->ParserMetaData.SpecificInformation.get());
      if(frameInfo->IsNewFrame(1, current_frame_id))
      {
-       std::cout << "Split Frame =>> FrameID: " << current_frame_id << std::endl;
+       std::cout << "Split Frame =>> FrameID: " << current_frame_id << ", total: " << this->points_per_frame << std::endl;
        this->SplitFrame();
      }
 
@@ -441,7 +441,7 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
 #endif
 
 #if 1
-       if (current_pt_id >= ASENSING_POINT_NUM)
+       if (current_pt_id >= this->points_per_frame)
        {
           // SplitFrame for safety to not overflow allcoated arrays
           //vtkWarningMacro("Received more datapoints than expected");
@@ -498,7 +498,7 @@ bool vtkAsensingPacketInterpreter::IsLidarPacket(unsigned char const * vtkNotUse
 vtkSmartPointer<vtkPolyData> vtkAsensingPacketInterpreter::CreateNewEmptyFrame(vtkIdType numberOfPoints,
                                                                             vtkIdType vtkNotUsed(prereservedNumberOfPoints))
 {
-  const int defaultPrereservedNumberOfPointsPerFrame = ASENSING_POINT_NUM;
+  const int defaultPrereservedNumberOfPointsPerFrame = this->points_per_frame;
   vtkSmartPointer<vtkPolyData> polyData = vtkSmartPointer<vtkPolyData>::New();
 
   // points
