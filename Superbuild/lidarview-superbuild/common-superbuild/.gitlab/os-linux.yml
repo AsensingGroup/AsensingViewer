@@ -1,0 +1,62 @@
+# Linux-specific builder configurations and build commands
+
+## Base images
+
+.fedora35:
+    image: "kitware/paraview:ci-csb-fedora35-20220112"
+
+    variables:
+        GIT_CLONE_PATH: $CI_BUILDS_DIR/gitlab-kitware-sciviz-ci
+
+.linux:
+    extends: .fedora35
+
+    variables:
+        CMAKE_CONFIGURATION: linux
+
+.linux_openssl:
+    extends: .fedora35
+
+    variables:
+        CMAKE_CONFIGURATION: linux_openssl
+
+## Tags
+
+.linux_builder_tags:
+    tags:
+        - build
+        - docker
+        - linux
+        - paraview
+
+## Linux-specific scripts
+
+.before_script_linux: &before_script_linux
+    - .gitlab/ci/cmake.sh
+    - .gitlab/ci/ninja.sh
+    - export PATH=$PWD/.gitlab:$PWD/.gitlab/cmake/bin:$PATH
+    - cmake --version
+    - ninja --version
+
+.cmake_build_linux:
+    stage: build
+
+    script:
+        - *before_script_linux
+        - export GIT_CEILING_DIRECTORIES=$PWD
+        - .gitlab/ci/sccache.sh
+        - export CC=$PWD/.gitlab/shortcuts/gcc
+        - export CXX=$PWD/.gitlab/shortcuts/g++
+        - sccache --start-server
+        - sccache --show-stats
+        - "$LAUNCHER ctest -VV -S .gitlab/ci/ctest_configure.cmake"
+        - "$LAUNCHER ctest -VV -S .gitlab/ci/ctest_build.cmake"
+        - "$LAUNCHER ctest -V --output-on-failure -S .gitlab/ci/ctest_test.cmake"
+        - sccache --show-stats
+
+    cache:
+        key: linux
+        paths:
+            # Cache downloaded tarballs.
+            - build/downloads/
+    interruptible: true

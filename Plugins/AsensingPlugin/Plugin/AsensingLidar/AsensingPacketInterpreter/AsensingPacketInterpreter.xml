@@ -1,0 +1,11 @@
+<ServerManagerConfiguration>
+  <ProxyGroup name="LidarPacketInterpreter">
+    <SourceProxy name="AsensingPacketInterpreter"
+         class="vtkAsensingPacketInterpreter"
+         label="Asensing Packet Interpreter"
+         base_proxygroup="base_LidarPacketInterpreter_g"
+         base_proxyname="base_LidarPacketInterpreter">
+
+    </SourceProxy>
+  </ProxyGroup>
+</ServerManagerConfiguration>

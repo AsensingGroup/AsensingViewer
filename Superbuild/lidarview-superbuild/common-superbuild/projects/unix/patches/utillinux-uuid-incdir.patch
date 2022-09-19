@@ -1,0 +1,12 @@
+diff -u -U5 -r util-linux-2.34/libuuid/uuid.pc.in util-linux-2.34.uuid-incdir/libuuid/uuid.pc.in
+--- util-linux-2.34/libuuid/uuid.pc.in	2017-09-18 05:48:03.575891419 -0400
++++ util-linux-2.34.uuid-incdir/libuuid/uuid.pc.in	2019-12-17 09:48:57.604993332 -0500
+@@ -5,7 +5,7 @@
+ 
+ Name: uuid
+ Description: Universally unique id library
+ Version: @LIBUUID_VERSION@
+ Requires:
+-Cflags: -I${includedir}/uuid
++Cflags: -I${includedir}
+ Libs: -L${libdir} -luuid

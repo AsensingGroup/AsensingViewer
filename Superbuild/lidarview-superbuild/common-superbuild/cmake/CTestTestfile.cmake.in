@@ -1,0 +1,1 @@
+subdirs("@superbuild_relative_dir@")

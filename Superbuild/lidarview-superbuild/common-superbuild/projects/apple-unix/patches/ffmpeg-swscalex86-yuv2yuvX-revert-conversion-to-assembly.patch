@@ -1,0 +1,587 @@
+From 79987ec1c88462feb9917a6ab3ff6b57f0feab37 Mon Sep 17 00:00:00 2001
+From: Ben Boeckel <mathstuf@gmail.com>
+Date: Wed, 8 Sep 2021 17:42:39 -0400
+Subject: [PATCH 1/1] swscalex86/yuv2yuvX: revert conversion to assembly
+
+This change ends up causing VTK's FFMPEG writer to create videos with
+striped output. Until a solution can be found, revert the feature.
+
+Reverts the following commits:
+
+    c00567647e9002094255df755e18c719e75b3333 "swscale/x86/swscale: fix mix of inline and external function definitions"
+    c2bf1dcace8d331e672b955f9cf5b59211749f00 "swscale/x86/swscale: fix compilation with old yasm"
+    1371647fc381774d40b8beecf69604331262172d "checkasm/sw_scale: use av_free() instead of free()"
+    d52ceed9fd3655113657d9b572fc2c83b7f913cc "tests/checkasm/sw_scale: use memset() to fill dither"
+    ee18edb13a9ae3041df961dd5003c2055b5cab35 "checkasm/sw_scale: properly initialize src_pixer and filter_coeff buffers"
+    6bc2058d00b119d265c9970eac213d2922d15129 "tests/checkasm/sw_scale: adds additional tests sizes for yux2yuvX"
+    c23a5523b5c5bc63d206cd18a669875034e62ae5 "swscale/x86/swscale: Remove unused ASM constants"
+    95aacf30e3803c57d91ff62975b375e394f61d49 "libswscale/x86/swscale: Only call ff_yuv2yuvX functions if the input size is > 0"
+    d512ebbaedefc977d7628da4dc3ecfe4e52a066a "swscale/x86/yuv2yuvX: use the SPLATW helper macro"
+    ebb48d85a07551ca82965bb66b88e50606683b4d "swscale/x86/yuv2yuvX: use movq to load 8 bytes in all non-AVX2 functions"
+    1a555d3c604804dcedacd230d410cfc822da3f4c "swscale/x86/yuv2yuvX: use the movsxdifnidn helper macro"
+    4aeedf4c2a8f35be667d5dd40c84bd27730ef1db "libswscale/x86/yuv2yuvX: Removes unrolling for mmx and mmxext"
+    554c2bc7086f49ef5a6a989ad6bc4bc11807eb6f "swscale: move yuv2yuvX_sse3 to yasm, unrolls main loop"
+---
+ libswscale/x86/Makefile           |   1 -
+ libswscale/x86/swscale.c          | 152 +++++++++++++++++-------------
+ libswscale/x86/swscale_template.c |  83 ++++++++++++++++
+ libswscale/x86/yuv2yuvX.asm       | 136 --------------------------
+ tests/checkasm/sw_scale.c         | 101 --------------------
+ 5 files changed, 172 insertions(+), 301 deletions(-)
+ delete mode 100644 libswscale/x86/yuv2yuvX.asm
+
+diff --git a/libswscale/x86/Makefile b/libswscale/x86/Makefile
+index bfe383364e..831d5359aa 100644
+--- a/libswscale/x86/Makefile
++++ b/libswscale/x86/Makefile
+@@ -13,4 +13,3 @@ X86ASM-OBJS                     += x86/input.o                          \
+                                    x86/scale.o                          \
+                                    x86/rgb_2_rgb.o                      \
+                                    x86/yuv_2_rgb.o                      \
+-                                   x86/yuv2yuvX.o                       \
+diff --git a/libswscale/x86/swscale.c b/libswscale/x86/swscale.c
+index 0848a31461..15c0b22f20 100644
+--- a/libswscale/x86/swscale.c
++++ b/libswscale/x86/swscale.c
+@@ -44,6 +44,15 @@ const DECLARE_ALIGNED(8, uint64_t, ff_dither8)[2] = {
+ 
+ DECLARE_ASM_CONST(8, uint64_t, bF8)=       0xF8F8F8F8F8F8F8F8LL;
+ DECLARE_ASM_CONST(8, uint64_t, bFC)=       0xFCFCFCFCFCFCFCFCLL;
++DECLARE_ASM_CONST(8, uint64_t, w10)=       0x0010001000100010LL;
++DECLARE_ASM_CONST(8, uint64_t, w02)=       0x0002000200020002LL;
++
++DECLARE_ASM_CONST(8, uint64_t, b16Mask)=   0x001F001F001F001FLL;
++DECLARE_ASM_CONST(8, uint64_t, g16Mask)=   0x07E007E007E007E0LL;
++DECLARE_ASM_CONST(8, uint64_t, r16Mask)=   0xF800F800F800F800LL;
++DECLARE_ASM_CONST(8, uint64_t, b15Mask)=   0x001F001F001F001FLL;
++DECLARE_ASM_CONST(8, uint64_t, g15Mask)=   0x03E003E003E003E0LL;
++DECLARE_ASM_CONST(8, uint64_t, r15Mask)=   0x7C007C007C007C00LL;
+ 
+ DECLARE_ASM_ALIGNED(8, const uint64_t, ff_M24A)         = 0x00FF0000FF0000FFLL;
+ DECLARE_ASM_ALIGNED(8, const uint64_t, ff_M24B)         = 0xFF0000FF0000FF00LL;
+@@ -187,56 +196,87 @@ void ff_updateMMXDitherTables(SwsContext *c, int dstY)
+         }
+     }
+ }
+-#endif /* HAVE_INLINE_ASM */
+-
+-#define YUV2YUVX_FUNC_MMX(opt, step)  \
+-void ff_yuv2yuvX_ ##opt(const int16_t *filter, int filterSize, int srcOffset, \
+-                           uint8_t *dest, int dstW,  \
+-                           const uint8_t *dither, int offset); \
+-static void yuv2yuvX_ ##opt(const int16_t *filter, int filterSize, \
+-                           const int16_t **src, uint8_t *dest, int dstW, \
+-                           const uint8_t *dither, int offset) \
+-{ \
+-    if(dstW > 0) \
+-        ff_yuv2yuvX_ ##opt(filter, filterSize - 1, 0, dest - offset, dstW + offset, dither, offset); \
+-    return; \
+-}
+ 
+-#define YUV2YUVX_FUNC(opt, step)  \
+-void ff_yuv2yuvX_ ##opt(const int16_t *filter, int filterSize, int srcOffset, \
+-                           uint8_t *dest, int dstW,  \
+-                           const uint8_t *dither, int offset); \
+-static void yuv2yuvX_ ##opt(const int16_t *filter, int filterSize, \
+-                           const int16_t **src, uint8_t *dest, int dstW, \
+-                           const uint8_t *dither, int offset) \
+-{ \
+-    int remainder = (dstW % step); \
+-    int pixelsProcessed = dstW - remainder; \
+-    if(((uintptr_t)dest) & 15){ \
+-        yuv2yuvX_mmx(filter, filterSize, src, dest, dstW, dither, offset); \
+-        return; \
+-    } \
+-    if(pixelsProcessed > 0) \
+-        ff_yuv2yuvX_ ##opt(filter, filterSize - 1, 0, dest - offset, pixelsProcessed + offset, dither, offset); \
+-    if(remainder > 0){ \
+-      ff_yuv2yuvX_mmx(filter, filterSize - 1, pixelsProcessed, dest - offset, pixelsProcessed + remainder + offset, dither, offset); \
+-    } \
+-    return; \
++#if HAVE_MMXEXT
++static void yuv2yuvX_sse3(const int16_t *filter, int filterSize,
++                           const int16_t **src, uint8_t *dest, int dstW,
++                           const uint8_t *dither, int offset)
++{
++    if(((uintptr_t)dest) & 15){
++        yuv2yuvX_mmxext(filter, filterSize, src, dest, dstW, dither, offset);
++        return;
++    }
++    filterSize--;
++#define MAIN_FUNCTION \
++        "pxor       %%xmm0, %%xmm0 \n\t" \
++        "punpcklbw  %%xmm0, %%xmm3 \n\t" \
++        "movd           %4, %%xmm1 \n\t" \
++        "punpcklwd  %%xmm1, %%xmm1 \n\t" \
++        "punpckldq  %%xmm1, %%xmm1 \n\t" \
++        "punpcklqdq %%xmm1, %%xmm1 \n\t" \
++        "psllw          $3, %%xmm1 \n\t" \
++        "paddw      %%xmm1, %%xmm3 \n\t" \
++        "psraw          $4, %%xmm3 \n\t" \
++        "movdqa     %%xmm3, %%xmm4 \n\t" \
++        "movdqa     %%xmm3, %%xmm7 \n\t" \
++        "movl           %3, %%ecx  \n\t" \
++        "mov                                 %0, %%"FF_REG_d"        \n\t"\
++        "mov                        (%%"FF_REG_d"), %%"FF_REG_S"     \n\t"\
++        ".p2align                             4             \n\t" /* FIXME Unroll? */\
++        "1:                                                 \n\t"\
++        "movddup                  8(%%"FF_REG_d"), %%xmm0   \n\t" /* filterCoeff */\
++        "movdqa              (%%"FF_REG_S", %%"FF_REG_c", 2), %%xmm2 \n\t" /* srcData */\
++        "movdqa            16(%%"FF_REG_S", %%"FF_REG_c", 2), %%xmm5 \n\t" /* srcData */\
++        "add                                $16, %%"FF_REG_d"        \n\t"\
++        "mov                        (%%"FF_REG_d"), %%"FF_REG_S"     \n\t"\
++        "test                         %%"FF_REG_S", %%"FF_REG_S"     \n\t"\
++        "pmulhw                           %%xmm0, %%xmm2      \n\t"\
++        "pmulhw                           %%xmm0, %%xmm5      \n\t"\
++        "paddw                            %%xmm2, %%xmm3      \n\t"\
++        "paddw                            %%xmm5, %%xmm4      \n\t"\
++        " jnz                                1b             \n\t"\
++        "psraw                               $3, %%xmm3      \n\t"\
++        "psraw                               $3, %%xmm4      \n\t"\
++        "packuswb                         %%xmm4, %%xmm3      \n\t"\
++        "movntdq                          %%xmm3, (%1, %%"FF_REG_c") \n\t"\
++        "add                         $16, %%"FF_REG_c"        \n\t"\
++        "cmp                          %2, %%"FF_REG_c"        \n\t"\
++        "movdqa                   %%xmm7, %%xmm3            \n\t" \
++        "movdqa                   %%xmm7, %%xmm4            \n\t" \
++        "mov                                 %0, %%"FF_REG_d"        \n\t"\
++        "mov                        (%%"FF_REG_d"), %%"FF_REG_S"     \n\t"\
++        "jb                                  1b             \n\t"
++
++    if (offset) {
++        __asm__ volatile(
++            "movq          %5, %%xmm3  \n\t"
++            "movdqa    %%xmm3, %%xmm4  \n\t"
++            "psrlq        $24, %%xmm3  \n\t"
++            "psllq        $40, %%xmm4  \n\t"
++            "por       %%xmm4, %%xmm3  \n\t"
++            MAIN_FUNCTION
++              :: "g" (filter),
++              "r" (dest-offset), "g" ((x86_reg)(dstW+offset)), "m" (offset),
++              "m"(filterSize), "m"(((uint64_t *) dither)[0])
++              : XMM_CLOBBERS("%xmm0" , "%xmm1" , "%xmm2" , "%xmm3" , "%xmm4" , "%xmm5" , "%xmm7" ,)
++                "%"FF_REG_d, "%"FF_REG_S, "%"FF_REG_c
++              );
++    } else {
++        __asm__ volatile(
++            "movq          %5, %%xmm3   \n\t"
++            MAIN_FUNCTION
++              :: "g" (filter),
++              "r" (dest-offset), "g" ((x86_reg)(dstW+offset)), "m" (offset),
++              "m"(filterSize), "m"(((uint64_t *) dither)[0])
++              : XMM_CLOBBERS("%xmm0" , "%xmm1" , "%xmm2" , "%xmm3" , "%xmm4" , "%xmm5" , "%xmm7" ,)
++                "%"FF_REG_d, "%"FF_REG_S, "%"FF_REG_c
++              );
++    }
+ }
+-
+-#if HAVE_MMX_EXTERNAL
+-YUV2YUVX_FUNC_MMX(mmx, 16)
+-#endif
+-#if HAVE_MMXEXT_EXTERNAL
+-YUV2YUVX_FUNC_MMX(mmxext, 16)
+-#endif
+-#if HAVE_SSE3_EXTERNAL
+-YUV2YUVX_FUNC(sse3, 32)
+-#endif
+-#if HAVE_AVX2_EXTERNAL
+-YUV2YUVX_FUNC(avx2, 64)
+ #endif
+ 
++#endif /* HAVE_INLINE_ASM */
++
+ #define SCALE_FUNC(filter_n, from_bpc, to_bpc, opt) \
+ void ff_hscale ## from_bpc ## to ## to_bpc ## _ ## filter_n ## _ ## opt( \
+                                                 SwsContext *c, int16_t *data, \
+@@ -363,25 +403,11 @@ av_cold void ff_sws_init_swscale_x86(SwsContext *c)
+ #if HAVE_MMXEXT_INLINE
+     if (INLINE_MMXEXT(cpu_flags))
+         sws_init_swscale_mmxext(c);
+-#endif
+-    if(c->use_mmx_vfilter && !(c->flags & SWS_ACCURATE_RND)) {
+-#if HAVE_MMX_EXTERNAL
+-        if (EXTERNAL_MMX(cpu_flags))
+-            c->yuv2planeX = yuv2yuvX_mmx;
+-#endif
+-#if HAVE_MMXEXT_EXTERNAL
+-        if (EXTERNAL_MMXEXT(cpu_flags))
+-            c->yuv2planeX = yuv2yuvX_mmxext;
+-#endif
+-#if HAVE_SSE3_EXTERNAL
+-        if (EXTERNAL_SSE3(cpu_flags))
++    if (cpu_flags & AV_CPU_FLAG_SSE3){
++        if(c->use_mmx_vfilter && !(c->flags & SWS_ACCURATE_RND))
+             c->yuv2planeX = yuv2yuvX_sse3;
+-#endif
+-#if HAVE_AVX2_EXTERNAL
+-        if (EXTERNAL_AVX2_FAST(cpu_flags))
+-            c->yuv2planeX = yuv2yuvX_avx2;
+-#endif
+     }
++#endif
+ 
+ #define ASSIGN_SCALE_FUNC2(hscalefn, filtersize, opt1, opt2) do { \
+     if (c->srcBpc == 8) { \
+diff --git a/libswscale/x86/swscale_template.c b/libswscale/x86/swscale_template.c
+index 97d8cae613..823056c2ea 100644
+--- a/libswscale/x86/swscale_template.c
++++ b/libswscale/x86/swscale_template.c
+@@ -38,6 +38,88 @@
+ #endif
+ #define MOVNTQ(a,b)  REAL_MOVNTQ(a,b)
+ 
++#if !COMPILE_TEMPLATE_MMXEXT
++static av_always_inline void
++dither_8to16(const uint8_t *srcDither, int rot)
++{
++    if (rot) {
++        __asm__ volatile("pxor      %%mm0, %%mm0\n\t"
++                         "movq       (%0), %%mm3\n\t"
++                         "movq      %%mm3, %%mm4\n\t"
++                         "psrlq       $24, %%mm3\n\t"
++                         "psllq       $40, %%mm4\n\t"
++                         "por       %%mm4, %%mm3\n\t"
++                         "movq      %%mm3, %%mm4\n\t"
++                         "punpcklbw %%mm0, %%mm3\n\t"
++                         "punpckhbw %%mm0, %%mm4\n\t"
++                         :: "r"(srcDither)
++                         );
++    } else {
++        __asm__ volatile("pxor      %%mm0, %%mm0\n\t"
++                         "movq       (%0), %%mm3\n\t"
++                         "movq      %%mm3, %%mm4\n\t"
++                         "punpcklbw %%mm0, %%mm3\n\t"
++                         "punpckhbw %%mm0, %%mm4\n\t"
++                         :: "r"(srcDither)
++                         );
++    }
++}
++#endif
++
++static void RENAME(yuv2yuvX)(const int16_t *filter, int filterSize,
++                           const int16_t **src, uint8_t *dest, int dstW,
++                           const uint8_t *dither, int offset)
++{
++    dither_8to16(dither, offset);
++    filterSize--;
++    __asm__ volatile(
++        "movd %0, %%mm1\n\t"
++        "punpcklwd %%mm1, %%mm1\n\t"
++        "punpckldq %%mm1, %%mm1\n\t"
++        "psllw        $3, %%mm1\n\t"
++        "paddw     %%mm1, %%mm3\n\t"
++        "paddw     %%mm1, %%mm4\n\t"
++        "psraw        $4, %%mm3\n\t"
++        "psraw        $4, %%mm4\n\t"
++        ::"m"(filterSize)
++     );
++
++    __asm__ volatile(\
++        "movq    %%mm3, %%mm6\n\t"
++        "movq    %%mm4, %%mm7\n\t"
++        "movl %3, %%ecx\n\t"
++        "mov                                 %0, %%"FF_REG_d"       \n\t"\
++        "mov                        (%%"FF_REG_d"), %%"FF_REG_S"    \n\t"\
++        ".p2align                             4                     \n\t" /* FIXME Unroll? */\
++        "1:                                                         \n\t"\
++        "movq                      8(%%"FF_REG_d"), %%mm0           \n\t" /* filterCoeff */\
++        "movq                (%%"FF_REG_S", %%"FF_REG_c", 2), %%mm2 \n\t" /* srcData */\
++        "movq               8(%%"FF_REG_S", %%"FF_REG_c", 2), %%mm5 \n\t" /* srcData */\
++        "add                                $16, %%"FF_REG_d"       \n\t"\
++        "mov                        (%%"FF_REG_d"), %%"FF_REG_S"    \n\t"\
++        "test                         %%"FF_REG_S", %%"FF_REG_S"    \n\t"\
++        "pmulhw                           %%mm0, %%mm2      \n\t"\
++        "pmulhw                           %%mm0, %%mm5      \n\t"\
++        "paddw                            %%mm2, %%mm3      \n\t"\
++        "paddw                            %%mm5, %%mm4      \n\t"\
++        " jnz                                1b             \n\t"\
++        "psraw                               $3, %%mm3      \n\t"\
++        "psraw                               $3, %%mm4      \n\t"\
++        "packuswb                         %%mm4, %%mm3      \n\t"
++        MOVNTQ2 "                         %%mm3, (%1, %%"FF_REG_c")\n\t"
++        "add                          $8, %%"FF_REG_c"      \n\t"\
++        "cmp                          %2, %%"FF_REG_c"      \n\t"\
++        "movq    %%mm6, %%mm3\n\t"
++        "movq    %%mm7, %%mm4\n\t"
++        "mov                                 %0, %%"FF_REG_d"     \n\t"\
++        "mov                        (%%"FF_REG_d"), %%"FF_REG_S"  \n\t"\
++        "jb                                  1b                   \n\t"\
++        :: "g" (filter),
++           "r" (dest-offset), "g" ((x86_reg)(dstW+offset)), "m" (offset)
++        : "%"FF_REG_d, "%"FF_REG_S, "%"FF_REG_c
++    );
++}
++
+ #define YSCALEYUV2PACKEDX_UV \
+     __asm__ volatile(\
+         "xor                %%"FF_REG_a", %%"FF_REG_a"  \n\t"\
+@@ -1435,6 +1517,7 @@ static av_cold void RENAME(sws_init_swscale)(SwsContext *c)
+                 }
+             } else {
+                 c->use_mmx_vfilter= 1;
++                c->yuv2planeX = RENAME(yuv2yuvX    );
+                 if (!(c->flags & SWS_FULL_CHR_H_INT)) {
+                     switch (c->dstFormat) {
+                     case AV_PIX_FMT_RGB32:   c->yuv2packedX = RENAME(yuv2rgb32_X);   break;
+diff --git a/libswscale/x86/yuv2yuvX.asm b/libswscale/x86/yuv2yuvX.asm
+deleted file mode 100644
+index b6294cb919..0000000000
+--- a/libswscale/x86/yuv2yuvX.asm
++++ /dev/null
+@@ -1,136 +0,0 @@
+-;******************************************************************************
+-;* x86-optimized yuv2yuvX
+-;* Copyright 2020 Google LLC
+-;* Copyright (C) 2001-2011 Michael Niedermayer <michaelni@gmx.at>
+-;*
+-;* This file is part of FFmpeg.
+-;*
+-;* FFmpeg is free software; you can redistribute it and/or
+-;* modify it under the terms of the GNU Lesser General Public
+-;* License as published by the Free Software Foundation; either
+-;* version 2.1 of the License, or (at your option) any later version.
+-;*
+-;* FFmpeg is distributed in the hope that it will be useful,
+-;* but WITHOUT ANY WARRANTY; without even the implied warranty of
+-;* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-;* Lesser General Public License for more details.
+-;*
+-;* You should have received a copy of the GNU Lesser General Public
+-;* License along with FFmpeg; if not, write to the Free Software
+-;* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+-;******************************************************************************
+-
+-%include "libavutil/x86/x86util.asm"
+-
+-SECTION .text
+-
+-;-----------------------------------------------------------------------------
+-; yuv2yuvX
+-;
+-; void ff_yuv2yuvX_<opt>(const int16_t *filter, int filterSize,
+-;                        int srcOffset, uint8_t *dest, int dstW,
+-;                        const uint8_t *dither, int offset);
+-;
+-;-----------------------------------------------------------------------------
+-
+-%macro YUV2YUVX_FUNC 0
+-cglobal yuv2yuvX, 7, 7, 8, filter, filterSize, src, dest, dstW, dither, offset
+-%if notcpuflag(sse3)
+-%define movr mova
+-%define unroll 1
+-%else
+-%define movr movdqu
+-%define unroll 2
+-%endif
+-    movsxdifnidn         dstWq, dstWd
+-    movsxdifnidn         offsetq, offsetd
+-    movsxdifnidn         srcq, srcd
+-%if cpuflag(avx2)
+-    vpbroadcastq         m3, [ditherq]
+-%else
+-    movq                 xm3, [ditherq]
+-%endif ; avx2
+-    cmp                  offsetd, 0
+-    jz                   .offset
+-
+-    ; offset != 0 path.
+-    psrlq                m5, m3, $18
+-    psllq                m3, m3, $28
+-    por                  m3, m3, m5
+-
+-.offset:
+-    add offsetq, srcq
+-    movd                 xm1, filterSized
+-    SPLATW               m1, xm1, 0
+-    pxor                 m0, m0, m0
+-    mov                  filterSizeq, filterq
+-    mov                  srcq, [filterSizeq]
+-    punpcklbw            m3, m0
+-    psllw                m1, m1, 3
+-    paddw                m3, m3, m1
+-    psraw                m7, m3, 4
+-.outerloop:
+-    mova                 m4, m7
+-    mova                 m3, m7
+-%if cpuflag(sse3)
+-    mova                 m6, m7
+-    mova                 m1, m7
+-%endif
+-.loop:
+-%if cpuflag(avx2)
+-    vpbroadcastq         m0, [filterSizeq + 8]
+-%elif cpuflag(sse3)
+-    movddup              m0, [filterSizeq + 8]
+-%else
+-    mova                 m0, [filterSizeq + 8]
+-%endif
+-    pmulhw               m2, m0, [srcq + offsetq * 2]
+-    pmulhw               m5, m0, [srcq + offsetq * 2 + mmsize]
+-    paddw                m3, m3, m2
+-    paddw                m4, m4, m5
+-%if cpuflag(sse3)
+-    pmulhw               m2, m0, [srcq + offsetq * 2 + 2 * mmsize]
+-    pmulhw               m5, m0, [srcq + offsetq * 2 + 3 * mmsize]
+-    paddw                m6, m6, m2
+-    paddw                m1, m1, m5
+-%endif
+-    add                  filterSizeq, $10
+-    mov                  srcq, [filterSizeq]
+-    test                 srcq, srcq
+-    jnz                  .loop
+-    psraw                m3, m3, 3
+-    psraw                m4, m4, 3
+-%if cpuflag(sse3)
+-    psraw                m6, m6, 3
+-    psraw                m1, m1, 3
+-%endif
+-    packuswb             m3, m3, m4
+-%if cpuflag(sse3)
+-    packuswb             m6, m6, m1
+-%endif
+-    mov                  srcq, [filterq]
+-%if cpuflag(avx2)
+-    vpermq               m3, m3, 216
+-    vpermq               m6, m6, 216
+-%endif
+-    movr                 [destq + offsetq], m3
+-%if cpuflag(sse3)
+-    movr                 [destq + offsetq + mmsize], m6
+-%endif
+-    add                  offsetq, mmsize * unroll
+-    mov                  filterSizeq, filterq
+-    cmp                  offsetq, dstWq
+-    jb                  .outerloop
+-    REP_RET
+-%endmacro
+-
+-INIT_MMX mmx
+-YUV2YUVX_FUNC
+-INIT_MMX mmxext
+-YUV2YUVX_FUNC
+-INIT_XMM sse3
+-YUV2YUVX_FUNC
+-%if HAVE_AVX2_EXTERNAL
+-INIT_YMM avx2
+-YUV2YUVX_FUNC
+-%endif
+diff --git a/tests/checkasm/sw_scale.c b/tests/checkasm/sw_scale.c
+index 3ac0f9082f..8741b3943c 100644
+--- a/tests/checkasm/sw_scale.c
++++ b/tests/checkasm/sw_scale.c
+@@ -36,105 +36,6 @@
+             AV_WN32(buf + j, rnd());      \
+     } while (0)
+ 
+-// This reference function is the same approximate algorithm employed by the
+-// SIMD functions
+-static void ref_function(const int16_t *filter, int filterSize,
+-                                                 const int16_t **src, uint8_t *dest, int dstW,
+-                                                 const uint8_t *dither, int offset)
+-{
+-    int i, d;
+-    d = ((filterSize - 1) * 8 + dither[0]) >> 4;
+-    for ( i = 0; i < dstW; i++) {
+-        int16_t val = d;
+-        int j;
+-        union {
+-            int val;
+-            int16_t v[2];
+-        } t;
+-        for (j = 0; j < filterSize; j++){
+-            t.val = (int)src[j][i + offset] * (int)filter[j];
+-            val += t.v[1];
+-        }
+-        dest[i]= av_clip_uint8(val>>3);
+-    }
+-}
+-
+-static void check_yuv2yuvX(void)
+-{
+-    struct SwsContext *ctx;
+-    int fsi, osi, isi, i, j;
+-    int dstW;
+-#define LARGEST_FILTER 16
+-#define FILTER_SIZES 4
+-    static const int filter_sizes[FILTER_SIZES] = {1, 4, 8, 16};
+-#define LARGEST_INPUT_SIZE 512
+-#define INPUT_SIZES 6
+-    static const int input_sizes[INPUT_SIZES] = {8, 24, 128, 144, 256, 512};
+-
+-    declare_func_emms(AV_CPU_FLAG_MMX, void, const int16_t *filter,
+-                      int filterSize, const int16_t **src, uint8_t *dest,
+-                      int dstW, const uint8_t *dither, int offset);
+-
+-    const int16_t **src;
+-    LOCAL_ALIGNED_8(int16_t, src_pixels, [LARGEST_FILTER * LARGEST_INPUT_SIZE]);
+-    LOCAL_ALIGNED_8(int16_t, filter_coeff, [LARGEST_FILTER]);
+-    LOCAL_ALIGNED_8(uint8_t, dst0, [LARGEST_INPUT_SIZE]);
+-    LOCAL_ALIGNED_8(uint8_t, dst1, [LARGEST_INPUT_SIZE]);
+-    LOCAL_ALIGNED_8(uint8_t, dither, [LARGEST_INPUT_SIZE]);
+-    union VFilterData{
+-        const int16_t *src;
+-        uint16_t coeff[8];
+-    } *vFilterData;
+-    uint8_t d_val = rnd();
+-    memset(dither, d_val, LARGEST_INPUT_SIZE);
+-    randomize_buffers((uint8_t*)src_pixels, LARGEST_FILTER * LARGEST_INPUT_SIZE * sizeof(int16_t));
+-    randomize_buffers((uint8_t*)filter_coeff, LARGEST_FILTER * sizeof(int16_t));
+-    ctx = sws_alloc_context();
+-    if (sws_init_context(ctx, NULL, NULL) < 0)
+-        fail();
+-
+-    ff_getSwsFunc(ctx);
+-    for(isi = 0; isi < INPUT_SIZES; ++isi){
+-        dstW = input_sizes[isi];
+-        for(osi = 0; osi < 64; osi += 16){
+-            for(fsi = 0; fsi < FILTER_SIZES; ++fsi){
+-                src = av_malloc(sizeof(int16_t*) * filter_sizes[fsi]);
+-                vFilterData = av_malloc((filter_sizes[fsi] + 2) * sizeof(union VFilterData));
+-                memset(vFilterData, 0, (filter_sizes[fsi] + 2) * sizeof(union VFilterData));
+-                for(i = 0; i < filter_sizes[fsi]; ++i){
+-                    src[i] = &src_pixels[i * LARGEST_INPUT_SIZE];
+-                    vFilterData[i].src = src[i];
+-                    for(j = 0; j < 4; ++j)
+-                        vFilterData[i].coeff[j + 4] = filter_coeff[i];
+-                }
+-                if (check_func(ctx->yuv2planeX, "yuv2yuvX_%d_%d_%d", filter_sizes[fsi], osi, dstW)){
+-                    memset(dst0, 0, LARGEST_INPUT_SIZE * sizeof(dst0[0]));
+-                    memset(dst1, 0, LARGEST_INPUT_SIZE * sizeof(dst1[0]));
+-
+-                    // The reference function is not the scalar function selected when mmx
+-                    // is deactivated as the SIMD functions do not give the same result as
+-                    // the scalar ones due to rounding. The SIMD functions are activated by
+-                    // the flag SWS_ACCURATE_RND
+-                    ref_function(&filter_coeff[0], filter_sizes[fsi], src, dst0, dstW - osi, dither, osi);
+-                    // There's no point in calling new for the reference function
+-                    if(ctx->use_mmx_vfilter){
+-                        call_new((const int16_t*)vFilterData, filter_sizes[fsi], src, dst1, dstW - osi, dither, osi);
+-                        if (memcmp(dst0, dst1, LARGEST_INPUT_SIZE * sizeof(dst0[0])))
+-                            fail();
+-                        if(dstW == LARGEST_INPUT_SIZE)
+-                            bench_new((const int16_t*)vFilterData, filter_sizes[fsi], src, dst1, dstW - osi, dither, osi);
+-                    }
+-                }
+-                av_freep(&src);
+-                av_freep(&vFilterData);
+-            }
+-        }
+-    }
+-    sws_freeContext(ctx);
+-#undef FILTER_SIZES
+-}
+-
+-#undef SRC_PIXELS
+ #define SRC_PIXELS 128
+ 
+ static void check_hscale(void)
+@@ -231,6 +132,4 @@ void checkasm_check_sw_scale(void)
+ {
+     check_hscale();
+     report("hscale");
+-    check_yuv2yuvX();
+-    report("yuv2yuvX");
+ }
+-- 
+2.31.1
+

@@ -1,0 +1,80 @@
+From 318c7a61ce1ff704704084b2540ca8a0ec3b12f5 Mon Sep 17 00:00:00 2001
+From: Peter Dimov <pdimov@gmail.com>
+Date: Sat, 26 Oct 2019 15:03:26 +0300
+Subject: [PATCH 1/2] Check that liblzma has lzma_threads when building
+
+---
+ libs/iostreams/build/Jamfile.v2              |  6 ++++++
+ libs/iostreams/build/has_lzma_cputhreads.cpp | 10 ++++++++++
+ 2 files changed, 16 insertions(+)
+ create mode 100644 libs/iostreams/build/has_lzma_cputhreads.cpp
+
+diff --git a/libs/iostreams/build/Jamfile.v2 b/libs/iostreams/build/Jamfile.v2
+index 40fb7d9f9..3b7e1b9e0 100644
+--- a/libs/iostreams/build/Jamfile.v2
++++ b/libs/iostreams/build/Jamfile.v2
+@@ -82,6 +82,12 @@ if $(NO_COMPRESSION) != 1 && $(NO_LZMA) != 1
+     lzma-requirements =
+         [ ac.check-library /lzma//lzma : <library>/lzma//lzma
+           <source>lzma.cpp ] ;
++
++    exe has_lzma_cputhreads : has_lzma_cputhreads.cpp /lzma//lzma ;
++    explicit has_lzma_cputhreads ;
++
++    lzma_requirements += [ check-target-builds has_lzma_cputhreads
++        : : <define>BOOST_IOSTREAMS_LZMA_NO_MULTITHREADED=1 ] ;
+ }
+ else
+ {
+diff --git a/libs/iostreams/build/has_lzma_cputhreads.cpp b/libs/iostreams/build/has_lzma_cputhreads.cpp
+new file mode 100644
+index 000000000..7b5a4ccd4
+--- /dev/null
++++ b/libs/iostreams/build/has_lzma_cputhreads.cpp
+@@ -0,0 +1,10 @@
++// Copyright 2019 Peter Dimov
++// Distributed under the Boost Software License, Version 1.0.
++// (See accompanying file LICENSE_1_0.txt or copy at http://boost.org/LICENSE_1_0.txt)
++
++#include <lzma.h>
++
++int main()
++{
++    return lzma_cputhreads();
++}
+
+From a063aae54cf17e34a12c7e2cd89bad2fc6eaaec9 Mon Sep 17 00:00:00 2001
+From: Peter Dimov <pdimov@gmail.com>
+Date: Sat, 26 Oct 2019 05:31:14 -0700
+Subject: [PATCH 2/2] Fix has_lzma_cputhreads.cpp location
+
+---
+ libs/iostreams/build/Jamfile.v2 | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/libs/iostreams/build/Jamfile.v2 b/libs/iostreams/build/Jamfile.v2
+index 3b7e1b9e0..7ea8a9687 100644
+--- a/libs/iostreams/build/Jamfile.v2
++++ b/libs/iostreams/build/Jamfile.v2
+@@ -79,15 +79,15 @@ else
+ if $(NO_COMPRESSION) != 1 && $(NO_LZMA) != 1
+ {
+     using lzma ;
+-    lzma-requirements =
+-        [ ac.check-library /lzma//lzma : <library>/lzma//lzma
+-          <source>lzma.cpp ] ;
+ 
+-    exe has_lzma_cputhreads : has_lzma_cputhreads.cpp /lzma//lzma ;
++    exe has_lzma_cputhreads : ../build/has_lzma_cputhreads.cpp /lzma//lzma ;
+     explicit has_lzma_cputhreads ;
+ 
+-    lzma_requirements += [ check-target-builds has_lzma_cputhreads
+-        : : <define>BOOST_IOSTREAMS_LZMA_NO_MULTITHREADED=1 ] ;
++    lzma-requirements =
++        [ ac.check-library /lzma//lzma : <library>/lzma//lzma
++          <source>lzma.cpp ]
++        [ check-target-builds has_lzma_cputhreads
++            : : <define>BOOST_IOSTREAMS_LZMA_NO_MULTITHREADED=1 ] ;
+ }
+ else
+ {

@@ -1,0 +1,1 @@
+superbuild_add_dummy_project(hdf5cpp)

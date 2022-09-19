@@ -1,0 +1,27 @@
+From dd0b532f60e3a9e8f4790d22720fdf42e08052f9 Mon Sep 17 00:00:00 2001
+From: Ben Boeckel <ben.boeckel@kitware.com>
+Date: Fri, 10 Dec 2021 21:45:12 -0500
+Subject: [PATCH] cmake: forward the macOS deployment target to the TIME
+ function test
+
+When using newer Xcode releases, older `gfortran` may be given a
+deployment target that is not understood if the host is on a new enough
+version. Forward the deployment target from the main project to the
+testing project to check with similar settings as the main project.
+---
+ CMAKE/CheckTimeFunction.cmake | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/CMAKE/CheckTimeFunction.cmake b/CMAKE/CheckTimeFunction.cmake
+index b57394887..d94c8a400 100644
+--- a/CMAKE/CheckTimeFunction.cmake
++++ b/CMAKE/CheckTimeFunction.cmake
+@@ -11,6 +11,8 @@ macro(CHECK_TIME_FUNCTION FUNCTION VARIABLE)
+     ${PROJECT_BINARY_DIR}/INSTALL
+     ${PROJECT_SOURCE_DIR}/INSTALL
+     TIMING secondtst_${FUNCTION}
++    CMAKE_FLAGS
++      -DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=${CMAKE_OSX_DEPLOYMENT_TARGET}
+     OUTPUT_VARIABLE OUTPUT)
+ 
+     if(RES)

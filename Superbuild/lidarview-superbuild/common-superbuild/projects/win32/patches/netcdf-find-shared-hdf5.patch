@@ -1,0 +1,19 @@
+diff -u -U5 -r netcdf-c-4.6.2/CMakeLists.txt netcdf-c-4.6.2.find-shared-hdf5/CMakeLists.txt
+--- netcdf-c-4.6.2/CMakeLists.txt	2018-11-19 14:35:29.000000000 -0500
++++ netcdf-c-4.6.2.find-shared-hdf5/CMakeLists.txt	2019-03-15 13:43:21.833106302 -0400
+@@ -584,10 +584,15 @@
+     SET(HDF5_LIBRARIES ${HDF5_C_LIBRARY} ${HDF5_HL_LIBRARY})
+     SET(HDF5_C_LIBRARIES ${HDF5_C_LIBRARY})
+     SET(HDF5_C_LIBRARY_hdf5 ${HDF5_C_LIBRARY})
+     SET(HDF5_HL_LIBRARIES ${HDF5_HL_LIBRARY})
+     INCLUDE_DIRECTORIES(${HDF5_INCLUDE_DIR})
++    IF(NC_FIND_SHARED_LIBS)
++      ADD_DEFINITIONS(-DH5_BUILT_AS_DYNAMIC_LIB)
++    ELSE(NC_FIND_SHARED_LIBS)
++      ADD_DEFINITIONS(-DH5_BUILT_AS_STATIC_LIB)
++    ENDIF(NC_FIND_SHARED_LIBS)
+     MESSAGE(STATUS "Using HDF5 C Library: ${HDF5_C_LIBRARY}")
+     MESSAGE(STATUS "Using HDF5 HL LIbrary: ${HDF5_HL_LIBRARY}")
+     if (EXISTS "${HDF5_INCLUDE_DIR}/H5pubconf.h")
+       file(READ "${HDF5_INCLUDE_DIR}/H5pubconf.h" _hdf5_version_lines
+         REGEX "#define[ \t]+H5_VERSION")

@@ -1,0 +1,15 @@
+[metadata]
+license_files = LICENSE/*
+
+[egg_info]
+
+[libs]
+enable_lto = True
+system_freetype = True
+system_qhull = True
+
+[packages]
+tests = False
+
+[rc_options]
+backend = Agg

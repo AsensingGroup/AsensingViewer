@@ -1,0 +1,87 @@
+commit a871f692b4a2e6c7d45579693e787edc0af1a02c
+Author: Christian Heimes <christian@python.org>
+Date:   Mon Jun 1 08:58:14 2020 +0200
+
+    bpo-30008: Fix OpenSSL no-deprecated compilation (GH-20397)
+    
+    Fix :mod:`ssl`` code to be compatible with OpenSSL 1.1.x builds that use
+    ``no-deprecated`` and ``--api=1.1.0``.
+    
+    Note: Tests assume full OpenSSL API and fail with limited API.
+    
+    Signed-off-by: Christian Heimes <christian@python.org>
+    Co-authored-by: Mark Wright <gienah@gentoo.org>
+
+diff --git a/Modules/_ssl.c b/Modules/_ssl.c
+index 5fe65a8a1d..5e82fe41a7 100644
+--- a/Modules/_ssl.c
++++ b/Modules/_ssl.c
+@@ -142,6 +142,24 @@ static void _PySSLFixErrno(void) {
+ #  define PY_OPENSSL_1_1_API 1
+ #endif
+ 
++/* OpenSSL API compat */
++#ifdef OPENSSL_API_COMPAT
++#if OPENSSL_API_COMPAT >= 0x10100000L
++
++/* OpenSSL API 1.1.0+ does not include version methods */
++#ifndef OPENSSL_NO_TLS1_METHOD
++#define OPENSSL_NO_TLS1_METHOD 1
++#endif
++#ifndef OPENSSL_NO_TLS1_1_METHOD
++#define OPENSSL_NO_TLS1_1_METHOD 1
++#endif
++#ifndef OPENSSL_NO_TLS1_2_METHOD
++#define OPENSSL_NO_TLS1_2_METHOD 1
++#endif
++
++#endif /* >= 1.1.0 compcat */
++#endif /* OPENSSL_API_COMPAT */
++
+ /* OpenSSL API 1.1.0+ does not include version methods. Define the methods
+  * unless OpenSSL is compiled without the methods. It's the easiest way to
+  * make 1.0.2, 1.1.0, 1.1.1, and 3.0.0 happy without deprecation warnings.
+commit 93a0ef76473683aa3ad215e11df18f7839488c4e
+Author: Pablo Galindo <Pablogsal@gmail.com>
+Date:   Wed Dec 2 06:07:56 2020 +0000
+
+    Correct return type in Modules/_ssl.c::sslmodule_legacy (GH-23609)
+
+diff --git a/Modules/_ssl.c b/Modules/_ssl.c
+index edb850ee46..96d2796fcf 100644
+--- a/Modules/_ssl.c
++++ b/Modules/_ssl.c
+@@ -6416,7 +6416,7 @@ sslmodule_legacy(PyObject *module)
+ #ifdef HAVE_OPENSSL_CRYPTO_LOCK
+     /* note that this will start threading if not already started */
+     if (!_setup_ssl_threads()) {
+-        return NULL;
++        return 0;
+     }
+ #elif OPENSSL_VERSION_1_1
+     /* OpenSSL 1.1.0 builtin thread support is enabled */
+From 3309113d6131e4bbac570c4f54175ecca02d025a Mon Sep 17 00:00:00 2001
+From: Christian Heimes <christian@python.org>
+Date: Tue, 20 Apr 2021 18:10:10 +0200
+Subject: [PATCH] bpo-43799: Also define SSLv3_method() (GH-25481)
+
+Signed-off-by: Christian Heimes <christian@python.org>
+---
+ Lib/test/test_ssl.py | 8 --------
+ Modules/_ssl.c       | 3 +++
+ 2 files changed, 3 insertions(+), 8 deletions(-)
+
+diff --git a/Modules/_ssl.c b/Modules/_ssl.c
+index 4b84014d008c12..e28c1286784a45 100644
+--- a/Modules/_ssl.c
++++ b/Modules/_ssl.c
+@@ -123,6 +123,9 @@ static void _PySSLFixErrno(void) {
+  * unless OpenSSL is compiled without the methods. It's the easiest way to
+  * make 1.0.2, 1.1.0, 1.1.1, and 3.0.0 happy without deprecation warnings.
+  */
++#ifndef OPENSSL_NO_SSL3_METHOD
++extern const SSL_METHOD *SSLv3_method(void);
++#endif
+ #ifndef OPENSSL_NO_TLS1_METHOD
+ extern const SSL_METHOD *TLSv1_method(void);
+ #endif

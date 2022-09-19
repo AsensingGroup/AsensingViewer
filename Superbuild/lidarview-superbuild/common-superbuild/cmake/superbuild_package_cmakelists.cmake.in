@@ -1,0 +1,41 @@
+# This file is the top-level CMakeLists.txt file for the packaging step. It
+# provides variables to the `.bundle.cmake` code such as project variables and
+# the like.
+
+cmake_minimum_required(VERSION "@CMAKE_MINIMUM_REQUIRED_VERSION@")
+
+# We need to explicitly state some form of language support. That is how CMake
+# detects what compilers are being used, and therefore what
+# InstallRequiredSystemLibraries should properly do. If we state NONE for
+# languages we will fail to install any of the system libraries.
+project("cpack-@name@")
+
+# Keep the full output on CDash for future inspection.
+message("CTEST_FULL_OUTPUT")
+
+set(CMAKE_BUILD_TYPE "@CMAKE_BUILD_TYPE@")
+set(CMAKE_MODULE_PATH "@CMAKE_MODULE_PATH@")
+set(CMAKE_INSTALL_PREFIX "@CMAKE_INSTALL_PREFIX@")
+set(superbuild_source_directory "@CMAKE_SOURCE_DIR@")
+set(superbuild_install_location "@superbuild_install_location@")
+set(enabled_projects "@enabled_projects@")
+foreach (project IN LISTS enabled_projects)
+  set("${project}_enabled" TRUE)
+  set("${project}_built_by_superbuild" TRUE)
+endforeach ()
+set(system_projects "@system_projects@")
+foreach (project IN LISTS system_projects)
+  set("USE_SYSTEM_${project}" TRUE)
+  set("${project}_built_by_superbuild" FALSE)
+endforeach ()
+@superbuild_extra_variables@
+include(SuperbuildInstallMacros)
+include("@name@.bundle")
+
+if (NOT superbuild_bundle_skip_system_libraries)
+  set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION "bin")
+  set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT "superbuild")
+  include(InstallRequiredSystemLibraries)
+endif ()
+
+include(CPack)

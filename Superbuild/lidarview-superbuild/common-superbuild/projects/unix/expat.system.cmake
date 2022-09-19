@@ -1,0 +1,5 @@
+find_package(EXPAT REQUIRED)
+
+superbuild_add_extra_cmake_args(
+  -DEXPAT_INCLUDE_DIR:PATH=${EXPAT_INCLUDE_DIR}
+  -DEXPAT_LIBRARY:FILEPATH=${EXPAT_LIBRARY})

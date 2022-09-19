@@ -1,0 +1,16 @@
+diff -u -Nru5 libjpeg-turbo-2.1.1/sharedlib/CMakeLists.txt libjpeg-turbo-2.1.1.msvc-default-lib-flags/sharedlib/CMakeLists.txt
+--- libjpeg-turbo-2.1.1/sharedlib/CMakeLists.txt	2021-08-09 19:16:57.000000000 -0400
++++ libjpeg-turbo-2.1.1.msvc-default-lib-flags/sharedlib/CMakeLists.txt	2021-08-18 07:43:11.484269884 -0400
+@@ -53,11 +53,11 @@
+ endif()
+ if(MSVC)
+   set_target_properties(jpeg PROPERTIES
+     RUNTIME_OUTPUT_NAME jpeg${SO_MAJOR_VERSION})
+   # The jsimd_*.c file is built using /MT, so this prevents a linker warning.
+-  set_target_properties(jpeg PROPERTIES LINK_FLAGS "/NODEFAULTLIB:LIBCMT /NODEFAULTLIB:LIBCMTD")
++  #set_target_properties(jpeg PROPERTIES LINK_FLAGS "/NODEFAULTLIB:LIBCMT /NODEFAULTLIB:LIBCMTD")
+ elseif(MINGW)
+   set_target_properties(jpeg PROPERTIES SUFFIX -${SO_MAJOR_VERSION}.dll)
+ endif()
+ 
+ if(WIN32)

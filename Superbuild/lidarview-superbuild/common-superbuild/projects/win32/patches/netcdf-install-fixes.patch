@@ -1,0 +1,15 @@
+diff -u -U5 -r netcdf-c-4.6.2/CMakeLists.txt netcdf-c-4.6.2.install-fixes/CMakeLists.txt
+--- netcdf-c-4.6.2/CMakeLists.txt	2018-11-19 14:35:29.000000000 -0500
++++ netcdf-c-4.6.2.install-fixes/CMakeLists.txt	2019-03-15 13:35:32.881419659 -0400
+@@ -1795,10 +1795,10 @@
+ ##
+ # Brute force, grab all of the dlls from the dependency directory,
+ # install them in the binary dir. Grab all of the .libs, put them
+ # in the libdir.
+ ##
+-IF(MSVC)
++IF(FALSE AND MSVC)
+   FILE(GLOB COPY_FILES ${CMAKE_PREFIX_PATH}/lib/*.lib)
+   INSTALL(FILES ${COPY_FILES}
+   DESTINATION ${CMAKE_INSTALL_LIBDIR}
+   COMPONENT dependencies)

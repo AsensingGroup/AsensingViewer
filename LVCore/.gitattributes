@@ -1,0 +1,5 @@
+*.patch -text
+*.pdf binary
+*.h format.clang-format
+*.cxx format.clang-format
+#LidarPlugin/Plugin/LidarCore/Testing/Data/** filter=lfs diff=lfs merge=lfs -text

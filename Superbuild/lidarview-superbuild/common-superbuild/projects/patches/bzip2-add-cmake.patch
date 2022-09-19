@@ -1,0 +1,311 @@
+diff -urN bzip2-1.0.6.orig/BZip2Config.cmake.in bzip2-1.0.6/BZip2Config.cmake.in
+--- bzip2-1.0.6.orig/BZip2Config.cmake.in	1970-01-01 01:00:00.000000000 +0100
++++ bzip2-1.0.6/BZip2Config.cmake.in	2016-07-19 22:39:17.466714868 +0100
+@@ -0,0 +1,12 @@
++@PACKAGE_INIT@
++
++include(${CMAKE_CURRENT_LIST_DIR}/BZip2ConfigInternal.cmake)
++
++add_library(BZip2::BZip2 INTERFACE IMPORTED)
++set_target_properties(BZip2::BZip2 PROPERTIES INTERFACE_LINK_LIBRARIES bzip2_bz2)
++
++# For compatibility with FindBZip2.
++set(BZIP2_VERSION_STRING "@PROJECT_VERSION@")
++set(BZIP2_NEED_PREFIX ON)
++get_target_property(BZIP2_INCLUDE_DIR bzip2_bz2 INTERFACE_INCLUDE_DIRECTORIES)
++set(BZIP2_LIBRARIES BZip2::BZip2)
+diff -urN bzip2-1.0.6.orig/CMakeLists.txt bzip2-1.0.6/CMakeLists.txt
+--- bzip2-1.0.6.orig/CMakeLists.txt	1970-01-01 01:00:00.000000000 +0100
++++ bzip2-1.0.6/CMakeLists.txt	2016-07-19 22:42:12.669767988 +0100
+@@ -0,0 +1,232 @@
++# CMake build for bzip2
++# Copyright © 2015-2016 Roger Leigh <rleigh@codelibre.net>
++
++cmake_minimum_required(VERSION 3.0.0)
++
++# Use new variable expansion policy.
++if (POLICY CMP0053)
++  cmake_policy(SET CMP0053 NEW)
++endif(POLICY CMP0053)
++if (POLICY CMP0054)
++  cmake_policy(SET CMP0054 NEW)
++endif(POLICY CMP0054)
++
++project(bzip2
++        VERSION "1.0.6"
++        LANGUAGES C)
++
++include(GNUInstallDirs)
++enable_testing()
++
++if(MSVC)
++  set(CMAKE_DEBUG_POSTFIX "d")
++endif()
++
++add_definitions(-D_FILE_OFFSET_BITS=64)
++
++option(BUILD_SHARED_LIBS "Build shared library" ON)
++
++include_directories("${CMAKE_SOURCE_DIR}")
++
++#============================================================================
++# libbz2
++#============================================================================
++
++set(bzip2_public_headers
++    bzlib.h)
++
++set(bzip2_private_headers
++    bzlib_private.h)
++
++set(bzip2_sources
++    blocksort.c
++    huffman.c
++    crctable.c
++    randtable.c
++    compress.c
++    decompress.c
++    bzlib.c)
++
++add_library(bz2
++            ${bzip2_sources}
++            ${bzip2_public_headers} ${bzip2_private_headers}
++            bz2.def)
++set_target_properties(bz2 PROPERTIES SOVERSION 1.0)
++
++if(NOT CYGWIN)
++    # This property causes shared libraries on Linux to have the full version
++    # encoded into their final filename.  We disable this on Cygwin because
++    # it causes cygz-${bzip2_VERSION}.dll to be created when cygz.dll
++    # seems to be the default.
++    set_target_properties(bz2 PROPERTIES VERSION ${bzip2_VERSION})
++endif()
++
++if(WIN32)
++  set(bzip2_config_dir "cmake")
++else()
++  set(bzip2_config_dir "${CMAKE_INSTALL_LIBDIR}/cmake/BZip2")
++endif()
++
++install(TARGETS bz2
++        EXPORT BZip2ConfigInternal
++        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
++        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
++        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
++        COMPONENT "runtime"
++        INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
++install(EXPORT BZip2ConfigInternal
++        DESTINATION "${bzip2_config_dir}"
++        NAMESPACE "bzip2_"
++        COMPONENT "development")
++
++include(CMakePackageConfigHelpers)
++configure_package_config_file(
++  "${CMAKE_CURRENT_SOURCE_DIR}/BZip2Config.cmake.in"
++  "${CMAKE_CURRENT_BINARY_DIR}/BZip2Config.cmake"
++  INSTALL_DESTINATION "${bzip2_config_dir}")
++write_basic_package_version_file(
++  ${CMAKE_CURRENT_BINARY_DIR}/BZip2ConfigVersion.cmake
++  VERSION "${PROJECT_VERSION}"
++  COMPATIBILITY SameMajorVersion)
++install(FILES ${CMAKE_CURRENT_BINARY_DIR}/BZip2Config.cmake
++              ${CMAKE_CURRENT_BINARY_DIR}/BZip2ConfigVersion.cmake
++        DESTINATION "${bzip2_config_dir}"
++        COMPONENT "development")
++install(FILES ${bzip2_public_headers}
++        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
++        COMPONENT "development")
++
++#============================================================================
++# Manpages
++#============================================================================
++
++set(bzip2_manpages
++    bzip2.1)
++
++# Don't install shell script manpages on Windows
++if(UNIX)
++  list(APPEND bzip2_manpages
++       bzdiff.1
++       bzgrep.1
++       bzmore.1)
++endif()
++
++install(FILES ${bzip2_manpages}
++        DESTINATION "${CMAKE_INSTALL_MANDIR}/man1"
++        COMPONENT "runtime")
++
++#============================================================================
++# Binaries
++#============================================================================
++
++add_executable(bzip2 bzip2.c)
++target_link_libraries(bzip2 bz2)
++
++add_executable(bzip2recover bzip2recover.c)
++target_link_libraries(bzip2recover bz2)
++
++install(TARGETS bzip2 bzip2recover
++        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
++        COMPONENT "runtime")
++
++# Copy or symlink bunzip2 and bzcat to bzip2
++if (WIN32)
++    install(CODE "configure_file(\"${CMAKE_INSTALL_FULL_BINDIR}/bzip2.exe\"
++                                 \"${CMAKE_INSTALL_FULL_BINDIR}/bunzip2.exe\"
++                                 COPYONLY)"
++            COMPONENT "runtime")
++    install(CODE "configure_file(\"${CMAKE_INSTALL_FULL_BINDIR}/bzip2.exe\"
++                                 \"${CMAKE_INSTALL_FULL_BINDIR}/bzcat.exe\"
++                                 COPYONLY)"
++            COMPONENT "runtime")
++else()
++    install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E
++            create_symlink bzip2
++            \"\$ENV{DESTDIR}${CMAKE_INSTALL_FULL_BINDIR}/bunzip2\")"
++            COMPONENT "runtime")
++    install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E
++            create_symlink bzip2
++            \"\$ENV{DESTDIR}${CMAKE_INSTALL_FULL_BINDIR}/bzcat\")"
++            COMPONENT "runtime")
++endif()
++
++# Copy or symlink manpages
++set(bzip2_man_aliases
++    bzip2:bunzip2
++    bzip2:bzcat
++    bzip2:bzip2recover)
++
++foreach(manpage IN LISTS bzip2_man_aliases)
++  string(REPLACE ":" ";" manpage ${manpage})
++  list(GET manpage 0 target)
++  list(GET manpage 1 dest)
++
++  if (WIN32)
++    install(CODE "file(WRITE
++                       \"${CMAKE_INSTALL_FULL_MANDIR}/man1/${dest}.1\"
++                       \".so man1/${target}.1\")"
++            COMPONENT "runtime")
++  else()
++    install(CODE "file(WRITE
++                       \"\$ENV{DESTDIR}${CMAKE_INSTALL_FULL_MANDIR}/man1/${dest}.1\"
++                       \".so man1/${target}.1\")"
++            COMPONENT "runtime")
++  endif()
++endforeach()
++
++# Don't install shell scripts on Windows
++if(UNIX)
++  set(bzip2_scripts
++      bzgrep
++      bzmore
++      bzdiff)
++
++  set(bzip2_script_aliases
++      bzgrep:bzegrep
++      bzgrep:bzfgrep
++      bzmore:bzless
++      bzdiff:bzcmp)
++
++  install(PROGRAMS ${bzip2_scripts}
++          DESTINATION "${CMAKE_INSTALL_BINDIR}"
++          COMPONENT "runtime")
++
++  foreach(alias IN LISTS bzip2_script_aliases)
++    string(REPLACE ":" ";" alias ${alias})
++    list(GET alias 0 target)
++    list(GET alias 1 dest)
++
++    # Copy or symlink aliases, including manpages
++    install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E
++            create_symlink ${target}
++            \"\$ENV{DESTDIR}${CMAKE_INSTALL_FULL_BINDIR}/${dest}\")"
++            COMPONENT "runtime")
++    install(CODE "file(WRITE
++                       \"\$ENV{DESTDIR}${CMAKE_INSTALL_FULL_MANDIR}/man1/${dest}.1\"
++                       \".so man1/${target}.1\")"
++            COMPONENT "runtime")
++  endforeach()
++endif()
++
++#============================================================================
++# Tests
++#============================================================================
++
++macro(add_bzip_test name arg input output expected_output)
++  add_test(NAME "${name}"
++           COMMAND "${CMAKE_COMMAND}"
++           "-DBZIP2_COMMAND:FILEPATH=$<TARGET_FILE:bzip2>"
++           "-DBZIP2_ARG=${arg}"
++           "-DBZIP2_INPUT:FILEPATH=${CMAKE_SOURCE_DIR}/${input}"
++           "-DBZIP2_OUTPUT:FILEPATH=${output}"
++           "-DBZIP2_EXPECTED_OUTPUT:FILEPATH=${CMAKE_SOURCE_DIR}/${expected_output}"
++           -P "${CMAKE_CURRENT_LIST_DIR}/RunTest.cmake")
++endmacro()
++
++# Test        name  opt input       output      expected-output
++add_bzip_test(test0 -1  sample1.ref sample1.rb2 sample1.bz2)
++add_bzip_test(test1 -2  sample2.ref sample2.rb2 sample2.bz2)
++add_bzip_test(test2 -3  sample3.ref sample3.rb2 sample3.bz2)
++add_bzip_test(test3 -d  sample1.bz2 sample1.tst sample1.ref)
++add_bzip_test(test4 -d  sample2.bz2 sample2.tst sample2.ref)
++add_bzip_test(test5 -ds sample3.bz2 sample3.tst sample3.ref)
+diff -urN bzip2-1.0.6.orig/RunTest.cmake bzip2-1.0.6/RunTest.cmake
+--- bzip2-1.0.6.orig/RunTest.cmake	1970-01-01 01:00:00.000000000 +0100
++++ bzip2-1.0.6/RunTest.cmake	2016-07-19 22:39:17.472714832 +0100
+@@ -0,0 +1,25 @@
++# Run bzip2 test and compare test output with expected output
++# Copyright © 2015-2016 Roger Leigh <rleigh@codelibre.net>
++
++message(STATUS "Running test ${BZIP2_COMMAND} ${BZIP2_ARG} < ${BZIP2_INPUT} > ${BZIP2_OUTPUT} (to be compared with ${BZIP2_EXPECTED_OUTPUT})")
++
++# Run test command
++
++execute_process(COMMAND "${BZIP2_COMMAND}" ${BZIP2_ARG}
++                INPUT_FILE "${BZIP2_INPUT}"
++                OUTPUT_FILE "${BZIP2_OUTPUT}"
++                RESULT_VARIABLE BZIP2_STATUS)
++
++if (BZIP2_STATUS)
++  message(FATAL_ERROR "bzip2: Test run failed")
++endif()
++
++# Compare output
++
++execute_process(COMMAND "${CMAKE_COMMAND}" -E compare_files
++                "${BZIP2_OUTPUT}" "${BZIP2_EXPECTED_OUTPUT}"
++                RESULT_VARIABLE BZIP2_COMPARE_STATUS)
++
++if (BZIP2_COMPARE_STATUS)
++  message(FATAL_ERROR "bzip2: Test output comparison failed")
++endif()
+diff -urN bzip2-1.0.6.orig/bz2.def bzip2-1.0.6/bz2.def
+--- bzip2-1.0.6.orig/bz2.def	1970-01-01 01:00:00.000000000 +0100
++++ bzip2-1.0.6/bz2.def	2016-07-19 22:39:17.465714141 +0100
+@@ -0,0 +1,26 @@
++LIBRARY
++EXPORTS
++	BZ2_bzCompressInit
++	BZ2_bzCompress
++	BZ2_bzCompressEnd
++	BZ2_bzDecompressInit
++	BZ2_bzDecompress
++	BZ2_bzDecompressEnd
++	BZ2_bzReadOpen
++	BZ2_bzReadClose
++	BZ2_bzReadGetUnused
++	BZ2_bzRead
++	BZ2_bzWriteOpen
++	BZ2_bzWrite
++	BZ2_bzWriteClose
++	BZ2_bzWriteClose64
++	BZ2_bzBuffToBuffCompress
++	BZ2_bzBuffToBuffDecompress
++	BZ2_bzlibVersion
++	BZ2_bzopen
++	BZ2_bzdopen
++	BZ2_bzread
++	BZ2_bzwrite
++	BZ2_bzflush
++	BZ2_bzclose
++	BZ2_bzerror

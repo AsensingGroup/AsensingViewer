@@ -1,0 +1,16 @@
+diff -Nr -U5 qt-everywhere-opensource-src-4.8.6/configure qt-everywhere-opensource-src-4.8.6.qt-pointer-size/configure
+--- qt-everywhere-opensource-src-4.8.6/configure	2014-04-10 14:37:08.000000000 -0400
++++ qt-everywhere-opensource-src-4.8.6.qt-pointer-size/configure	2015-12-02 12:40:11.001912517 -0500
+@@ -8376,11 +8376,11 @@
+ #endif
+ EOF
+ elif [ "$XPLATFORM_SYMBIAN_SBSV2" = "no" ]; then
+     # Raptor does not support configure tests.
+     "$unixtests/ptrsize.test" "$XQMAKESPEC" $OPT_VERBOSE "$relpath" "$outpath"
+-    echo "#define QT_POINTER_SIZE $?" >>"$outpath/src/corelib/global/qconfig.h.new"
++    echo "#define QT_POINTER_SIZE 4" >>"$outpath/src/corelib/global/qconfig.h.new"
+ fi
+ 
+ 
+ echo "" >>"$outpath/src/corelib/global/qconfig.h.new"
+ 
