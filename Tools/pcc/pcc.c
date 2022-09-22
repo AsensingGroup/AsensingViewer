@@ -95,7 +95,7 @@ static void fill_packet(AsensingPacket *packet, uint16_t distance, uint16_t sn, 
     //packet->header.Flags = 0x0;
     packet->header.LaserNum = 0x08; /* 8 */
     packet->header.BlockNum = 0x0C; /* 12 block */
-    packet->header.EchoCount = 0x03;
+    packet->header.EchoCount = 0x02;
     //packet->header.EchoNum = 0x02;
 
     packet->header.UTCTime0 = pt->tm_year;
@@ -106,6 +106,8 @@ static void fill_packet(AsensingPacket *packet, uint16_t distance, uint16_t sn, 
     packet->header.UTCTime5 = pt->tm_sec;
 
     packet->header.Timestamp = tv.tv_usec;
+
+    packet->header.PointNum = htole16(38400);
 
     /* Block */
     for (int i = 0; i < BLOCK_NUM; i++)

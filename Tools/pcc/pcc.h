@@ -109,9 +109,9 @@ typedef struct
     uint8_t  MemsTemp;
     uint8_t  SlotNum;
 
+    uint16_t PointNum;
     uint16_t Reserved1;
     uint16_t Reserved2;
-    uint16_t Reserved3;
 
 } AsensingHeader;
 #pragma pack(pop)
