@@ -1,10 +1,19 @@
--- trivial protocol example
--- declare our protocol
-trivial_proto = Proto("Asensing","Asensing LiDAR")
--- create a function to dissect it
-function trivial_proto.dissector(buffer,pinfo,tree)
+-- Copyright (c) 2014-2022, Asensing Group
+--
+-- Asensing LiDAR protocol plugin for Wireshark
+--
+-- Change Logs:
+-- Date           Author       Notes
+-- 2022-09-13     luhuadong    the first version
+
+
+-- Declare our protocol
+lidar_proto = Proto("Asensing","Asensing LiDAR")
+
+-- Create a function to dissect it
+function lidar_proto.dissector(buffer,pinfo,tree)
 	pinfo.cols.protocol = "Asensing"
-	local subtree = tree:add(trivial_proto,buffer(),"Asensing data")
+	local subtree = tree:add(lidar_proto,buffer(),"Asensing LiDAR packet data")
 
 	local curr = 0
 
@@ -109,16 +118,16 @@ function trivial_proto.dissector(buffer,pinfo,tree)
 	header_subtree:add(buffer(curr,1),"SlotNum : " .. SlotNum)
 	curr = curr + 1
 
+	local PointNum = buffer(curr, 2):uint()
+	header_subtree:add(buffer(curr,2),"PointNum : " .. PointNum)
+	curr = curr + 2
+
 	local Reserved1 = buffer(curr, 2):uint()
 	header_subtree:add(buffer(curr,2),"Reserved1 : " .. Reserved1)
 	curr = curr + 2
 
 	local Reserved2 = buffer(curr, 2):uint()
 	header_subtree:add(buffer(curr,2),"Reserved2 : " .. Reserved2)
-	curr = curr + 2
-
-	local Reserved3 = buffer(curr, 2):uint()
-	header_subtree:add(buffer(curr,2),"Reserved3 : " .. Reserved3)
 	curr = curr + 2
 
 
@@ -204,4 +213,4 @@ end
 -- load the udp.port table
 udp_table = DissectorTable.get("udp.port")
 -- register our protocol to handle udp port 51180
-udp_table:add(51180, trivial_proto)
+udp_table:add(51180, lidar_proto)
