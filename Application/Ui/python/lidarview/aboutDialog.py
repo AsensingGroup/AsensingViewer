@@ -42,25 +42,16 @@ def showDialog(mainWindow):
     dialog.windowTitle = "About " + appName + " ..."
     copyrightText = '''<h1>{0} {1} {2}</h1><br/>
                        Copyright (c) 2014-2022, Asensing Group, 
-                       Copyright (c) 2016-2022, Kitware<br />
-                       Provided by <a href="http://www.asensing.com">Asensing</a>, coded by <a href="https://www.kitware.com">Kitware</a>.<br />
+                       Provided by <a href="http://www.asensing.com">asensing.com</a><br />
                        <br />
                     '''.format(appName, appVersionTag, appBitTag)
     w('copyrightLabel').setText(copyrightText)
     
-    textBoxContent = '''<h4>Want more? Ask Kitware!</h4>
-                        Kitware is a leading provider of open-source software systems for technical and scientific computing.
-                        We are the developers of LidarView, providing real-time interactive visualization of live captured 3D LiDAR
-                        data from Lidar sensors. We create customized solutions providing detection and tracking of people,
-                        street signs, lane markings, vehicles, industrial machinery, and building facades from within LidarView or using
-                        combinations of point cloud and video data. We also provide Lidar-based SLAM algorithms for Lidar integrators.
-                        We work with customers to create tailored solutions using proven open-source
-                        technologies, avoiding vendor lock-in and leveraging our world-leading experience in visualization, computer vision, high-performance
-                        computing, and test-driven high-quality software process.<br />
+    textBoxContent = '''<h4>License</h4>
+                        NeptuneViewer is provided under the Apache License 2.0.<br /><br />
+                        The initial developer of some parts of the framework, which are 
+                        copied from, derived from, or inspired by LidarView open source project.
                         <br />
-                        <br />
-                        Have a look at <a href="https://www.kitware.com/our-expertise/">our expertise</a>, and for more information, please contact us: 
-                        <a href="mailto:kitware@kitware.fr?subject=Contact+about+LidarView">kitware@kitware.fr</a>
                      '''
     w('detailsLabel').setText(textBoxContent)
     
