@@ -121,8 +121,9 @@ private:
   bool CalibEnabled = false;
 #endif
 
+  uint8_t echo_count = 1;
   int current_pt_id = 0;
-  int points_per_frame = ASENSING_POINT_NUM;
+  uint32_t points_per_frame = ASENSING_POINT_NUM;
   uint32_t current_frame_id = 0;
 };
 
