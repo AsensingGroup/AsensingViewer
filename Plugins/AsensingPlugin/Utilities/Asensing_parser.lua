@@ -5,15 +5,16 @@
 -- Change Logs:
 -- Date           Author       Notes
 -- 2022-09-13     luhuadong    the first version
+-- 2022-09-22     luhuadong    support little-endian
 
 
 -- Declare our protocol
-lidar_proto = Proto("Asensing","Asensing LiDAR")
+lidar_proto = Proto("Asensing","Asensing LiDAR Protocol")
 
 -- Create a function to dissect it
-function lidar_proto.dissector(buffer,pinfo,tree)
+function lidar_proto.dissector(buffer, pinfo, tree)
 	pinfo.cols.protocol = "Asensing"
-	local subtree = tree:add(lidar_proto,buffer(),"Asensing LiDAR packet data")
+	local subtree = tree:add(lidar_proto, buffer(), "Asensing LiDAR packet data")
 
 	local curr = 0
 
@@ -28,26 +29,26 @@ function lidar_proto.dissector(buffer,pinfo,tree)
 	local tailSize = 4
 
 	-- Packet Header --
-	local header_subtree = subtree:add(buffer(curr, headerSize), "Header")
+	local header_subtree = subtree:add_le(buffer(curr, headerSize), "Header")
 
 	local Sob = buffer(curr, 4):uint()
-	header_subtree:add(buffer(curr, 4), "Sob : " .. Sob)
+	header_subtree:add_le(buffer(curr, 4), "Sob : " .. Sob)
 	curr = curr + 4
 
 	local FrameID = buffer(curr, 4):uint()
-	header_subtree:add(buffer(curr, 4), "FrameID : " .. FrameID)
+	header_subtree:add_le(buffer(curr, 4), "FrameID : " .. FrameID)
 	curr = curr + 4
 
 	local SeqNum = buffer(curr, 2):uint()
-	header_subtree:add(buffer(curr, 2), "SeqNum : " .. SeqNum)
+	header_subtree:add_le(buffer(curr, 2), "SeqNum : " .. SeqNum)
 	curr = curr + 2
 
 	local PkgLen = buffer(curr, 2):uint()
-	header_subtree:add(buffer(curr, 2), "PkgLen : " .. PkgLen)
+	header_subtree:add_le(buffer(curr, 2), "PkgLen : " .. PkgLen)
 	curr = curr + 2
 
 	local LidarType = buffer(curr, 2):uint()
-	header_subtree:add(buffer(curr, 2), "LidarType : " .. LidarType)
+	header_subtree:add_le(buffer(curr, 2), "LidarType : " .. LidarType)
 	curr = curr + 2
 
 	local VersionMajor = buffer(curr, 1):uint()
@@ -83,7 +84,7 @@ function lidar_proto.dissector(buffer,pinfo,tree)
 	curr = curr + 1
 
 	local Timestamp = buffer(curr, 4):uint()
-	header_subtree:add(buffer(curr, 4), "Timestamp  : " .. Timestamp)
+	header_subtree:add_le(buffer(curr, 4), "Timestamp  : " .. Timestamp)
 	curr = curr + 4
 
 	local MeasureMode = buffer(curr, 1):uint()
@@ -119,7 +120,7 @@ function lidar_proto.dissector(buffer,pinfo,tree)
 	curr = curr + 1
 
 	local PointNum = buffer(curr, 2):uint()
-	header_subtree:add(buffer(curr, 2), "PointNum : " .. PointNum)
+	header_subtree:add_le(buffer(curr, 2), "PointNum : " .. PointNum)
 	curr = curr + 2
 
 	local Reserved1 = buffer(curr, 2):uint()
@@ -162,11 +163,11 @@ function lidar_proto.dissector(buffer,pinfo,tree)
 			local laser_subtree = all_laser_subtree:add(buffer(curr, laserSize), "Laser Return : " ..j)
 
 			local Distance = buffer(curr, 2):uint()
-			laser_subtree:add(buffer(curr, 2), "Distance  : " .. Distance)
+			laser_subtree:add_le(buffer(curr, 2), "Distance  : " .. Distance)
 			curr = curr + 2
 
 			local Azimuth = buffer(curr, 2):uint()
-			laser_subtree:add(buffer(curr, 2), "Azimuth  : " .. Azimuth)
+			laser_subtree:add_le(buffer(curr, 2), "Azimuth  : " .. Azimuth)
 			curr = curr + 2
 
 			local Elevation = buffer(curr, 2):uint()
@@ -178,7 +179,7 @@ function lidar_proto.dissector(buffer,pinfo,tree)
 			curr = curr + 1
 
 			local Reserved = buffer(curr, 2):uint()
-			laser_subtree:add(buffer(curr, 2), "Reserved  : " .. Reserved)
+			laser_subtree:add_le(buffer(curr, 2), "Reserved  : " .. Reserved)
 			curr = curr + 2
 		end
 
