@@ -160,10 +160,41 @@ cd AsensingViewer
 git clone git@gitlab.ag.com:fusionposition/software/lidar/asensingviewer.git --recurse-submodules src
 mkdir AsensingViewer\build
 cd AsensingViewer\build
-cmake ..\src\Superbuild -GNinja -DCMAKE_BUILD_TYPE=Release -DUSE_SYSTEM_qt5=True -DQt5_DIR="C:/Qt/Qt5.15.2/5.15.2/msvc2019_64/lib/cmake/Qt5"
+```
+
+使用 MSVC2019
+
+```bash
+cmake ..\src\Superbuild -GNinja -DCMAKE_BUILD_TYPE=Release -DUSE_SYSTEM_qt5=True -DQt5_DIR="C:/Qt/5.15.2/msvc2019_64/lib/cmake/Qt5"
+```
+
+使用 MSVC2015
+
+```bash
+cmake ..\src\Superbuild -GNinja -DCMAKE_BUILD_TYPE=Release -DUSE_SYSTEM_qt5=True -DQt5_DIR="C:/Qt/5.15.2/msvc2015_64/lib/cmake/Qt5"
+```
+
+开始构建
+
+```bash
 cmake --build . -j
+```
+
+启动程序
+
+```bash
 install\bin\NeptuneViewer
 ```
+
+## 增量构建说明
+
+如果你只修改了 AsensingViewer 源代码，通常会希望增量构建，以缩短构建时间。命令如下：
+
+```bash
+cd AsensingViewer\build\lidarview-superbuild\common-superbuild\lidarview\build
+cmake --build . -j --target install
+```
+
 
 ## 打包说明
 
