@@ -2,7 +2,7 @@
 
 ## NeptuneViewer V0.23.3
 
-- 增加点云数据的 RT 矩阵运算
+- 增加点云数据的 RT 矩阵转换
 
 ## NeptuneViewer V0.23.2
 

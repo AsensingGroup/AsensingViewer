@@ -39,6 +39,7 @@ target_include_directories(AsensingLidar
 
 set(calib_files
   Neptune48.json
+  RT-Matrix.json
   No-Correction.json
 )
 
