@@ -119,12 +119,20 @@ private:
   std::vector<double> ZCorrection;
 
   bool CalibEnabled = false;
+  bool RTMatEnabled = false;
 #endif
 
   uint8_t echo_count = 1;
   int current_pt_id = 0;
   uint32_t points_per_frame = ASENSING_POINT_NUM_MAX;
   uint32_t current_frame_id = 0;
+
+#if 1
+  double matrix_RT0[4][4];
+  double matrix_RT1[4][4];
+  double matrix_RT2[4][4];
+  double matrix_RT3[4][4];
+#endif
 };
 
 struct AsensingSpecificFrameInformation : public SpecificFrameInformation

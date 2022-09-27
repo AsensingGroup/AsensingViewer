@@ -144,14 +144,105 @@ void vtkAsensingPacketInterpreter::LoadCalibration(const std::string& filename)
   cJSON *root = cJSON_Parse(jsonData);
   //printf("%s\n\n", cJSON_Print(root));
 
+  cJSON *RT0 = cJSON_GetObjectItemCaseSensitive(root, "module_RT0");
+  cJSON *RT1 = cJSON_GetObjectItemCaseSensitive(root, "module_RT1");
+  cJSON *RT2 = cJSON_GetObjectItemCaseSensitive(root, "module_RT2");
+  cJSON *RT3 = cJSON_GetObjectItemCaseSensitive(root, "module_RT3");
+
   cJSON *module0 = cJSON_GetObjectItemCaseSensitive(root, "module_0");
   cJSON *module1 = cJSON_GetObjectItemCaseSensitive(root, "module_1");
   cJSON *module2 = cJSON_GetObjectItemCaseSensitive(root, "module_2");
   cJSON *module3 = cJSON_GetObjectItemCaseSensitive(root, "module_3");
 
+  bool NoLaserAngle = false;
+  bool NoRTMatrix = false;
+
   if (!(cJSON_IsArray(module0) && cJSON_IsArray(module1) && cJSON_IsArray(module2) && cJSON_IsArray(module3))) {
     std::cout << "Warning: Please check module data" << std::endl;
+    NoLaserAngle = true;
   }
+
+  if (!(cJSON_IsArray(RT0) && cJSON_IsArray(RT1) && cJSON_IsArray(RT2) && cJSON_IsArray(RT3))) {
+    std::cout << "Warning: Please check RT matrix" << std::endl;
+    NoRTMatrix = true;
+  }
+
+  /* fill in RT matrix */
+  if (!NoRTMatrix) {
+
+  for (int i=0; i<4; i++) {
+    for (int j=0; j<4; j++) {
+      this->matrix_RT0[i][j] = cJSON_GetArrayItem(RT0, i*4 + j)->valuedouble;
+    }
+  }
+
+  for (int i=0; i<4; i++) {
+    for (int j=0; j<4; j++) {
+      this->matrix_RT1[i][j] = cJSON_GetArrayItem(RT1, i*4 + j)->valuedouble;
+    }
+  }
+
+  for (int i=0; i<4; i++) {
+    for (int j=0; j<4; j++) {
+      this->matrix_RT2[i][j] = cJSON_GetArrayItem(RT2, i*4 + j)->valuedouble;
+    }
+  }
+
+  for (int i=0; i<4; i++) {
+    for (int j=0; j<4; j++) {
+      this->matrix_RT3[i][j] = cJSON_GetArrayItem(RT3, i*4 + j)->valuedouble;
+    }
+  }
+
+  this->RTMatEnabled = true;
+  
+  /* Print all RT matrix */
+
+  std::cout << "RT matrix 0 :" << std::endl;
+  for (int i=0; i<4; i++) {
+    for (int j=0; j<4; j++) {
+      std::cout << this->matrix_RT0[i][j] << ", ";
+    }
+    std::cout << std::endl;
+  }
+
+  std::cout << "RT matrix 1 :" << std::endl;
+  for (int i=0; i<4; i++) {
+    for (int j=0; j<4; j++) {
+      std::cout << this->matrix_RT1[i][j] << ", ";
+    }
+    std::cout << std::endl;
+  }
+
+  std::cout << "RT matrix 2 :" << std::endl;
+  for (int i=0; i<4; i++) {
+    for (int j=0; j<4; j++) {
+      std::cout << this->matrix_RT2[i][j] << ", ";
+    }
+    std::cout << std::endl;
+  }
+
+  std::cout << "RT matrix 3 :" << std::endl;
+  for (int i=0; i<4; i++) {
+    for (int j=0; j<4; j++) {
+      std::cout << this->matrix_RT3[i][j] << ", ";
+    }
+    std::cout << std::endl;
+  }
+  }
+
+  /* If no Laser angle data */
+
+  if (!module0) {
+    cJSON_Delete(root);
+    free(jsonData);
+    fclose(fp);
+    this->IsCalibrated = true;
+    this->CalibEnabled = false;
+    return;
+  }
+
+  /* fill in Laser angle */
 
   long arraySize = cJSON_GetArraySize(module0); // 9600
   printf("Array Size = %ld\n", arraySize);
@@ -425,7 +516,38 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
        y = xyDistance * this->Sin_all_angle[azimuthIdx];
        z = distance * this->Sin_all_angle[static_cast<int>(pitch * 100 + 0.5)];
 #endif
+       } /* End of this->CalibEnabled */
+
+       /* Matrix processing */
+       if (this->RTMatEnabled) {
+         std::cout << "Matrix processing" << std::endl;
+         double x_ = x, y_ = y, z_ = z;
+
+         if (laserID == 0 || laserID == 1) {
+           x = this->matrix_RT0[0][0] * x_ + this->matrix_RT0[0][1] * y_ + this->matrix_RT0[0][2] * z_ + this->matrix_RT0[0][3];
+           y = this->matrix_RT0[1][0] * x_ + this->matrix_RT0[1][1] * y_ + this->matrix_RT0[1][2] * z_ + this->matrix_RT0[1][3];
+           z = this->matrix_RT0[2][0] * x_ + this->matrix_RT0[2][1] * y_ + this->matrix_RT0[2][2] * z_ + this->matrix_RT0[2][3];
+         }
+
+         if (laserID == 2 || laserID == 3) {
+           x = this->matrix_RT1[0][0] * x_ + this->matrix_RT1[0][1] * y_ + this->matrix_RT1[0][2] * z_ + this->matrix_RT1[0][3];
+           y = this->matrix_RT1[1][0] * x_ + this->matrix_RT1[1][1] * y_ + this->matrix_RT1[1][2] * z_ + this->matrix_RT1[1][3];
+           z = this->matrix_RT1[2][0] * x_ + this->matrix_RT1[2][1] * y_ + this->matrix_RT1[2][2] * z_ + this->matrix_RT1[2][3];
+         }
+
+         if (laserID == 4 || laserID == 5) {
+           x = this->matrix_RT2[0][0] * x_ + this->matrix_RT2[0][1] * y_ + this->matrix_RT2[0][2] * z_ + this->matrix_RT2[0][3];
+           y = this->matrix_RT2[1][0] * x_ + this->matrix_RT2[1][1] * y_ + this->matrix_RT2[1][2] * z_ + this->matrix_RT2[1][3];
+           z = this->matrix_RT2[2][0] * x_ + this->matrix_RT2[2][1] * y_ + this->matrix_RT2[2][2] * z_ + this->matrix_RT2[2][3];
+         }
+
+         if (laserID == 5 || laserID == 6) {
+           x = this->matrix_RT3[0][0] * x_ + this->matrix_RT3[0][1] * y_ + this->matrix_RT3[0][2] * z_ + this->matrix_RT3[0][3];
+           y = this->matrix_RT3[1][0] * x_ + this->matrix_RT3[1][1] * y_ + this->matrix_RT3[1][2] * z_ + this->matrix_RT3[1][3];
+           z = this->matrix_RT3[2][0] * x_ + this->matrix_RT3[2][1] * y_ + this->matrix_RT3[2][2] * z_ + this->matrix_RT3[2][3];
+         }
        }
+       
 
        uint8_t intensity = currentBlock.units[laserID].GetIntensity();
 
