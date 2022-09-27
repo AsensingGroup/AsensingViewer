@@ -520,7 +520,6 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
 
        /* Matrix processing */
        if (this->RTMatEnabled) {
-         std::cout << "Matrix processing" << std::endl;
          double x_ = x, y_ = y, z_ = z;
 
          if (laserID == 0 || laserID == 1) {
@@ -528,20 +527,17 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
            y = this->matrix_RT0[1][0] * x_ + this->matrix_RT0[1][1] * y_ + this->matrix_RT0[1][2] * z_ + this->matrix_RT0[1][3];
            z = this->matrix_RT0[2][0] * x_ + this->matrix_RT0[2][1] * y_ + this->matrix_RT0[2][2] * z_ + this->matrix_RT0[2][3];
          }
-
-         if (laserID == 2 || laserID == 3) {
+         else if (laserID == 2 || laserID == 3) {
            x = this->matrix_RT1[0][0] * x_ + this->matrix_RT1[0][1] * y_ + this->matrix_RT1[0][2] * z_ + this->matrix_RT1[0][3];
            y = this->matrix_RT1[1][0] * x_ + this->matrix_RT1[1][1] * y_ + this->matrix_RT1[1][2] * z_ + this->matrix_RT1[1][3];
            z = this->matrix_RT1[2][0] * x_ + this->matrix_RT1[2][1] * y_ + this->matrix_RT1[2][2] * z_ + this->matrix_RT1[2][3];
          }
-
-         if (laserID == 4 || laserID == 5) {
+         else if (laserID == 4 || laserID == 5) {
            x = this->matrix_RT2[0][0] * x_ + this->matrix_RT2[0][1] * y_ + this->matrix_RT2[0][2] * z_ + this->matrix_RT2[0][3];
            y = this->matrix_RT2[1][0] * x_ + this->matrix_RT2[1][1] * y_ + this->matrix_RT2[1][2] * z_ + this->matrix_RT2[1][3];
            z = this->matrix_RT2[2][0] * x_ + this->matrix_RT2[2][1] * y_ + this->matrix_RT2[2][2] * z_ + this->matrix_RT2[2][3];
          }
-
-         if (laserID == 5 || laserID == 6) {
+         else if (laserID == 5 || laserID == 6) {
            x = this->matrix_RT3[0][0] * x_ + this->matrix_RT3[0][1] * y_ + this->matrix_RT3[0][2] * z_ + this->matrix_RT3[0][3];
            y = this->matrix_RT3[1][0] * x_ + this->matrix_RT3[1][1] * y_ + this->matrix_RT3[1][2] * z_ + this->matrix_RT3[1][3];
            z = this->matrix_RT3[2][0] * x_ + this->matrix_RT3[2][1] * y_ + this->matrix_RT3[2][2] * z_ + this->matrix_RT3[2][3];

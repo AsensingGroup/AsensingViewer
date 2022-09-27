@@ -3,6 +3,7 @@
 ## NeptuneViewer V0.23.3
 
 - 增加点云数据的 RT 矩阵转换
+- 支持点云大小动态调整
 
 ## NeptuneViewer V0.23.2
 
