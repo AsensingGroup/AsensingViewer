@@ -132,7 +132,7 @@ private:
   void operator=(const vtkStream&) = delete;
 
   /*!< The port to receive information*/
-  int ListeningPort = 2368;
+  int ListeningPort = 51180;
   /*!< The multicast address to receive packets*/
   std::string MulticastAddress;
   /*!< The Listening address in case of multiples interfaces*/

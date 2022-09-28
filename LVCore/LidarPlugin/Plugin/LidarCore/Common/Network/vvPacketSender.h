@@ -33,7 +33,7 @@ class LIDARCORE_EXPORT vvPacketSender
 {
 public:
   vvPacketSender(std::string pcapfile, std::string destinationio = "127.0.0.1",
-    int lidarport = 2368, int positionport = 8308);
+    int lidarport = 51180, int positionport = 8308);
   ~vvPacketSender();
 
   /**

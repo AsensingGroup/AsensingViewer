@@ -24,8 +24,8 @@ def wrap_ethernet_ip_udp(data):
 
     # UDP datagram.
     udp = dpkt.udp.UDP(
-        sport=2368,  # source port
-        dport=2368   # destination port
+        sport=51180,  # source port
+        dport=51180   # destination port
     )
     udp.data = data
     udp.ulen += len(data)

@@ -14,7 +14,7 @@
         name="ListeningPort"
         animateable="0"
         command="SetListeningPort"
-        default_values="2368"
+        default_values="51180"
         number_of_elements="1">
       <Documentation>
         Specify port on which to listen for packets
