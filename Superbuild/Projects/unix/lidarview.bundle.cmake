@@ -11,3 +11,11 @@ file(GLOB shared_files "${superbuild_install_location}/share/*.csv")
 install(FILES ${shared_files}
         DESTINATION "${LV_INSTALL_RESOURCE_DIR}")
 unset(shared_files)
+file(GLOB shared_files "${superbuild_install_location}/share/*.xml")
+install(FILES ${shared_files}
+        DESTINATION "${LV_INSTALL_RESOURCE_DIR}")
+unset(shared_files)
+file(GLOB shared_files "${superbuild_install_location}/share/*.json")
+install(FILES ${shared_files}
+        DESTINATION "${LV_INSTALL_RESOURCE_DIR}")
+unset(shared_files)
