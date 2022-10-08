@@ -76,7 +76,7 @@ static void fill_packet(AsensingPacket *packet, uint16_t distance, uint16_t sn, 
     struct timeval tv;
     struct tm *pt;
     int pos = index * MAX_POINT_NUM_IN_PACKET;
-    printf("azimuth: %u, elevation: %u, distance: %u\n", point_map[pos].azimuth, point_map[pos].elevation, distance);
+    DEBUG_PRINT("azimuth: %u, elevation: %u, distance: %u\n", point_map[pos].azimuth, point_map[pos].elevation, distance);
 
     //uint16_t azimuth = point_map[pos].azimuth;
     //uint16_t elevation = point_map[pos].elevation;
@@ -163,6 +163,7 @@ static void show_version(void)
 
 int main(int argc, char *argv[])
 {
+    int ret = 0, yes = 1;
     int option;
     char *ipaddr = NULL;
     char *port = NULL;
@@ -223,6 +224,7 @@ int main(int argc, char *argv[])
 
     /* Client IP address and port */
     // bzero(&caddr, sizeof(struct sockaddr_in));
+    memset((void *)&caddr, 0, sizeof(struct sockaddr_in));
     caddr.sin_family = AF_INET;
 
     if (NULL == port)
@@ -236,7 +238,7 @@ int main(int argc, char *argv[])
 
     if (NULL == ipaddr)
     {
-        caddr.sin_addr.s_addr = htonl(INADDR_ANY);
+        caddr.sin_addr.s_addr = htonl(INADDR_BROADCAST); //htonl(INADDR_ANY);
     }
     else
     {
@@ -252,6 +254,14 @@ int main(int argc, char *argv[])
     {
         perror("socket creation failed");
         exit(EXIT_FAILURE);
+    }
+
+    /* Enable broadcast */
+    ret = setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, (char *)&yes, sizeof(yes));
+    if (ret == -1)
+    {
+        perror("setsockopt error");
+        return 0;
     }
 
     /* Bind the socket with the server address */
@@ -273,7 +283,6 @@ int main(int argc, char *argv[])
     uint32_t frameID = 0;
 
     uint32_t sr;
-    int ret = 0;
 
     while (count--)
     {
@@ -282,6 +291,8 @@ int main(int argc, char *argv[])
         if (distance > 10) {
             distance = 1;
         }
+
+        const char *msg = "Hello";
 
         /* This is a frame of point cloud */
         for (int i = 0; i < POINT_NUM_PER_FRAME / MAX_POINT_NUM_IN_PACKET; i++) {
@@ -292,12 +303,13 @@ int main(int argc, char *argv[])
             fill_packet(&packet, distance, sn, i);
 
             ret = sendto(sockfd, &packet, sizeof(packet), 0, (struct sockaddr *)&caddr, len);
+            //ret = sendto(sockfd, &msg, strlen(msg), 0, (struct sockaddr *)&caddr, len);
 
             if (ret < 0)
             {
                 printf("Send package error...\n");
-                close(sockfd);
-                return -1;
+                //close(sockfd);
+                //return -1;
             }
 
             sn++;

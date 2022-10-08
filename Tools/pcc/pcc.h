@@ -15,9 +15,16 @@
 extern "C" {
 #endif
 
-#define VER_MAJOR                      0
+static int debug = 0;  /* enable this to printf */
+
+#define DEBUG_PRINT(fmt, args...) \
+    do { if(debug) \
+    printf(fmt, ## args); \
+    } while(0)
+
+#define VER_MAJOR                      1
 #define VER_MINOR                      0
-#define VER_PATCH                      1
+#define VER_PATCH                      0
 
 #define MAX_POINT_NUM_IN_PACKET        (96)
 #define LASER_MODULE_NUM               (4)
