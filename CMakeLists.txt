@@ -12,8 +12,6 @@ include(Application/branding.cmake)
 include(SetupLidarviewProject)
 
 # custom code here
-#add_subdirectory(Plugins/VelodynePlugin)
-#add_subdirectory(Plugins/HesaiPlugin)
 add_subdirectory(Plugins/AsensingPlugin)
 
 # Application
