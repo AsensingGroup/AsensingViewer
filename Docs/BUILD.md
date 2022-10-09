@@ -92,7 +92,7 @@ cmake --build . -j
 编译 Debug 版本
 
 ```bash
-cmake ../src/Superbuild -GNinja -DCMAKE_BUILD_TYPE=Debug
+cmake ../src/Superbuild -GNinja -DCMAKE_BUILD_TYPE=Debug -DSUPERBUILD_ALLOW_DEBUG:BOOL=ON
 cmake --build . -j
 ```
 
