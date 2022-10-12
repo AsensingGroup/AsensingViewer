@@ -1,6 +1,9 @@
 .vscode/
 .VSCodeCounter/
 
+html/
+latex/
+
 # Compiled source #
 ###################
 *.com
