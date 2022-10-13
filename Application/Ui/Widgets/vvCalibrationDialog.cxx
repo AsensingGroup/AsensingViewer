@@ -49,7 +49,7 @@ public:
     std::vector<QString> calibrationBuiltIn(filenames, filenames + nFile);
     QString prefix;
 #if defined(_WIN32)
-    prefix = QCoreApplication::applicationDirPath() + "/../share/";
+    prefix = QCoreApplication::applicationDirPath() + "/share/";
 #elif defined(__APPLE__)
     prefix = QCoreApplication::applicationDirPath() + "/../Resources/";
 #else
