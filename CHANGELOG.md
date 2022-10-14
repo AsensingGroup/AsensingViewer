@@ -1,10 +1,14 @@
 # 更改日志
 
+## NeptuneViewer V0.31.2
+
+- 增加 PCL 库支持
+- 修复点云帧计算问题
 ## NeptuneViewer V0.31.1
 
 - 修复标定文件默认安装问题
-- 增加 PCL 库支持
 - 增加距离滤波功能
+- 发布 Windows 版本
 
 ## NeptuneViewer V0.23.3
 
