@@ -543,7 +543,7 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
           z = this->matrix_RT2[2][0] * x_ + this->matrix_RT2[2][1] * y_ +
             this->matrix_RT2[2][2] * z_ + this->matrix_RT2[2][3];
         }
-        else if (laserID == 5 || laserID == 6)
+        else if (laserID == 6 || laserID == 7)
         {
           x = this->matrix_RT3[0][0] * x_ + this->matrix_RT3[0][1] * y_ +
             this->matrix_RT3[0][2] * z_ + this->matrix_RT3[0][3];
