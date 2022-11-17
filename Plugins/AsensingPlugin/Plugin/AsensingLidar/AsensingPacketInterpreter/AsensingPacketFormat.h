@@ -191,9 +191,8 @@ private:
   boost::endian::little_uint8_t  MemsTemp;      /* Temperature of MEMS */
   boost::endian::little_uint8_t  SlotNum;
 
-  boost::endian::little_uint16_t PointNum;      /* The number of points in a frame */
+  boost::endian::little_uint32_t PointNum;      /* The number of points in a frame */
   boost::endian::little_uint16_t Reserved1;     /* e.g DistUnit, Flags ... */
-  boost::endian::little_uint16_t Reserved2;
 
 public:
   GET_NATIVE_UINT(32, Sob)
@@ -244,12 +243,10 @@ public:
   GET_NATIVE_UINT(8, SlotNum)
   SET_NATIVE_UINT(8, SlotNum)
 
-  GET_NATIVE_UINT(16, PointNum)
-  SET_NATIVE_UINT(16, PointNum)
+  GET_NATIVE_UINT(32, PointNum)
+  SET_NATIVE_UINT(32, PointNum)
   GET_NATIVE_UINT(16, Reserved1)
   SET_NATIVE_UINT(16, Reserved1)
-  GET_NATIVE_UINT(16, Reserved2)
-  SET_NATIVE_UINT(16, Reserved2)
 };
 #pragma pack(pop)
 

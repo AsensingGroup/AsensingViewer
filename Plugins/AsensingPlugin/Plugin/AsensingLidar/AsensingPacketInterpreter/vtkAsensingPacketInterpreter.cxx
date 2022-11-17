@@ -416,9 +416,9 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
   echo_count = dataPacket->header.GetEchoCount();
   current_frame_id = dataPacket->header.GetFrameID();
 
-  uint16_t points_unit_1 =
-    dataPacket->header.GetPointNum() == 0 ? ASENSING_POINT_NUM : dataPacket->header.GetPointNum();
-  points_per_frame = points_unit_1 * echo_count;
+  if (dataPacket->header.GetPointNum() > 0) {
+    points_per_frame = dataPacket->header.GetPointNum();
+  }
 
   // [HACK start] Proccess only one return in case of dual mode for performance issue
   int start_block = 0;
