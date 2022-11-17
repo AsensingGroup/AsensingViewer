@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-static int debug = 0;  /* enable this to printf */
+static int debug = 1;  /* enable this to printf */
 
 #define DEBUG_PRINT(fmt, args...) \
     do { if(debug) \
@@ -116,9 +116,8 @@ typedef struct
     uint8_t  MemsTemp;
     uint8_t  SlotNum;
 
-    uint16_t PointNum;
+    uint32_t PointNum;
     uint16_t Reserved1;
-    uint16_t Reserved2;
 
 } AsensingHeader;
 #pragma pack(pop)
