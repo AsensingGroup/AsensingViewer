@@ -12,6 +12,10 @@
 
 #include <memory>
 
+#define USING_ANGLE_MODEL        1
+#define USING_RT_MATRIX          1
+#define USING_MATH_LIB           0
+
 struct point_xyz {
     double x;
     double y;
@@ -119,7 +123,7 @@ private:
   std::vector<double> ZCorrection;
 
   bool CalibEnabled = false;
-  bool RTMatEnabled = false;
+  
 #endif
 
   uint8_t echo_count = 1;
@@ -127,7 +131,8 @@ private:
   uint32_t points_per_frame = ASENSING_POINT_NUM_MAX;
   uint32_t current_frame_id = 0;
 
-#if 1
+#if USING_RT_MATRIX
+  bool RTMatEnabled = false;
   double matrix_RT0[4][4];
   double matrix_RT1[4][4];
   double matrix_RT2[4][4];
@@ -142,7 +147,6 @@ struct AsensingSpecificFrameInformation : public SpecificFrameInformation
   double LastAzimuth[2] = {-1, -1};
   uint32_t LastFrameID[2] = {0, 0};
 
-#if 1
   bool IsNewFrame(int index, uint32_t newFrameID)
   {
 
@@ -152,56 +156,23 @@ struct AsensingSpecificFrameInformation : public SpecificFrameInformation
       return false;
     }
 
-    // We always update the LastAzimuth
     uint32_t prev_LastFrameID = this->LastFrameID[index];
     this->LastFrameID[index] = newFrameID;
 
-    // We always update
     if(prev_LastFrameID == 0)
     {
       return false;
     }
 
-    // We have to check if new Azimuth is 5 because
     if(newFrameID != prev_LastFrameID)
-    //if((newFrameID != prev_LastFrameID) && (newFrameID % 50 == 0))
     {
       return true;
     }
     return false;
   }
-#else
-  bool IsNewFrame(int index, double newAzimuth)
-  {
-    if(index > 1)
-    {
-      std::cerr << "Last Azimuth not updated, wrong index" << std::endl;
-      return false;
-    }
-
-    // We always update the LastAzimuth
-    double prev_LastAzimuth = this->LastAzimuth[index];
-    this->LastAzimuth[index] = newAzimuth;
-
-    // We always update
-    if(prev_LastAzimuth == -1)
-    {
-      return false;
-    }
-
-    // We have to check if new Azimuth is 5 because
-    if(newAzimuth < prev_LastAzimuth && newAzimuth == 5)
-    {
-      return true;
-    }
-    return false;
-  }
-#endif
 
   void reset() override { *this = AsensingSpecificFrameInformation(); }
   std::unique_ptr<SpecificFrameInformation> clone() override { return std::make_unique<AsensingSpecificFrameInformation>(*this); }
 };
-
-
 
 #endif // VTKAsensingPacketInterpreter_h

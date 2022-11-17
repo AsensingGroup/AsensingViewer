@@ -17,7 +17,7 @@
 #include <chrono>
 #include <vtkDelimitedTextReader.h>
 
-#define PANDAR128_LASER_NUM (128)
+#define TEST_LASER_NUM (128) /* Just for testing */
 
 using std::chrono::duration;
 using std::chrono::duration_cast;
@@ -71,7 +71,7 @@ vtkStandardNewMacro(vtkAsensingPacketInterpreter)
   std::cout << "Size of AsensingPacket = " << sizeof(AsensingPacket) << std::endl;
 
   // Initialize Elevation and Azimuth correction
-  for (int i = 0; i < PANDAR128_LASER_NUM; i++)
+  for (int i = 0; i < TEST_LASER_NUM; i++)
   {
     if (elev_angle[i])
     {
@@ -402,9 +402,6 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
   int mode = 0;
   int state = 0;
   int returnMode = 0;
-  // int mode =  dataPacket->tail.GetShutdownFlag() & 0x03;
-  // int state = (dataPacket->tail.GetShutdownFlag() & 0xF0) >> 4;
-  // int returnMode = dataPacket->tail.GetReturnMode();
 
   // Timestamp contains in the packet
   // roll back every second, probably in microsecond
@@ -461,22 +458,8 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
         // double azimuth_correction = this->AzimuthCorrection[laserID];
         // double elevation_correction = this->ElevationCorrection[laserID];
 
-        // float azimuth = azimuth_correction + (static_cast<float>(currentBlock.GetAzimuth()) /
-        // 100.0f); float originAzimuth = azimuth;
-        float azimuth =
-          static_cast<float>(currentBlock.units[laserID].GetAzimuth()) * ASENSING_AZIMUTH_UNIT;
-
-        // float pitch = elevation_correction;
-        float pitch =
-          static_cast<float>(currentBlock.units[laserID].GetElevation()) * ASENSING_ELEVATION_UNIT;
-
-        // int offset = this->LaserOffset.getTSOffset(laserID, mode, state, distance,
-        // dataPacket->header.GetVersionMajor()); offset = currentBlock.GettimeOffSet();
-
-        // azimuth += this->LaserOffset.getAngleOffset(offset, 1 /* dataPacket->tail.GetMotorSpeed()
-        // */, dataPacket->header.GetVersionMajor());
-
-        // pitch += this->LaserOffset.getPitchOffset("", pitch, distance);
+        float azimuth = static_cast<float>(currentBlock.units[laserID].GetAzimuth()) * ASENSING_AZIMUTH_UNIT;
+        float pitch = static_cast<float>(currentBlock.units[laserID].GetElevation()) * ASENSING_ELEVATION_UNIT;
 
         if (pitch < 0)
         {
@@ -488,7 +471,6 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
         }
 
         float xyDistance = distance * this->Cos_all_angle[static_cast<int>(pitch * 100 + 0.5)];
-        // azimuth += this->LaserOffset.getAzimuthOffset("", originAzimuth, azimuth, xyDistance);
 
         int azimuthIdx = static_cast<int>(azimuth * 100 + 0.5);
         if (azimuthIdx >= CIRCLE)
@@ -500,7 +482,7 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
           azimuthIdx += CIRCLE;
         }
 
-#if 0
+#if USING_MATH_LIB
        double x = xyDistance * sin(degreeToRadian(azimuth)); // this->Sin_all_angle[azimuthIdx];
        double y = xyDistance * cos(degreeToRadian(azimuth)); // this->Cos_all_angle[azimuthIdx];
        double z = distance * sin(degreeToRadian(pitch));     // this->Sin_all_angle[static_cast<int>(pitch * 100 + 0.5)];
@@ -511,6 +493,7 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
 #endif
       } /* End of this->CalibEnabled */
 
+#if USING_RT_MATRIX
       /* Matrix processing */
       if (this->RTMatEnabled)
       {
@@ -553,14 +536,13 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
             this->matrix_RT3[2][2] * z_ + this->matrix_RT3[2][3];
         }
       }
+#endif /* USING_RT_MATRIX */
 
       uint8_t intensity = currentBlock.units[laserID].GetIntensity();
 
       int offset = currentBlock.GettimeOffSet();
 
       // Compute timestamp of the point
-      // timestamp += this->LaserOffset.getBlockTS(blockID, returnMode, mode, PANDAR128_LIDAR_NUM) /
-      // 1000000000.0 + offset / 1000000000.0;
       timestamp += offset;
 
 #if 0
@@ -590,18 +572,6 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
       TrySetValue(this->Timestamps, current_pt_id, timestamp);
       TrySetValue(this->Distances, current_pt_id, distance);
       current_pt_id++;
-
-      /*int index;
-      if (LIDAR_RETURN_BLOCK_SIZE_2 == m_iReturnBlockSize)
-      {
-        index = (block.fAzimuth - start_angle_) / m_iAngleSize * PANDAR128_LASER_NUM *
-                    m_iReturnBlockSize +
-                PANDAR128_LASER_NUM * blockid + i;
-        // ROS_WARN("block 2 index:[%d]",index);
-      } else {
-        index = (block.fAzimuth - start_angle_) / m_iAngleSize * PANDAR128_LASER_NUM + i;
-      }
-      cld->points[index] = point;*/
     }
   }
 
