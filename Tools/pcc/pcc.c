@@ -63,9 +63,6 @@ static void point_map_init()
 
             point_map[i*POINT_NUM_PER_LASER_HORIZON*LASER_MODULE_NUM + j].azimuth = azimuth;
             point_map[i*POINT_NUM_PER_LASER_HORIZON*LASER_MODULE_NUM + j].elevation = elevation;
-
-            //azimuth = azimuth + ((i/3) * RESOLUTION_HORIZON * 100);
-            //elevation += 5 * 100;  /* 5 degree, 100 times */
         }
     }
 }
@@ -294,7 +291,7 @@ int main(int argc, char *argv[])
         const char *msg = "Hello";
 
         /* This is a frame of point cloud */
-        for (int i = 0; i < POINT_NUM_PER_FRAME / MAX_POINT_NUM_IN_PACKET; i++) {
+        for (int i = 0, sn = 0; i < POINT_NUM_PER_FRAME / MAX_POINT_NUM_IN_PACKET; i++) {
 
             memset(&packet, 0, sizeof(packet));
             packet.header.FrameID = htole32(frameID);

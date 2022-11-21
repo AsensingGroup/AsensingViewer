@@ -131,6 +131,10 @@ private:
   uint32_t points_per_frame = ASENSING_POINT_NUM_MAX;
   uint32_t current_frame_id = 0;
 
+  uint16_t current_seq_num = 0;
+  uint16_t last_seq_num = 0;
+  uint16_t seq_num_counter = 0;
+
 #if USING_RT_MATRIX
   bool RTMatEnabled = false;
   double matrix_RT0[4][4];

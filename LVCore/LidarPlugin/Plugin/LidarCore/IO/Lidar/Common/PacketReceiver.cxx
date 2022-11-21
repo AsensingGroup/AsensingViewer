@@ -274,9 +274,10 @@ void PacketReceiver::SocketCallback(
 
   this->WaitForNextPacket();
 
-  if ((++this->PacketCounter % 5000) == 0)
+  if ((++this->PacketCounter % 10000) == 0)
   {
-    std::cout << "RECV packets: " << this->PacketCounter << " on " << this->Port << std::endl;
+    //std::cout << "RECV packets: " << this->PacketCounter << " on " << this->Port << std::endl;
+    vtkDebugMacro(<< "RECV packets: " << this->PacketCounter << " on " << this->Port);
   }
 
 }

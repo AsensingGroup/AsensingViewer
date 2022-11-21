@@ -382,6 +382,7 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
   auto start = high_resolution_clock::now();
   if (!this->IsLidarPacket(data, dataLength))
   {
+    vtkWarningMacro("Not a vaild point-cloud data packet");
     return;
   }
 
@@ -412,6 +413,8 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
 
   echo_count = dataPacket->header.GetEchoCount();
   current_frame_id = dataPacket->header.GetFrameID();
+  current_seq_num = dataPacket->header.GetSeqNum();
+  seq_num_counter++;
 
   if (dataPacket->header.GetPointNum() > 0) {
     points_per_frame = dataPacket->header.GetPointNum();
@@ -435,9 +438,14 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
         this->ParserMetaData.SpecificInformation.get());
     if (frameInfo->IsNewFrame(1, current_frame_id))
     {
-      std::cout << "Split Frame =>> FrameID: " << current_frame_id
-                << ", total: " << this->points_per_frame << std::endl;
+      if (this->seq_num_counter < this->last_seq_num) {
+
+          vtkWarningMacro(<< "Incomplete frame (id: " << current_frame_id-1 << ", packets: " 
+                          << seq_num_counter << ", sn: " << this->last_seq_num << ", points: " 
+                          << this->points_per_frame << ")" );
+      }
       this->SplitFrame();
+      this->seq_num_counter = 0;
     }
 
     for (int laserID = 0; laserID < ASENSING_LASER_NUM; laserID++)
@@ -545,22 +553,29 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
       // Compute timestamp of the point
       timestamp += offset;
 
-#if 0
+#if DEBUG
        //std::cout << "Point " << current_frame_id << ": " << distance << ", " << azimuth << ", " << pitch << ", " << x << ", " << y << ", " << z << std::endl;
        std::cout << "Point " << current_frame_id << ": " << currentBlock.units[laserID].GetDistance() 
                  << ", " << currentBlock.units[laserID].GetAzimuth() 
                  << ", " << currentBlock.units[laserID].GetElevation() << ", " << x << ", " << y << ", " << z << std::endl;
 #endif
 
-#if 1
       if (current_pt_id >= this->points_per_frame)
       {
+        if (seq_num_counter < current_seq_num) {
+          
+          vtkWarningMacro(<< "Incomplete frame 2 (id: " << current_frame_id-1 << ", packets: " 
+                          << seq_num_counter << ", sn: " << this->last_seq_num << ", points: " 
+                          << this->points_per_frame << ")" );
+        }
+        
         // SplitFrame for safety to not overflow allcoated arrays
-        // vtkWarningMacro("Received more datapoints than expected");
-        // std::cout << "Split Frame =>> FrameID: " << current_frame_id << std::endl;
+        //vtkWarningMacro(<< "Received more datapoints than expected" << " (" << current_pt_id << ")");
+
         this->SplitFrame();
+        this->seq_num_counter = 0;
       }
-#endif
+
       this->Points->SetPoint(current_pt_id, x, y, z);
 
       TrySetValue(this->PointsX, current_pt_id, x);
@@ -575,6 +590,8 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
     }
   }
 
+  this->last_seq_num = current_seq_num;
+
   auto stop = high_resolution_clock::now();
   duration<double, std::micro> ms_double = stop - start;
   // std::cout << ms_double.count() << "micro seconds\n";
@@ -582,8 +599,20 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
 
 //-----------------------------------------------------------------------------
 bool vtkAsensingPacketInterpreter::IsLidarPacket(
-  unsigned char const* vtkNotUsed(data), unsigned int vtkNotUsed(dataLength))
+  unsigned char const* data, unsigned int dataLength)
 {
+  const AsensingPacket* dataPacket = reinterpret_cast<const AsensingPacket*>(data);
+
+  if (dataLength < 4) {
+    return false;
+  }
+
+  /* Check sob flag of packet header */
+  uint32_t sob = htole32(0x5AA555AA); /* 0xAA, 0x55, 0xA5, 0x5A */
+  if (sob != dataPacket->header.GetSob()) {
+    return false;
+  }
+
   // std::cout << "Process Packet, Size = " << dataLength << std::endl;
   // std::cout << "dataLength  " << dataLength << std::endl;
   // std::cout << "ASENSING_PACKET_SIZE  " << ASENSING_PACKET_SIZE << std::endl;
@@ -601,6 +630,7 @@ vtkSmartPointer<vtkPolyData> vtkAsensingPacketInterpreter::CreateNewEmptyFrame(
 
   // points
   current_pt_id = 0;
+  current_seq_num = 0;
   vtkNew<vtkPoints> points;
   points->SetDataTypeToFloat();
   points->SetNumberOfPoints(defaultPrereservedNumberOfPointsPerFrame);
