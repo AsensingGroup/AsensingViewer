@@ -382,7 +382,6 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
   auto start = high_resolution_clock::now();
   if (!this->IsLidarPacket(data, dataLength))
   {
-    vtkWarningMacro("Not a vaild point-cloud data packet");
     return;
   }
 
@@ -417,7 +416,7 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
   seq_num_counter++;
 
   if (dataPacket->header.GetPointNum() > 0) {
-    points_per_frame = dataPacket->header.GetPointNum();
+    this->points_per_frame = dataPacket->header.GetPointNum();
   }
 
   // [HACK start] Proccess only one return in case of dual mode for performance issue
@@ -444,6 +443,8 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
                           << seq_num_counter << ", sn: " << this->last_seq_num << ", points: " 
                           << this->points_per_frame << ")" );
       }
+
+      std::cout << "Split Frame =>> " << "FrameID: " << this->current_frame_id << ", total: " << this->points_per_frame  << std::endl; 
       this->SplitFrame();
       this->seq_num_counter = 0;
     }
@@ -601,6 +602,7 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
 bool vtkAsensingPacketInterpreter::IsLidarPacket(
   unsigned char const* data, unsigned int dataLength)
 {
+#if CHECK_LIDAR_PACKET
   const AsensingPacket* dataPacket = reinterpret_cast<const AsensingPacket*>(data);
 
   if (dataLength < 4) {
@@ -610,8 +612,10 @@ bool vtkAsensingPacketInterpreter::IsLidarPacket(
   /* Check sob flag of packet header */
   uint32_t sob = htole32(0x5AA555AA); /* 0xAA, 0x55, 0xA5, 0x5A */
   if (sob != dataPacket->header.GetSob()) {
+    vtkWarningMacro("Not a vaild point-cloud data packet");
     return false;
   }
+#endif /* CHECK_LIDAR_PACKET */
 
   // std::cout << "Process Packet, Size = " << dataLength << std::endl;
   // std::cout << "dataLength  " << dataLength << std::endl;

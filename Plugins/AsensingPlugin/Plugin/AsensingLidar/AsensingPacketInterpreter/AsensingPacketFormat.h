@@ -41,7 +41,7 @@
 #define ROLL_NUM                  (3)         /* 配置的回波次数，最大3回波 */
 
 #define ASENSING_POINT_NUM        (4800 * 8)  /* 忽略，使用动态计算 */
-#define ASENSING_POINT_NUM_MAX    (ASENSING_POINT_NUM * 2)
+#define ASENSING_POINT_NUM_MAX    (ASENSING_POINT_NUM * 2 * 2) /* Dual echo & High precision for max ROI */
 #define ASENSING_LASER_NUM        TEST_CHANNEL_NUM
 #define ASENSING_BLOCK_NUM        TEST_BLOCK_NUM
 

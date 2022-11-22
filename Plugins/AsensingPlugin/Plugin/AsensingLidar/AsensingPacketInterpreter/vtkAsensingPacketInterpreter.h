@@ -15,6 +15,7 @@
 #define USING_ANGLE_MODEL        1
 #define USING_RT_MATRIX          1
 #define USING_MATH_LIB           0
+#define CHECK_LIDAR_PACKET       0
 
 struct point_xyz {
     double x;
