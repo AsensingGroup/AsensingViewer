@@ -9,6 +9,8 @@ project(LidarViewSuperBuild)
 # the CMakeLists.txt inside "lidarview-superbuild"
 #-----------------------------------------------------------------------------
 
+option(INTERPRETER_ENABLE_Asensing "Enable Asensing interpreter " ON)
+
 list(APPEND superbuild_project_roots
   "${CMAKE_CURRENT_SOURCE_DIR}/Projects")
 
