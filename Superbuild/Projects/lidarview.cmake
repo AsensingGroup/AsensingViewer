@@ -21,6 +21,7 @@ superbuild_add_project(lidarview
     -DENABLE_g2o=${ENABLE_g2o}
     #$lidarview_appname features options
     -DLIDARVIEW_BUILD_SLAM=${LIDARVIEW_BUILD_SLAM}
+    -DLIDARVIEW_BUILD_ASENSING=${INTERPRETER_ENABLE_Asensing}
     #$lidarview_appname additional configuration
 )
 
