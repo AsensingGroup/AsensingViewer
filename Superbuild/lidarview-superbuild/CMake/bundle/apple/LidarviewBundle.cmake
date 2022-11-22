@@ -164,7 +164,7 @@ set(CPACK_DMG_BACKGROUND_IMAGE      "${CMAKE_CURRENT_LIST_DIR}/files/CMakeDMGBac
 set(CPACK_DMG_DS_STORE_SETUP_SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/CMakeDMGSetup.scpt")
 
 # WIP Prevent Symlink Issue
-set(CPACK_DMG_DISABLE_APPLICATIONS_SYMLINK ON)
+#set(CPACK_DMG_DISABLE_APPLICATIONS_SYMLINK ON)
 
 message(STATUS "qt5_plugin_paths is ${qt5_plugin_paths}")
 foreach (qt5_plugin_path IN LISTS qt5_plugin_paths)
@@ -180,6 +180,6 @@ foreach (qt5_plugin_path IN LISTS qt5_plugin_paths)
 endforeach ()
 
 #LV already copies its calib, files but this is done to get VV specific ones too
-install(DIRECTORY "${superbuild_install_location}/${LV_INSTALL_RESOURCE_DIR}"
-  DESTINATION "${LV_INSTALL_RESOURCE_DIR}/.." #WIP PV DOES THIS BUT LV HAS Application/ ? WIP
-  COMPONENT superbuild)
+#install(DIRECTORY "${superbuild_install_location}/${LV_INSTALL_RESOURCE_DIR}"
+#  DESTINATION "${LV_INSTALL_RESOURCE_DIR}/.." #WIP PV DOES THIS BUT LV HAS Application/ ? WIP
+#  COMPONENT superbuild)
