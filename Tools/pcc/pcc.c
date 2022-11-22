@@ -79,9 +79,17 @@ static void fill_packet(AsensingPacket *packet, uint16_t distance, uint16_t sn, 
     //uint16_t elevation = point_map[pos].elevation;
 
     gettimeofday(&tv, NULL);
-    //printf("start : %ld.%ld\n", tv.tv_sec, tv.tv_usec);
 
-    pt = gmtime(&tv.tv_sec);
+    /* 此函数返回的时间日期未经时区转换，而是 UTC 时间 */
+    //pt = gmtime(&tv.tv_sec);
+
+    /* 此函数返回的时间日期经过时区转换，是本地时间 */
+    pt = localtime(&tv.tv_sec);
+
+#if DEBUG
+    printf("start : %ld.%ld\n", tv.tv_sec, tv.tv_usec);
+    printf("%d-%02d-%02d %02d:%02d:%02d\n", (1900 + pt->tm_year), (1 + pt->tm_mon), pt->tm_mday, pt->tm_hour, pt->tm_min, pt->tm_sec);
+#endif
 
     /* Header */
     packet->header.Sob = htole32(0x5AA555AA); /* 0xAA, 0x55, 0xA5, 0x5A */
@@ -101,7 +109,7 @@ static void fill_packet(AsensingPacket *packet, uint16_t distance, uint16_t sn, 
     packet->header.UTCTime4 = pt->tm_min;
     packet->header.UTCTime5 = pt->tm_sec;
 
-    packet->header.Timestamp = tv.tv_usec;
+    packet->header.Timestamp = htole32(tv.tv_usec);
 
     packet->header.PointNum = htole32(38400 * packet->header.EchoCount);
 
