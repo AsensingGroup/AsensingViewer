@@ -62,6 +62,20 @@ PacketReceiver::PacketReceiver(int port,
       // Tell the OS we accept to re-use the port address for an other app
       this->Socket.set_option(boost::asio::ip::udp::socket::reuse_address(true));
 
+#define DEBUG_BUFFER_SIZE 1
+#if DEBUG_BUFFER_SIZE
+      boost::asio::socket_base::receive_buffer_size size_option;
+      this->Socket.get_option(size_option);
+      int size = size_option.value();  // default 8192
+
+      std::cout << "### Set buffer size of packet reciver: " << size << std::endl;
+      vtkGenericWarningMacro(<< "### Set buffer size of packet reciver: " << size);
+
+      //boost::asio::socket_base::receive_buffer_size size_option(80000);
+      //this->Socket.set_option(size_option);
+      this->Socket.set_option(boost::asio::socket_base::receive_buffer_size(size * 2));
+#endif
+
       // Connect to multicast
       boost::system::error_code errCode;
       boost::asio::ip::address multicast_address = boost::asio::ip::address::from_string(multicastAddress, errCode);
