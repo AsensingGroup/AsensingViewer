@@ -198,6 +198,9 @@ cmake --build . -j --target install
 
 ## 打包说明
 
+
+### Linux
+
 通过 CMake 配置激活 tests 的构建：
 
 ```bash
@@ -216,3 +219,18 @@ cmake --build . -j
 ```bash
 ctest
 ```
+
+### Windows
+
+请使用预先配置好的 Windows 10 虚拟机进行编译、打包。
+
+- 源码位于“桌面 -> AsensingViewer-main”，构建目录位于“C:\builds”；
+- 打开 Qt Creator，可以更新工程 CMake 配置，编译依赖库；
+- 打开“VS 2017 的 x64 本机工具命令提示”，切换到“C:\builds\lidarview-superbuild\common-superbuild\lidarview\build”，执行如下命令；
+  ```bash
+  cmake --build . -j --target install
+  ```
+- 编译后的可执行文件位于“C:\builds\install\bin”；
+- 使用 Inno Setup Compiler 软件打开桌面的 pack.iss 文件，修改版本信息，点击工具栏中的“Compile”按钮开始打包程序。
+- 等待打包完成，将在桌面生成一个 NeptuneViewer.exe 可执行文件。
+
