@@ -437,11 +437,13 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
         this->ParserMetaData.SpecificInformation.get());
     if (frameInfo->IsNewFrame(1, current_frame_id))
     {
-      if (this->seq_num_counter < this->last_seq_num) {
+      if (current_frame_id > 0 && this->seq_num_counter < (this->points_per_frame / TEST_POINT_PER_PACKET)) {
 
-          vtkWarningMacro(<< "Incomplete frame (id: " << current_frame_id-1 << ", packets: " 
-                          << seq_num_counter << ", sn: " << this->last_seq_num << ", points: " 
-                          << this->points_per_frame << ")" );
+          vtkWarningMacro(<< "Incomplete frame (id: " << (current_frame_id - 1)
+                          << ", packets: " << seq_num_counter
+                          << ", total: " << (this->points_per_frame / TEST_POINT_PER_PACKET)
+                          << ", lsn: " << this->last_seq_num 
+                          << ", points: " << this->points_per_frame << ")" );
       }
 
       std::cout << "Split Frame =>> " << "FrameID: " << this->current_frame_id << ", total: " << this->points_per_frame  << std::endl; 
@@ -563,15 +565,17 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
 
       if (current_pt_id >= this->points_per_frame)
       {
-        if (seq_num_counter < current_seq_num) {
-          
-          vtkWarningMacro(<< "Incomplete frame 2 (id: " << current_frame_id-1 << ", packets: " 
-                          << seq_num_counter << ", sn: " << this->last_seq_num << ", points: " 
-                          << this->points_per_frame << ")" );
-        }
-        
         // SplitFrame for safety to not overflow allcoated arrays
-        //vtkWarningMacro(<< "Received more datapoints than expected" << " (" << current_pt_id << ")");
+        vtkWarningMacro(<< "Received more datapoints than expected" << " (" << current_pt_id << ", " << current_frame_id << ")");
+
+        if (current_frame_id > 0 && this->seq_num_counter < (this->points_per_frame / TEST_POINT_PER_PACKET)) {
+
+          vtkWarningMacro(<< "Incomplete frame 2 (id: " << (current_frame_id - 1)
+                          << ", packets: " << seq_num_counter
+                          << ", total: " << (this->points_per_frame / TEST_POINT_PER_PACKET)
+                          << ", lsn: " << this->last_seq_num 
+                          << ", points: " << this->points_per_frame << ")" );
+        }
 
         this->SplitFrame();
         this->seq_num_counter = 0;
