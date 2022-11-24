@@ -1,5 +1,10 @@
 # 更改日志
 
+## NeptuneViewer V0.33.1
+
+- 修复点云帧拆帧逻辑漏洞
+- 修复 UDP 数据包统计漏洞
+
 ## NeptuneViewer V0.33.0
 
 - 修正 RT 矩阵运算逻辑
