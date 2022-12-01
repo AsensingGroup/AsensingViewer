@@ -34,9 +34,8 @@ time_sync_mode = ProtoField.uint8 ("asensing.time_sync_mode", "TimeSyncMode", ba
 time_sync_stat = ProtoField.uint8 ("asensing.time_sync_stat", "TimeSyncStat", base.DEC)
 mems_temp = ProtoField.uint8 ("asensing.mems_temp", "MemsTemp", base.DEC)
 slot_num = ProtoField.uint8 ("asensing.slot_num", "SlotNum", base.DEC)
-point_num = ProtoField.uint16 ("asensing.point_num", "PointNum", base.DEC)
+point_num = ProtoField.uint32 ("asensing.point_num", "PointNum", base.DEC)
 reserved1 = ProtoField.uint16 ("asensing.reserved1", "Reserved1", base.DEC)
-reserved2 = ProtoField.uint16 ("asensing.reserved2", "Reserved2", base.DEC)
 
 -- Block fields
 distance = ProtoField.uint16 ("asensing.block.unit.distance", "Distance", base.DEC)
@@ -51,7 +50,7 @@ lidar_proto.fields = {
     sob, frame_id, seq_num, pkg_len, lidar_type, version_major, version_minor, 
     utc_time0, utc_time1, utc_time2, utc_time3, utc_time4, utc_time5, time_stamp, 
     measure_mode, laser_num, block_num, echo_count, time_sync_mode, time_sync_stat, 
-    mems_temp, slot_num, point_num, reserved1, reserved2,
+    mems_temp, slot_num, point_num, reserved1,
     -- Block
     distance, azimuth, elevation, intensity, unit_reserved
 }
@@ -145,15 +144,11 @@ function lidar_proto.dissector(buffer, pinfo, tree)
     header_subtree:add(slot_num, buffer(curr, 1))
     curr = curr + 1
 
-    header_subtree:add_le(point_num, buffer(curr, 2))
-    curr = curr + 2
+    header_subtree:add_le(point_num, buffer(curr, 4))
+    curr = curr + 4
 
     header_subtree:add(reserved1, buffer(curr, 2))
     curr = curr + 2
-
-    header_subtree:add(reserved2, buffer(curr, 2))
-    curr = curr + 2
-
 
     ---- bock Return ----
     local size = blockPerPacket * blockSize
