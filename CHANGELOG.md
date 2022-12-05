@@ -1,5 +1,11 @@
 # 更改日志
 
+## NeptuneViewer V0.41.0
+
+- 解决 Windows 版本不支持中文路径问题
+- 解决 Windows 版本时间戳解析异常问题
+- 解决 pcap 数据导入异常问题
+
 ## NeptuneViewer V0.33.1
 
 - 修复点云帧拆帧逻辑漏洞

@@ -44,7 +44,7 @@
 #define ASENSING_POINT_NUM           (4800 * 8)  /* 忽略，使用动态计算 */
 #define ASENSING_POINT_NUM_MAX       (ASENSING_POINT_NUM * 2 * 2) /* Dual echo & High precision for max ROI */
 #define ASENSING_LASER_NUM           TEST_CHANNEL_NUM
-#define ASENSING_BLOCK_NUM           TEST_BLOCK_NUM
+#define ASENSING_BLOCK_NUM           TEST_BLOCK_NUM  /* 12 blocks per packet */
 
 #define ASENSING_SOB_SIZE            (4)
 #define ASENSING_FRAME_ID_SIZE       (4)
