@@ -191,7 +191,7 @@ install\bin\NeptuneViewer
 如果你只修改了 AsensingViewer 源代码，通常会希望增量构建，以缩短构建时间。命令如下：
 
 ```bash
-cd AsensingViewer\build\lidarview-superbuild\common-superbuild\lidarview\build
+cd AsensingViewer/build/lidarview-superbuild/common-superbuild/lidarview/build
 cmake --build . -j --target install
 ```
 
