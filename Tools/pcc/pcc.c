@@ -290,7 +290,7 @@ int main(int argc, char *argv[])
 
     while (count--)
     {
-        printf("------ %4u\n", count);
+        DEBUG_PRINT("------ %4u\n", count);
 
         if (distance > 10) {
             distance = 1;
