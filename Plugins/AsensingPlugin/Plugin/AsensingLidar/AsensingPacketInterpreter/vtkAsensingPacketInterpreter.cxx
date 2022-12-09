@@ -437,6 +437,7 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
         this->ParserMetaData.SpecificInformation.get());
     if (frameInfo->IsNewFrame(1, current_frame_id))
     {
+#ifdef PACKET_STAT_DEBUG
       if (current_frame_id > 0 && this->seq_num_counter < (this->points_per_frame / TEST_POINT_PER_PACKET)) {
 
           vtkWarningMacro(<< "Incomplete frame (id: " << (current_frame_id - 1)
@@ -445,7 +446,7 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
                           << ", lsn: " << this->last_seq_num 
                           << ", points: " << this->points_per_frame << ")" );
       }
-
+#endif
       std::cout << "Split Frame =>> " << "FrameID: " << this->current_frame_id << ", total: " << this->points_per_frame  << std::endl; 
       this->SplitFrame();
       this->seq_num_counter = 0;
@@ -565,6 +566,7 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
 
       if (current_pt_id >= this->points_per_frame)
       {
+#ifdef PACKET_STAT_DEBUG
         // SplitFrame for safety to not overflow allcoated arrays
         vtkWarningMacro(<< "Received more datapoints than expected" << " (" << current_pt_id << ", " << current_frame_id << ")");
 
@@ -576,7 +578,7 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
                           << ", lsn: " << this->last_seq_num 
                           << ", points: " << this->points_per_frame << ")" );
         }
-
+#endif
         this->SplitFrame();
         this->seq_num_counter = 0;
       }
