@@ -164,7 +164,7 @@ struct AsensingSpecificFrameInformation : public SpecificFrameInformation
     uint32_t prev_LastFrameID = this->LastFrameID[index];
     this->LastFrameID[index] = newFrameID;
 
-    if(prev_LastFrameID == 0 && newFrameID == 0)
+    if(prev_LastFrameID == 0 || newFrameID == 0)
     {
       return false;
     }
