@@ -25,6 +25,8 @@
 
 #include <functional>
 
+#define DEBUG_BUFFER_SIZE 1
+
 //-----------------------------------------------------------------------------
 PacketReceiver::PacketReceiver(int port,
                                std::function<void(NetworkPacket *)> callback,
@@ -62,18 +64,13 @@ PacketReceiver::PacketReceiver(int port,
       // Tell the OS we accept to re-use the port address for an other app
       this->Socket.set_option(boost::asio::ip::udp::socket::reuse_address(true));
 
-#define DEBUG_BUFFER_SIZE 1
 #if DEBUG_BUFFER_SIZE
+      // default 106496 (linux) to 4194304 (4MB)
+      this->Socket.set_option(boost::asio::socket_base::receive_buffer_size(4194304));
+
       boost::asio::socket_base::receive_buffer_size size_option;
       this->Socket.get_option(size_option);
-      int size = size_option.value();  // default 8192
-
-      std::cout << "### Set buffer size of packet reciver: " << size << std::endl;
-      vtkGenericWarningMacro(<< "### Set buffer size of packet reciver: " << size);
-
-      //boost::asio::socket_base::receive_buffer_size size_option(80000);
-      //this->Socket.set_option(size_option);
-      this->Socket.set_option(boost::asio::socket_base::receive_buffer_size(size * 2));
+      std::cout << "[PacketReceiver] (Multicast) Set receive buffer size = " << size_option.value() << std::endl;
 #endif
 
       // Connect to multicast
@@ -140,6 +137,15 @@ PacketReceiver::PacketReceiver(int port,
     }
     // Tell the OS we accept to re-use the port address for an other app
     this->Socket.set_option(boost::asio::ip::udp::socket::reuse_address(true));
+
+#if DEBUG_BUFFER_SIZE
+      // default 106496 (linux) to 4194304 (4MB)
+      this->Socket.set_option(boost::asio::socket_base::receive_buffer_size(4194304));
+
+      boost::asio::socket_base::receive_buffer_size size_option;
+      this->Socket.get_option(size_option);
+      std::cout << "[PacketReceiver] Set receive buffer size = " << size_option.value() << std::endl;
+#endif
 
     try
       {
