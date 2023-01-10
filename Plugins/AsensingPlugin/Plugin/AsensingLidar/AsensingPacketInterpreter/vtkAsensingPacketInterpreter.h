@@ -95,6 +95,7 @@ protected:
   vtkSmartPointer<vtkDoubleArray> PointsY;
   vtkSmartPointer<vtkDoubleArray> PointsZ;
 
+  vtkSmartPointer<vtkUnsignedIntArray> PointID;
   vtkSmartPointer<vtkUnsignedIntArray> LaserID;
   vtkSmartPointer<vtkUnsignedCharArray> Intensities;
   vtkSmartPointer<vtkDoubleArray> Timestamps;

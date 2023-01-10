@@ -17,6 +17,7 @@
 #include <chrono>
 #include <vtkDelimitedTextReader.h>
 
+#define PACKET_STAT_DEBUG
 #define TEST_LASER_NUM (128) /* Just for testing */
 
 using std::chrono::duration;
@@ -588,7 +589,7 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
       TrySetValue(this->PointsX, current_pt_id, x);
       TrySetValue(this->PointsY, current_pt_id, y);
       TrySetValue(this->PointsZ, current_pt_id, z);
-
+      TrySetValue(this->PointID, current_pt_id, current_pt_id);
       TrySetValue(this->LaserID, current_pt_id, laserID);
       TrySetValue(this->Intensities, current_pt_id, intensity);
       TrySetValue(this->Timestamps, current_pt_id, timestamp);
@@ -656,6 +657,8 @@ vtkSmartPointer<vtkPolyData> vtkAsensingPacketInterpreter::CreateNewEmptyFrame(
   this->PointsZ = CreateDataArray<vtkDoubleArray>(
     true, "Z", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
 
+  this->PointID = CreateDataArray<vtkUnsignedIntArray>(
+    false, "PointID", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
   this->LaserID = CreateDataArray<vtkUnsignedIntArray>(
     false, "LaserID", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
   this->Intensities = CreateDataArray<vtkUnsignedCharArray>(
