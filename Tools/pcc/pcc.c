@@ -31,6 +31,9 @@
 static uint8_t buffer[BUFFER_SIZE] = {0};
 const char *hello = "Hello from server";
 
+static uint32_t count = 1000000;
+static uint32_t gLaserNum = LASER_MODULE_NUM;
+
 // static  uint8_t   bufOrigenAddr[MAXSIZE] = {0};
 static uint16_t pkgSn = 0;
 static uint16_t distance = 1;  /* for test */
@@ -111,7 +114,7 @@ static void fill_packet(AsensingPacket *packet, uint16_t distance, uint16_t sn, 
 
     packet->header.Timestamp = htole32(tv.tv_usec);
 
-    packet->header.PointNum = htole32(38400 * packet->header.EchoCount);
+    packet->header.PointNum = htole32(POINT_NUM_PER_FRAME * packet->header.EchoCount);
 
     /* Block */
     for (int i = 0; i < BLOCK_NUM; i++)
@@ -154,7 +157,8 @@ static void show_usage(const char *cmd)
     printf("  -v, --version        output version information and exit\n");
     printf("  -i, --ipaddr=ADDR    set target IP address\n");
     printf("  -p, --port=PORT      set target port\n");
-    printf("  -n, --count=NUM      set loop times (number of frames)\n\n");
+    printf("  -n, --count=NUM      set loop times (number of frames)\n");
+    printf("  -l, --laser=NUM      set the number of laser module\n\n");
 
     exit(0);
 }
@@ -171,11 +175,11 @@ int main(int argc, char *argv[])
     int option;
     char *ipaddr = NULL;
     char *port = NULL;
-    uint32_t count = 300;
+    
     struct sockaddr_in saddr, caddr;
     size_t len = sizeof(struct sockaddr);
 
-    const char *const short_options = "hvi:p:n:";
+    const char *const short_options = "hvi:p:n:l:";
     const struct option long_options[] = {
 
         {"help",    0, NULL, 'h'},
@@ -183,6 +187,7 @@ int main(int argc, char *argv[])
         {"ipaddr",  1, NULL, 'i'},
         {"port",    1, NULL, 'p'},
         {"count",   1, NULL, 'n'},
+        {"laser",   1, NULL, 'l'},
         {NULL, 0, NULL, 0}};
 
     while ((option = getopt_long(argc, argv, short_options, long_options, NULL)) != -1)
@@ -203,6 +208,9 @@ int main(int argc, char *argv[])
             break;
         case 'n':
             count = atol(optarg);
+            break;
+        case 'l':
+            gLaserNum = atol(optarg);
             break;
         case '?':
         default:
@@ -321,8 +329,8 @@ int main(int argc, char *argv[])
 
         frameID++;
 
-        //usleep(100000); // 10Hz
-        sleep(1);
+        usleep(200000); // 10Hz
+        //sleep(1);
         distance++;
     }
 

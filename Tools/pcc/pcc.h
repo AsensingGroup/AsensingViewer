@@ -26,16 +26,18 @@ static int debug = 1;  /* enable this to printf */
 #define VER_MINOR                      0
 #define VER_PATCH                      0
 
-#define MAX_POINT_NUM_IN_PACKET        (96)
+#ifndef LASER_MODULE_NUM
 #define LASER_MODULE_NUM               (4)
+#endif
 #define CHANNEL_NUM_PER_MODULE         (2)
 #define LASER_CHANNEL_NUM              (LASER_MODULE_NUM * CHANNEL_NUM_PER_MODULE)
-#define BLOCK_NUM                      (MAX_POINT_NUM_IN_PACKET / LASER_CHANNEL_NUM)
+#define BLOCK_NUM                      (12)
+#define MAX_POINT_NUM_IN_PACKET        (BLOCK_NUM * LASER_CHANNEL_NUM)  // eg. 12 * 8
 
 #define POINT_NUM_PER_LASER_HORIZON    (200)
 #define POINT_NUM_PER_LASER_VERTICAL   (48)
-#define POINT_NUM_PER_LASER            (POINT_NUM_PER_LASER_HORIZON * POINT_NUM_PER_LASER_VERTICAL)
-#define POINT_NUM_PER_FRAME            (POINT_NUM_PER_LASER * LASER_MODULE_NUM)
+#define POINT_NUM_PER_LASER            (POINT_NUM_PER_LASER_HORIZON * POINT_NUM_PER_LASER_VERTICAL)  // eg. 200 * 48
+#define POINT_NUM_PER_FRAME            (POINT_NUM_PER_LASER * LASER_MODULE_NUM)  // eg. 9600 * 4
 
 #define DEFAULT_MSOP_PORT              (51180)
 #define DEFAULT_DIFOP_PORT             (51080)
