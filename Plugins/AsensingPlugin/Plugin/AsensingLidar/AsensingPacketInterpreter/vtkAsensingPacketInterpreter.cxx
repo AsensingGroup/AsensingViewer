@@ -439,10 +439,10 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
     {
 #if PACKET_STAT_DEBUG
       /* If fewer UDP packets are received than expected, means packet loss */
-      if (current_frame_id > 0 && this->seq_num_counter < (this->points_per_frame / TEST_POINT_PER_PACKET)) {
+      if (current_frame_id > 0 && this->seq_num_counter < (this->points_per_frame / ASENSING_POINT_PER_PACKET)) {
           vtkWarningMacro(<< "Incomplete frame (id: " << (current_frame_id - 1)
                           << ", packets: " << seq_num_counter
-                          << ", total: " << (this->points_per_frame / TEST_POINT_PER_PACKET)
+                          << ", total: " << (this->points_per_frame / ASENSING_POINT_PER_PACKET)
                           << ", lsn: " << this->last_seq_num 
                           << ", points: " << this->points_per_frame << ")" );
       }
@@ -570,11 +570,11 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
         // SplitFrame for safety to not overflow allcoated arrays
         vtkWarningMacro(<< "Received more datapoints than expected" << " (" << current_pt_id << ", " << current_frame_id << ")");
 
-        if (current_frame_id > 0 && this->seq_num_counter < (this->points_per_frame / TEST_POINT_PER_PACKET)) {
+        if (current_frame_id > 0 && this->seq_num_counter < (this->points_per_frame / ASENSING_POINT_PER_PACKET)) {
 
           vtkWarningMacro(<< "Incomplete frame 2 (id: " << (current_frame_id - 1)
                           << ", packets: " << seq_num_counter
-                          << ", total: " << (this->points_per_frame / TEST_POINT_PER_PACKET)
+                          << ", total: " << (this->points_per_frame / ASENSING_POINT_PER_PACKET)
                           << ", lsn: " << this->last_seq_num 
                           << ", points: " << this->points_per_frame << ")" );
         }

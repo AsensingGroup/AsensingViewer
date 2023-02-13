@@ -28,23 +28,19 @@
 #define CIRCLE (36000)
 
 /* Custom */
-#define TEST_POINT_PER_PACKET        (96)
-#define TEST_CHANNEL_NUM             (8)  /* 2 4 6 8 (1 Laser => 2 Channel) */
-#define TEST_BLOCK_NUM               (TEST_POINT_PER_PACKET / TEST_CHANNEL_NUM)
+#define LASER_MODULE_NUM             (5)
+#define CHANNEL_NUM_PER_MODULE       (2) /* 1 Laser => 2 Channel */
 
 #define ASENSING_DISTANCE_UNIT       (0.01f)
 #define ASENSING_AZIMUTH_UNIT        (0.01f)
 #define ASENSING_ELEVATION_UNIT      (0.01f)
 
-#define LASER_NUM                    (2)
-#define MAX_POINT_NUM_IN_BLOCK       ASENSING_LASER_NUM
-#define MAX_BLOCK_NUM                (4)
-#define ROLL_NUM                     (3)         /* 配置的回波次数，最大3回波 */
+#define ASENSING_LASER_NUM           (LASER_MODULE_NUM * CHANNEL_NUM_PER_MODULE)  /* eg. 4 * 2 = 8 */
+#define ASENSING_BLOCK_NUM           (12)                                         /* 12 blocks per packet */
+#define ASENSING_POINT_PER_PACKET    (ASENSING_BLOCK_NUM * ASENSING_LASER_NUM)    /* eg. 12 * 8 = 96, 12 * 10 = 120 */
 
-#define ASENSING_POINT_NUM           (4800 * 8)  /* 忽略，使用动态计算 */
-#define ASENSING_POINT_NUM_MAX       (ASENSING_POINT_NUM * 2 * 2) /* Dual echo & High precision for max ROI */
-#define ASENSING_LASER_NUM           TEST_CHANNEL_NUM
-#define ASENSING_BLOCK_NUM           TEST_BLOCK_NUM  /* 12 blocks per packet */
+#define ASENSING_POINT_NUM           (4800 * ASENSING_LASER_NUM)  /* 忽略，使用动态计算 (38400) */
+#define ASENSING_POINT_NUM_MAX       (ASENSING_POINT_NUM * 6)     /* Dual echo & High precision for max ROI */
 
 #define ASENSING_SOB_SIZE            (4)
 #define ASENSING_FRAME_ID_SIZE       (4)
@@ -88,7 +84,7 @@
   (ASENSING_UNIT_DISTANCE_SIZE + ASENSING_UNIT_AZIMUTH_SIZE + ASENSING_UNIT_ELEVATION_SIZE + \
    ASENSING_UNIT_INTENSITY_SIZE + ASENSING_UNIT_RESERVED_SIZE)
 #define ASENSING_BLOCK_SIZE \
-  (ASENSING_UNIT_SIZE * MAX_POINT_NUM_IN_BLOCK + ASENSING_BLOCK_CHANNEL_SIZE + \
+  (ASENSING_UNIT_SIZE * ASENSING_LASER_NUM + ASENSING_BLOCK_CHANNEL_SIZE + \
    ASENSING_BLOCK_TIME_OFFSET_SIZE + ASENSING_BLOCK_RETURN_SN_SIZE + ASENSING_BLOCK_RESERVED_SIZE)
 
 #define ASENSING_TAIL_RESERVED_SIZE      (4)
@@ -135,7 +131,7 @@ private :
   boost::endian::little_uint8_t reserved;
 
 public :
-  AsensingUnit units[MAX_POINT_NUM_IN_BLOCK];
+  AsensingUnit units[ASENSING_LASER_NUM];
 
 public :
   GET_NATIVE_UINT(8, channelNum)
