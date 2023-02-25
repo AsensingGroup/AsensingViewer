@@ -454,6 +454,14 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
 
     for (int laserID = 0; laserID < ASENSING_LASER_NUM; laserID++)
     {
+      /* Eliminate invalid points */
+      if (0 == currentBlock.units[laserID].GetAzimuth() &&
+          0 == currentBlock.units[laserID].GetElevation() &&
+          0 == currentBlock.units[laserID].GetDistance() &&
+          0 == currentBlock.units[laserID].GetIntensity()) {
+            continue;
+      }
+
       double x, y, z;
 
       double distance =
