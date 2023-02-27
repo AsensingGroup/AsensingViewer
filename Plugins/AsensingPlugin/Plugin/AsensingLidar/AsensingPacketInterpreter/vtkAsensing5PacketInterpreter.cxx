@@ -1,4 +1,4 @@
-#include "vtkAsensingPacketInterpreter.h"
+#include "vtkAsensing5PacketInterpreter.h"
 
 #include "vtkHelper.h"
 #include <vtkDoubleArray.h>
@@ -35,7 +35,7 @@ double degreeToRadian(double degree)
 
 //! @todo this method are actually usefull for every Interpreter and should go to the top
 template<typename T>
-vtkSmartPointer<T> vtkAsensingPacketInterpreter::CreateDataArray(bool isAdvanced, const char* name,
+vtkSmartPointer<T> vtkAsensing5PacketInterpreter::CreateDataArray(bool isAdvanced, const char* name,
   vtkIdType vtkNotUsed(np), vtkIdType prereserved_np, vtkPolyData* pd)
 {
   if (isAdvanced && !this->EnableAdvancedArrays)
@@ -63,10 +63,10 @@ void TrySetValue(T& array, int pos, U value)
 }
 
 //-----------------------------------------------------------------------------
-vtkStandardNewMacro(vtkAsensingPacketInterpreter)
+vtkStandardNewMacro(vtkAsensing5PacketInterpreter)
 
 //-----------------------------------------------------------------------------
-vtkAsensingPacketInterpreter::vtkAsensingPacketInterpreter()
+vtkAsensing5PacketInterpreter::vtkAsensing5PacketInterpreter()
 {
   std::cout << "Size of AsensingPacket = " << sizeof(AsensingPacket) << std::endl;
 
@@ -96,11 +96,11 @@ vtkAsensingPacketInterpreter::vtkAsensingPacketInterpreter()
 }
 
 //-----------------------------------------------------------------------------
-vtkAsensingPacketInterpreter::~vtkAsensingPacketInterpreter() {}
+vtkAsensing5PacketInterpreter::~vtkAsensing5PacketInterpreter() {}
 
 #include "cJSON.h"
 //-----------------------------------------------------------------------------
-void vtkAsensingPacketInterpreter::LoadCalibration(const std::string& filename)
+void vtkAsensing5PacketInterpreter::LoadCalibration(const std::string& filename)
 {
   if (filename.empty())
   {
@@ -377,7 +377,7 @@ void vtkAsensingPacketInterpreter::LoadCalibration(const std::string& filename)
   this->CalibEnabled = true;
 }
 
-void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsigned int dataLength)
+void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned int dataLength)
 {
   auto start = high_resolution_clock::now();
   if (!this->IsLidarPacket(data, dataLength))
@@ -614,7 +614,7 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
 }
 
 //-----------------------------------------------------------------------------
-bool vtkAsensingPacketInterpreter::IsLidarPacket(
+bool vtkAsensing5PacketInterpreter::IsLidarPacket(
   unsigned char const* data, unsigned int dataLength)
 {
 #if CHECK_LIDAR_PACKET
@@ -641,7 +641,7 @@ bool vtkAsensingPacketInterpreter::IsLidarPacket(
 }
 
 //-----------------------------------------------------------------------------
-vtkSmartPointer<vtkPolyData> vtkAsensingPacketInterpreter::CreateNewEmptyFrame(
+vtkSmartPointer<vtkPolyData> vtkAsensing5PacketInterpreter::CreateNewEmptyFrame(
   vtkIdType numberOfPoints, vtkIdType vtkNotUsed(prereservedNumberOfPoints))
 {
   const int defaultPrereservedNumberOfPointsPerFrame = this->points_per_frame;
@@ -680,7 +680,7 @@ vtkSmartPointer<vtkPolyData> vtkAsensingPacketInterpreter::CreateNewEmptyFrame(
 }
 
 //-----------------------------------------------------------------------------
-bool vtkAsensingPacketInterpreter::PreProcessPacket(unsigned char const* data,
+bool vtkAsensing5PacketInterpreter::PreProcessPacket(unsigned char const* data,
   unsigned int vtkNotUsed(dataLength), fpos_t filePosition, double packetNetworkTime,
   std::vector<FrameInformation>* frameCatalog)
 {
@@ -710,7 +710,7 @@ bool vtkAsensingPacketInterpreter::PreProcessPacket(unsigned char const* data,
 }
 
 //-----------------------------------------------------------------------------
-std::string vtkAsensingPacketInterpreter::GetSensorInformation(bool vtkNotUsed(shortVersion))
+std::string vtkAsensing5PacketInterpreter::GetSensorInformation(bool vtkNotUsed(shortVersion))
 {
-  return "Asensing A0 LiDAR Sensor";
+  return "Asensing A0 LiDAR Sensor (5 modules)";
 }

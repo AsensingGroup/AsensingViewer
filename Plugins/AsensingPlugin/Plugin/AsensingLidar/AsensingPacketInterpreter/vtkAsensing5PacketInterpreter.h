@@ -8,7 +8,7 @@
 #include <vtkUnsignedIntArray.h>
 
 #include "laser_ts.h"
-#include "AsensingPacketFormat.h"
+#include "Asensing5PacketFormat.h"
 
 #include <memory>
 
@@ -66,11 +66,11 @@ static const float azimuth_offset[] = {
 };
 
 
-class VTK_EXPORT vtkAsensingPacketInterpreter : public vtkLidarPacketInterpreter
+class VTK_EXPORT vtkAsensing5PacketInterpreter : public vtkLidarPacketInterpreter
 {
 public:
-  static vtkAsensingPacketInterpreter* New();
-  vtkTypeMacro(vtkAsensingPacketInterpreter, vtkLidarPacketInterpreter)
+  static vtkAsensing5PacketInterpreter* New();
+  vtkTypeMacro(vtkAsensing5PacketInterpreter, vtkLidarPacketInterpreter)
   //void PrintSelf(ostream& vtkNotUsed(os), vtkIndent vtkNotUsed(indent)) override;
 
   void LoadCalibration(const std::string& filename) override;
@@ -103,12 +103,12 @@ protected:
   vtkSmartPointer<vtkDoubleArray> Distances;
 
 
-  vtkAsensingPacketInterpreter();
-  ~vtkAsensingPacketInterpreter();
+  vtkAsensing5PacketInterpreter();
+  ~vtkAsensing5PacketInterpreter();
 
 private:
-  vtkAsensingPacketInterpreter(const vtkAsensingPacketInterpreter&) = delete;
-  void operator=(const vtkAsensingPacketInterpreter&) = delete;
+  vtkAsensing5PacketInterpreter(const vtkAsensing5PacketInterpreter&) = delete;
+  void operator=(const vtkAsensing5PacketInterpreter&) = delete;
 
   std::vector<double> Cos_all_angle;
   std::vector<double> Sin_all_angle;

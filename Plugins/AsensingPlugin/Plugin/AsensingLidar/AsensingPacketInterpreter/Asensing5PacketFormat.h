@@ -1,5 +1,5 @@
-#ifndef AsensingPacketFormat_H
-#define AsensingPacketFormat_H
+#ifndef Asensing5PacketFormat_H
+#define Asensing5PacketFormat_H
 
 #include <boost/endian/arithmetic.hpp>
 #include <memory>
@@ -28,7 +28,7 @@
 #define CIRCLE (36000)
 
 /* Custom */
-#define LASER_MODULE_NUM             (4)
+#define LASER_MODULE_NUM             (5)
 #define CHANNEL_NUM_PER_MODULE       (2) /* 1 Laser => 2 Channel */
 
 #define ASENSING_DISTANCE_UNIT       (0.01f)
@@ -277,4 +277,4 @@ struct AsensingPacket {
 };
 #pragma pack(pop)
 
-#endif // AsensingPacketFormat_H
+#endif // Asensing5PacketFormat_H
