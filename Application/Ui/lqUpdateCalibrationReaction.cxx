@@ -146,6 +146,10 @@ void lqUpdateCalibrationReaction::setCalibrationFileAndDefaultInterpreter(vtkSMP
       {
         defaultProxy = proxyListDomain->FindProxy("LidarPacketInterpreter", "AsensingPacketInterpreter");
       }
+      else if ((calibrationFile.contains("5", Qt::CaseInsensitive)))
+      {
+        defaultProxy = proxyListDomain->FindProxy("LidarPacketInterpreter", "Asensing5PacketInterpreter");
+      }
     }
     else if (interpreterName == "interpreterRadio_hesai") {
       // Set General Packet Interpreter based on SDK as default

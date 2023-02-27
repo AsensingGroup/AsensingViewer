@@ -1,20 +1,36 @@
+#-----------------------------------------------------------------------------
+# Build Asensing Plugin
+#-----------------------------------------------------------------------------
 
-#set(PandarGeneralRaw ${CMAKE_CURRENT_SOURCE_DIR}/AsensingLidar_General_SDK/src/PandarGeneralRaw)
+file(GLOB_RECURSE AsensingInterpreter_xml ${CMAKE_CURRENT_SOURCE_DIR}/*PacketInterpreter*.xml)
+file(GLOB_RECURSE AsensingInterpreter_cxx ${CMAKE_CURRENT_SOURCE_DIR}/*PacketInterpreter*.cxx)
+file(GLOB_RECURSE AsensingInterpreter_h ${CMAKE_CURRENT_SOURCE_DIR}/*PacketInterpreter*.h)
+
+message(STATUS "XML: ${AsensingInterpreter_xml}")
+message(STATUS "CXX: ${AsensingInterpreter_cxx}")
+message(STATUS "HXX: ${AsensingInterpreter_h}")
 
 set(asensingplugin_xml
+  #${AsensingInterpreter_xml}
   ${CMAKE_CURRENT_SOURCE_DIR}/AsensingPacketInterpreter/AsensingPacketInterpreter.xml
+  ${CMAKE_CURRENT_SOURCE_DIR}/AsensingPacketInterpreter/Asensing5PacketInterpreter.xml
   #${CMAKE_CURRENT_SOURCE_DIR}/AsensingGeneralPacketInterpreter/AsensingGeneralPacketInterpreter.xml
   )
 
 set(asensingplugin_classes
+  #${AsensingInterpreter_cxx}
   ${CMAKE_CURRENT_SOURCE_DIR}/AsensingPacketInterpreter/vtkAsensingPacketInterpreter
+  ${CMAKE_CURRENT_SOURCE_DIR}/AsensingPacketInterpreter/vtkAsensing5PacketInterpreter
   #${CMAKE_CURRENT_SOURCE_DIR}/AsensingGeneralPacketInterpreter/vtkAsensingGeneralPacketInterpreter
   )
 
 set(asensingplugin_sources
-  #${PandarGeneralRaw}/src/pandarGeneral_internal.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/AsensingPacketInterpreter/laser_ts.cxx
+  #${AsensingInterpreter_cxx}
   ${CMAKE_CURRENT_SOURCE_DIR}/AsensingPacketInterpreter/cJSON.c
+  )
+
+set(asensingplugin_headers
+  ${AsensingInterpreter_h}
   )
 
 #Create Module
@@ -33,14 +49,13 @@ target_include_directories(AsensingLidar
   PUBLIC
   AsensingPacketInterpreter/
   #AsensingGeneralPacketInterpreter
-  #${PandarGeneralRaw}/include/
-  #${PandarGeneralRaw}/include/pandarGeneral
   )
 
 set(calib_files
   Neptune48.json
   RT-Matrix.json
   No-Correction.json
+  No-Correction-5.json
 )
 
 # Copy the calibration to the build folder

@@ -39,12 +39,12 @@ public:
   pqInternal()
     : Settings(pqApplicationCore::instance()->settings())
   {
-    const unsigned int nFile = 3; // WARNING update this accordingly.
+    const unsigned int nFile = 4; // WARNING update this accordingly.
     const char* filenames[nFile] = {
       //"HDL-32.xml", "VLP-16.xml", "VLP-32c.xml", "Puck Hi-Res.xml",
       //"Puck LITE.xml", "Alpha Prime.xml",
       //"PandarXT.csv", "Pandar128.csv", // HESAI Calibration
-      "Neptune48.json", "RT-Matrix.json", "No-Correction.json"  // Asensing Calibration
+      "Neptune48.json", "RT-Matrix.json", "No-Correction.json", "No-Correction-5.json"  // Asensing Calibration
     };
     std::vector<QString> calibrationBuiltIn(filenames, filenames + nFile);
     QString prefix;
@@ -460,7 +460,7 @@ vvCalibrationDialog::vvCalibrationDialog(QWidget* p)
   this->Internal->EnableInterpretGPSPackets->setEnabled(true);
   this->Internal->EnableInterpretGPSPackets->setChecked(false);
 
-  liveCalibrationItem->setText("HDL64 Live Corrections");
+  liveCalibrationItem->setText("HDL64 Live Corrections (modified)");
   liveCalibrationItem->setToolTip("Get Corrections from the data stream");
   liveCalibrationItem->setData(Qt::UserRole, "");
 

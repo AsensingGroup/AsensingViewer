@@ -7,7 +7,6 @@
 #include <vtkTypeUInt64Array.h>
 #include <vtkUnsignedIntArray.h>
 
-#include "laser_ts.h"
 #include "Asensing5PacketFormat.h"
 
 #include <memory>
@@ -16,7 +15,7 @@
 #define USING_RT_MATRIX          1
 #define USING_MATH_LIB           0
 #define CHECK_LIDAR_PACKET       0
-#define PACKET_STAT_DEBUG        1
+#define PACKET_STAT_DEBUG        0
 
 struct point_xyz {
     double x;
@@ -112,7 +111,6 @@ private:
 
   std::vector<double> Cos_all_angle;
   std::vector<double> Sin_all_angle;
-  LasersTSOffset LaserOffset;
 
   //! @brief Calibration of each laser get from the calibration file
   std::vector<double> ElevationCorrection;
