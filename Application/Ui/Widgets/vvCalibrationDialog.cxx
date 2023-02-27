@@ -460,7 +460,7 @@ vvCalibrationDialog::vvCalibrationDialog(QWidget* p)
   this->Internal->EnableInterpretGPSPackets->setEnabled(true);
   this->Internal->EnableInterpretGPSPackets->setChecked(false);
 
-  liveCalibrationItem->setText("HDL64 Live Corrections (modified)");
+  liveCalibrationItem->setText("HDL64 Live Corrections (unused)");
   liveCalibrationItem->setToolTip("Get Corrections from the data stream");
   liveCalibrationItem->setData(Qt::UserRole, "");
 
