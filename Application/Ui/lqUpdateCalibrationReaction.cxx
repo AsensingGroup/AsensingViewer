@@ -22,6 +22,8 @@
 #include "vvCalibrationDialog.h"
 
 #include <cctype>
+#include <QFileInfo>
+#include <QDebug>
 //-----------------------------------------------------------------------------
 lqUpdateCalibrationReaction::lqUpdateCalibrationReaction(QAction *action) :
   Superclass(action)
@@ -141,14 +143,15 @@ void lqUpdateCalibrationReaction::setCalibrationFileAndDefaultInterpreter(vtkSMP
     vtkSMProxy* defaultProxy = nullptr;
 
     if (interpreterName == "interpreterRadio_asensing") {
-      defaultProxy = proxyListDomain->FindProxy("LidarPacketInterpreter", "AsensingPacketInterpreter");
-      if ((calibrationFile.contains("Neptune48", Qt::CaseInsensitive)))
-      {
-        defaultProxy = proxyListDomain->FindProxy("LidarPacketInterpreter", "AsensingPacketInterpreter");
-      }
-      else if ((calibrationFile.contains("5", Qt::CaseInsensitive)))
+      QFileInfo fileInfo(QFile(calibrationFile).fileName());
+      QString fileName(fileInfo.fileName());
+      if (fileName == "No-Correction-5.json")
       {
         defaultProxy = proxyListDomain->FindProxy("LidarPacketInterpreter", "Asensing5PacketInterpreter");
+      }
+      else
+      {
+        defaultProxy = proxyListDomain->FindProxy("LidarPacketInterpreter", "AsensingPacketInterpreter");
       }
     }
     else if (interpreterName == "interpreterRadio_hesai") {
