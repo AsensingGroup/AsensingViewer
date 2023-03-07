@@ -19,6 +19,8 @@
 
 #define TEST_LASER_NUM (128) /* Just for testing */
 
+//#define FIX_WRONG_PCAP_PROBLEM
+
 using std::chrono::duration;
 using std::chrono::duration_cast;
 using std::chrono::high_resolution_clock;
@@ -699,11 +701,20 @@ bool vtkAsensingPacketInterpreter::PreProcessPacket(unsigned char const* data,
     AsensingSpecificFrameInformation* frameInfo =
       reinterpret_cast<AsensingSpecificFrameInformation*>(
         this->ParserMetaData.SpecificInformation.get());
+  #ifdef FIX_WRONG_PCAP_PROBLEM
+    if (dataPacket->blocks[0].units->GetAzimuth() == 33500 && dataPacket->blocks[0].units->GetElevation() == 1250 && frameCatalog)
+    {
+      isNewFrame = true;
+      frameCatalog->push_back(this->ParserMetaData);
+      break;
+    }
+  #else
     if (frameInfo->IsNewFrame(0, dataPacket->header.GetFrameID()) && frameCatalog)
     {
       isNewFrame = true;
       frameCatalog->push_back(this->ParserMetaData);
     }
+  #endif
   }
 
   return isNewFrame;
