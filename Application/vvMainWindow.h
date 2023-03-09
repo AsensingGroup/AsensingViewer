@@ -32,6 +32,7 @@ protected:
   void dropEvent(QDropEvent* evt) override;
   void showEvent(QShowEvent* evt) override;
   void closeEvent(QCloseEvent* evt) override;
+  bool eventFilter(QObject *obj, QEvent *ev) override;
 
 protected Q_SLOTS:
   void showHelpForProxy(const QString& proxyname, const QString& groupname);
@@ -56,6 +57,9 @@ private:
 
   void setupGUICustom();  // LidarView Specific UI elements
   void setBranding();     // LidarView Specific Branding
+
+private:
+  Qt::WindowFlags m_windowFlags;
 };
 
 #endif
