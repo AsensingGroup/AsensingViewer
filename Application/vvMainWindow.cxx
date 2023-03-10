@@ -82,6 +82,7 @@ typedef pqPythonDebugLeaksView DebugLeaksViewType;
 #include <QUrl>
 #include <QDockWidget>
 #include <QDragEnterEvent>
+#include <QKeyEvent>
 
 #include <cassert>
 #include <iostream>
@@ -171,6 +172,8 @@ vvMainWindow::vvMainWindow()
   this->show();
   this->raise();
   this->activateWindow();
+
+  centralWidget()->installEventFilter(this);
 }
 
 //-----------------------------------------------------------------------------
@@ -412,6 +415,14 @@ void vvMainWindow::setupGUICustom()
     this, SLOT(toggleMVDecoration())
   );
 
+  // Full Screen
+  connect(this->Internals->actionFull_Screen, &QAction::triggered, this, [=](bool flag) {
+    auto widget = centralWidget();
+    m_windowFlags = widget->windowFlags();
+    widget->setWindowFlag(Qt::Window);
+    widget->showFullScreen();
+  });
+
   new lqOpenSensorReaction(this->Internals->actionOpen_Sensor_Stream);
   new lqOpenPcapReaction(this->Internals->actionOpenPcap);
 
@@ -544,7 +555,22 @@ void vvMainWindow::showEvent(QShowEvent* evt)
 //-----------------------------------------------------------------------------
 void vvMainWindow::closeEvent(QCloseEvent* evt)
 {
-  pqApplicationCore::instance()->getMainWindowEventManager()->closeEvent(evt);
+    pqApplicationCore::instance()->getMainWindowEventManager()->closeEvent(evt);
+}
+
+bool vvMainWindow::eventFilter(QObject *obj, QEvent *ev)
+{
+  if(obj == centralWidget() && ev->type() == QEvent::KeyPress) {
+    auto keyEvent = static_cast<QKeyEvent *>(ev);
+    if(keyEvent->key() == Qt::Key_Escape) {
+      auto widget = centralWidget();
+      widget->setWindowFlags(m_windowFlags);
+      widget->showNormal();
+      this->Internals->actionFull_Screen->setChecked(false);
+      return true;
+    }
+  }
+  return QMainWindow::eventFilter(obj, ev);
 }
 
 //-----------------------------------------------------------------------------
