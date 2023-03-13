@@ -455,7 +455,7 @@ void vtkAsensingPacketInterpreter::ProcessPacket(unsigned char const* data, unsi
       this->seq_num_counter = 0;
     }
 
-    for (int laserID = 0; laserID < laser_num; laserID++)
+    for (int laserID = 0; laserID < ASENSING_LASER_NUM; laserID++)
     {
       /* Eliminate invalid points */
       if (0 == currentBlock.units[laserID].GetAzimuth() &&
@@ -669,7 +669,7 @@ vtkSmartPointer<vtkPolyData> vtkAsensingPacketInterpreter::CreateNewEmptyFrame(
 
   this->PointID = CreateDataArray<vtkUnsignedIntArray>(
     false, "PointID", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
-  this->LaserID = CreateDataArray<vtkUnsignedIntArray>(
+  this->LaserID = CreateDataArray<vtkUnsignedCharArray>(
     false, "LaserID", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
   this->Intensities = CreateDataArray<vtkUnsignedCharArray>(
     false, "Intensity", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
