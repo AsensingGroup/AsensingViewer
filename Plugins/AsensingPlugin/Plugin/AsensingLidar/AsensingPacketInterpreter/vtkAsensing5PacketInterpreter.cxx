@@ -410,7 +410,7 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
   // Timestamp in second of the packet
   double timestamp = unix_second + (timestampPacket / 1000000.0);
 
-  laser_num = dataPacket->header.GetLaserNum();
+  laser_num = dataPacket->header.GetLaserNum(); // ASENSING_LASER_NUM
   echo_count = dataPacket->header.GetEchoCount();
   current_frame_id = dataPacket->header.GetFrameID();
   current_seq_num = dataPacket->header.GetSeqNum();
@@ -620,14 +620,15 @@ bool vtkAsensing5PacketInterpreter::IsLidarPacket(
 #if CHECK_LIDAR_PACKET
   const AsensingPacket* dataPacket = reinterpret_cast<const AsensingPacket*>(data);
 
-  if (dataLength < 4) {
+  if (dataLength != sizeof(struct AsensingPacket)) {
+    vtkWarningMacro("Invaild point cloud data packet (length mismatch)");
     return false;
   }
 
   /* Check sob flag of packet header */
   uint32_t sob = htole32(0x5AA555AA); /* 0xAA, 0x55, 0xA5, 0x5A */
   if (sob != dataPacket->header.GetSob()) {
-    vtkWarningMacro("Not a vaild point-cloud data packet");
+    vtkWarningMacro("Invaild point cloud data packet (header flag mismatch)");
     return false;
   }
 #endif /* CHECK_LIDAR_PACKET */
