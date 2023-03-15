@@ -165,6 +165,8 @@ void vtkAsensing5PacketInterpreter::LoadCalibration(const std::string& filename)
   cJSON* module2 = cJSON_GetObjectItemCaseSensitive(root, "module_2");
   cJSON* module3 = cJSON_GetObjectItemCaseSensitive(root, "module_3");
 
+  cJSON* module_angles = cJSON_GetObjectItemCaseSensitive(root, "module_angles");
+
   bool NoLaserAngle = false;
   bool NoRTMatrix = false;
 
@@ -215,6 +217,11 @@ void vtkAsensing5PacketInterpreter::LoadCalibration(const std::string& filename)
       {
         this->matrix_RT3[i][j] = cJSON_GetArrayItem(RT3, i * 4 + j)->valuedouble;
       }
+    }
+
+    for (int i = 0; i < ANGLE_SIZE; i++)
+    {
+      m_angles[i] = cJSON_GetArrayItem(module_angles, i)->valuedouble;
     }
 
     this->RTMatEnabled = true;
@@ -590,6 +597,34 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
 #endif
         this->SplitFrame();
         this->seq_num_counter = 0;
+      }
+
+      // update x, y, z
+      if(true)
+      {
+          float vector[VECTOR_SIZE] = {0};
+          float theta = degreeToRadian(m_angles[laserID / 2]);
+          float gamma0 = degreeToRadian(m_angles[ANGLE_SIZE-1]);
+          vector[0] = std::cos(theta) - 2.0 * std::cos(theta) * std::sin(gamma0) * std::sin(gamma0);
+          vector[1] = std::sin(theta);
+          vector[2] =  -2.0 * std::cos(theta) * std::sin(gamma0) * std::cos(gamma0);
+
+          float normal[VECTOR_SIZE] = {0};
+          float beta = degreeToRadian(static_cast<float>(currentBlock.units[laserID].GetAzimuth()) * ASENSING_AZIMUTH_UNIT / 2.0);
+          float gamma = degreeToRadian(static_cast<float>(currentBlock.units[laserID].GetElevation()) * ASENSING_ELEVATION_UNIT / 2.0);
+          normal[0] = std::sin(beta) * (std::cos(gamma) * std::cos(gamma0) - std::sin(gamma0) * std::sin(gamma));
+          normal[1] = -std::cos(gamma) * std::sin(gamma0) - std::sin(gamma) * std::cos(gamma0);
+          normal[2] = std::cos(beta) * (std::cos(gamma) * std::cos(gamma0) - std::sin(gamma0) * std::sin(gamma));
+
+          float out[VECTOR_SIZE] = {0};
+          float k = vector[0] * normal[0] + vector[1] * normal[1] + vector[2] * normal[2];
+          for(int i = 0; i < VECTOR_SIZE; i++)
+          {
+              out[i] = vector[i] - 2 * k * normal[i];
+          }
+          x = distance * out[0];
+          y = distance * out[1];
+          z = distance * out[2];
       }
 
       this->Points->SetPoint(current_pt_id, x, y, z);

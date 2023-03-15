@@ -67,6 +67,10 @@ static const float azimuth_offset[] = {
 
 class VTK_EXPORT vtkAsensing5PacketInterpreter : public vtkLidarPacketInterpreter
 {
+    enum {
+        VECTOR_SIZE = 3,
+        ANGLE_SIZE = 6
+    };
 public:
   static vtkAsensing5PacketInterpreter* New();
   vtkTypeMacro(vtkAsensing5PacketInterpreter, vtkLidarPacketInterpreter)
@@ -135,6 +139,8 @@ private:
   uint16_t current_seq_num = 0;
   uint16_t last_seq_num = 0;
   uint16_t seq_num_counter = 0;
+
+  float m_angles[ANGLE_SIZE];
 
 #if USING_RT_MATRIX
   bool RTMatEnabled = false;
