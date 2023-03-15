@@ -224,6 +224,12 @@ void vtkAsensing5PacketInterpreter::LoadCalibration(const std::string& filename)
       m_angles[i] = cJSON_GetArrayItem(module_angles, i)->valuedouble;
     }
 
+    m_angles[0] += 25;
+    m_angles[1] += 12.5;
+    m_angles[2] += 0;
+    m_angles[3] -= 12.5;
+    m_angles[4] -= 25;
+
     this->RTMatEnabled = true;
 
     /* Print all RT matrix */
@@ -603,7 +609,8 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
       if(true)
       {
           float vector[VECTOR_SIZE] = {0};
-          float theta = degreeToRadian(m_angles[laserID / 2]);
+          float angle = m_angles[laserID / 2] > 120 ? (m_angles[laserID / 2] - 180) : m_angles[laserID / 2];
+          float theta = degreeToRadian(angle);
           float gamma0 = degreeToRadian(m_angles[ANGLE_SIZE-1]);
           vector[0] = std::cos(theta) - 2.0 * std::cos(theta) * std::sin(gamma0) * std::sin(gamma0);
           vector[1] = std::sin(theta);
@@ -612,9 +619,9 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
           float normal[VECTOR_SIZE] = {0};
           float beta = degreeToRadian(static_cast<float>(currentBlock.units[laserID].GetAzimuth()) * ASENSING_AZIMUTH_UNIT / 2.0);
           float gamma = degreeToRadian(static_cast<float>(currentBlock.units[laserID].GetElevation()) * ASENSING_ELEVATION_UNIT / 2.0);
-          normal[0] = std::sin(beta) * (std::cos(gamma) * std::cos(gamma0) - std::sin(gamma0) * std::sin(gamma));
-          normal[1] = -std::cos(gamma) * std::sin(gamma0) - std::sin(gamma) * std::cos(gamma0);
-          normal[2] = std::cos(beta) * (std::cos(gamma) * std::cos(gamma0) - std::sin(gamma0) * std::sin(gamma));
+          normal[0] = std::cos(beta) * std::cos(gamma) * std::cos(gamma0) - std::sin(beta) * std::sin(gamma0);
+          normal[1] = std::sin(gamma) * std::cos(gamma0);
+          normal[2] = -std::cos(gamma0) * std::sin(beta) * std::cos(gamma) - std::cos(beta) * std::sin(gamma0);
 
           float out[VECTOR_SIZE] = {0};
           float k = vector[0] * normal[0] + vector[1] * normal[1] + vector[2] * normal[2];
@@ -625,6 +632,8 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
           x = distance * out[0];
           y = distance * out[1];
           z = distance * out[2];
+
+//          std::cout << (currentBlock.units[laserID].GetAzimuth() * ASENSING_AZIMUTH_UNIT / 2.0) << " , " << (currentBlock.units[laserID].GetElevation() * ASENSING_ELEVATION_UNIT / 2.0) << std::endl;
       }
 
       this->Points->SetPoint(current_pt_id, x, y, z);
