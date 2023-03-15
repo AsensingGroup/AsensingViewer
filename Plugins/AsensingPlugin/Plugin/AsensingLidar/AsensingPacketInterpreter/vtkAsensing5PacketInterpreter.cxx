@@ -166,6 +166,11 @@ void vtkAsensing5PacketInterpreter::LoadCalibration(const std::string& filename)
   cJSON* module3 = cJSON_GetObjectItemCaseSensitive(root, "module_3");
 
   cJSON* module_angles = cJSON_GetObjectItemCaseSensitive(root, "module_angles");
+  for (int i = 0; i < ANGLE_SIZE; i++)
+  {
+    m_angles[i] = cJSON_GetArrayItem(module_angles, i)->valuedouble;
+    std::cout << "angle " << i << " : " << m_angles[i] << std::endl;
+  }
 
   bool NoLaserAngle = false;
   bool NoRTMatrix = false;
@@ -217,11 +222,6 @@ void vtkAsensing5PacketInterpreter::LoadCalibration(const std::string& filename)
       {
         this->matrix_RT3[i][j] = cJSON_GetArrayItem(RT3, i * 4 + j)->valuedouble;
       }
-    }
-
-    for (int i = 0; i < ANGLE_SIZE; i++)
-    {
-      m_angles[i] = cJSON_GetArrayItem(module_angles, i)->valuedouble;
     }
 
     this->RTMatEnabled = true;
@@ -604,6 +604,7 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
       {
           float vector[VECTOR_SIZE] = {0};
           float theta = degreeToRadian(m_angles[laserID / 2]);
+//          std::cout << "theta " << laserID << " : " << theta << std::endl;
           float gamma0 = degreeToRadian(m_angles[ANGLE_SIZE-1]);
           vector[0] = std::cos(theta) - 2.0 * std::cos(theta) * std::sin(gamma0) * std::sin(gamma0);
           vector[1] = std::sin(theta);
