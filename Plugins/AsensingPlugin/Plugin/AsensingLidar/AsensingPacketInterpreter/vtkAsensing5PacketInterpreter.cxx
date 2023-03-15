@@ -224,12 +224,6 @@ void vtkAsensing5PacketInterpreter::LoadCalibration(const std::string& filename)
       m_angles[i] = cJSON_GetArrayItem(module_angles, i)->valuedouble;
     }
 
-    m_angles[0] += 25;
-    m_angles[1] += 12.5;
-    m_angles[2] += 0;
-    m_angles[3] -= 12.5;
-    m_angles[4] -= 25;
-
     this->RTMatEnabled = true;
 
     /* Print all RT matrix */
@@ -609,15 +603,27 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
       if(true)
       {
           float vector[VECTOR_SIZE] = {0};
-          float angle = m_angles[laserID / 2] > 120 ? (m_angles[laserID / 2] - 180) : m_angles[laserID / 2];
-          float theta = degreeToRadian(angle);
+          float theta = degreeToRadian(m_angles[laserID / 2]);
           float gamma0 = degreeToRadian(m_angles[ANGLE_SIZE-1]);
           vector[0] = std::cos(theta) - 2.0 * std::cos(theta) * std::sin(gamma0) * std::sin(gamma0);
           vector[1] = std::sin(theta);
           vector[2] =  -2.0 * std::cos(theta) * std::sin(gamma0) * std::cos(gamma0);
-
           float normal[VECTOR_SIZE] = {0};
-          float beta = degreeToRadian(static_cast<float>(currentBlock.units[laserID].GetAzimuth()) * ASENSING_AZIMUTH_UNIT / 2.0);
+          float angle = currentBlock.units[laserID].GetAzimuth() * ASENSING_AZIMUTH_UNIT / 2.0;
+          angle = (angle > 120) ? (angle - 180) : angle;
+          if(laserID / 2 == 0) {
+              angle += 25;
+          }
+          else if(laserID / 2 == 1) {
+              angle += 12.5;
+          }
+          else if(laserID / 2 == 3) {
+              angle -= 12.5;
+          }
+          else if(laserID / 2 == 4) {
+              angle -= 25;
+          }
+          float beta = degreeToRadian(angle);
           float gamma = degreeToRadian(static_cast<float>(currentBlock.units[laserID].GetElevation()) * ASENSING_ELEVATION_UNIT / 2.0);
           normal[0] = std::cos(beta) * std::cos(gamma) * std::cos(gamma0) - std::sin(beta) * std::sin(gamma0);
           normal[1] = std::sin(gamma) * std::cos(gamma0);
