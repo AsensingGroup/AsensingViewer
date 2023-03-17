@@ -119,7 +119,7 @@ void vtkAsensing5PacketInterpreter::LoadCalibration(const std::string& filename)
 
   std::string keyword("No-Correction-5");
   std::size_t found = filename.find(keyword);
-  if (std::string::npos != found)
+  if (std::string::npos == found)
   {
     std::cout << "Do not need to correct data" << std::endl;
     this->CalibEnabled = false;
@@ -606,9 +606,9 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
           float theta = degreeToRadian(m_angles[laserID / 2]);
 //          std::cout << "theta " << laserID << " : " << theta << std::endl;
           float gamma0 = degreeToRadian(m_angles[ANGLE_SIZE-1]);
-          vector[0] = std::cos(theta) - 2.0 * std::cos(theta) * std::sin(gamma0) * std::sin(gamma0);
+          vector[0] = std::cos(theta) - 2.0 * std::cos(theta) * std::cos(gamma0) * std::cos(gamma0);
           vector[1] = std::sin(theta);
-          vector[2] =  -2.0 * std::cos(theta) * std::sin(gamma0) * std::cos(gamma0);
+          vector[2] =  2.0 * std::cos(theta) * std::sin(gamma0) * std::cos(gamma0);
           float normal[VECTOR_SIZE] = {0};
           float angle = currentBlock.units[laserID].GetAzimuth() * ASENSING_AZIMUTH_UNIT / 2.0;
           angle = (angle > 120) ? (angle - 180) : angle;
@@ -624,8 +624,11 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
           else if(laserID / 2 == 4) {
               angle -= 25;
           }
-          float beta = degreeToRadian(angle);
-          float gamma = degreeToRadian(static_cast<float>(currentBlock.units[laserID].GetElevation()) * ASENSING_ELEVATION_UNIT / 2.0);
+//          std::cout << "angle : " << angle << std::endl;
+          float  gamma = degreeToRadian(angle);
+          angle = static_cast<float>(currentBlock.units[laserID].GetElevation()) * ASENSING_ELEVATION_UNIT / 2.0;
+          angle = (angle > 120) ? (angle - 180) : angle;
+          float  beta = -degreeToRadian(angle);
           normal[0] = std::cos(beta) * std::cos(gamma) * std::cos(gamma0) - std::sin(beta) * std::sin(gamma0);
           normal[1] = std::sin(gamma) * std::cos(gamma0);
           normal[2] = -std::cos(gamma0) * std::sin(beta) * std::cos(gamma) - std::cos(beta) * std::sin(gamma0);
