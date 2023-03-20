@@ -672,18 +672,21 @@ bool vtkAsensing5PacketInterpreter::IsLidarPacket(
   unsigned char const* data, unsigned int dataLength)
 {
 #if CHECK_LIDAR_PACKET
-  const AsensingPacket* dataPacket = reinterpret_cast<const AsensingPacket*>(data);
-
+//  const AsensingPacket* dataPacket = reinterpret_cast<const AsensingPacket*>(data);
   if (dataLength != sizeof(struct AsensingPacket)) {
     vtkWarningMacro("Invaild point cloud data packet (length mismatch)");
     return false;
   }
 
   /* Check sob flag of packet header */
-  uint32_t sob = htole32(0x5AA555AA); /* 0xAA, 0x55, 0xA5, 0x5A */
-  if (sob != dataPacket->header.GetSob()) {
-    vtkWarningMacro("Invaild point cloud data packet (header flag mismatch)");
-    return false;
+  if (data[0] == 0xAA && data[1] == 0x55 && data[2] == 0xA5 && data[3] == 0x5A )
+  {
+      return true;
+  }
+  else
+  {
+      vtkWarningMacro("Invaild point cloud data packet (header flag mismatch)");
+      return false;
   }
 #endif /* CHECK_LIDAR_PACKET */
 
