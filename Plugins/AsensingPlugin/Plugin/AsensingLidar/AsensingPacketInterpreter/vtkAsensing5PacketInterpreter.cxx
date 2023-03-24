@@ -224,7 +224,7 @@ void vtkAsensing5PacketInterpreter::LoadCalibration(const std::string& filename)
       }
     }
 
-    this->RTMatEnabled = cJSON_GetObjectItemCaseSensitive(root, "RT_enable")->valueint ? true : false;
+    this->RTMatEnabled = cJSON_GetObjectItem(root, "RT_enable")->valueint ? true : false;
 
     /* Print all RT matrix */
 
@@ -599,40 +599,36 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
         this->seq_num_counter = 0;
       }
 
-      // update x, y, z
-      if(true)
+      // 角度算法处理x，y，z
       {
+          // 法向量求解
           float vector[VECTOR_SIZE] = {0};
           float theta = degreeToRadian(m_angles[laserID / 2]);
-//          std::cout << "theta " << laserID << " : " << theta << std::endl;
           float gamma0 = degreeToRadian(m_angles[ANGLE_SIZE-1]);
-          vector[0] = std::cos(theta) - 2.0 * std::cos(theta) * std::cos(gamma0) * std::cos(gamma0);
+          float sin_gamma0 = std::sin(gamma0);
+          float cos_gamma0 = std::cos(gamma0);
+          float cos_theta = std::cos(theta);
+          vector[0] = cos_theta - 2.0 * cos_theta * cos_gamma0 * cos_gamma0;
           vector[1] = std::sin(theta);
-          vector[2] =  2.0 * std::cos(theta) * std::sin(gamma0) * std::cos(gamma0);
-          float normal[VECTOR_SIZE] = {0};
-          float angle = currentBlock.units[laserID].GetAzimuth() * ASENSING_AZIMUTH_UNIT / 2.0;
-          angle = (angle > 120) ? (angle - 180) : angle;
-          if(laserID / 2 == 0) {
-              angle += 25;
-          }
-          else if(laserID / 2 == 1) {
-              angle += 12.5;
-          }
-          else if(laserID / 2 == 3) {
-              angle -= 12.5;
-          }
-          else if(laserID / 2 == 4) {
-              angle -= 25;
-          }
-//          std::cout << "angle : " << angle << std::endl;
-          float  gamma = degreeToRadian(angle);
-          angle = static_cast<float>(currentBlock.units[laserID].GetElevation()) * ASENSING_ELEVATION_UNIT / 2.0;
-          angle = (angle > 120) ? (angle - 180) : angle;
-          float  beta = -degreeToRadian(angle);
-          normal[0] = std::cos(beta) * std::cos(gamma) * std::cos(gamma0) - std::sin(beta) * std::sin(gamma0);
-          normal[1] = std::sin(gamma) * std::cos(gamma0);
-          normal[2] = -std::cos(gamma0) * std::sin(beta) * std::cos(gamma) - std::cos(beta) * std::sin(gamma0);
+          vector[2] =  2.0 * cos_theta * sin_gamma0 * cos_gamma0;
 
+          // 入射向量求解
+          float normal[VECTOR_SIZE] = {0};
+          float angle = currentBlock.units[laserID].GetAzimuth() * ASENSING_AZIMUTH_UNIT;
+          angle = (angle > 120) ? (angle - 180) : angle;
+          angle = static_cast<float>(currentBlock.units[laserID].GetElevation()) * ASENSING_ELEVATION_UNIT;
+          angle = (angle > 120) ? (angle - 180) : angle;
+          float gamma = degreeToRadian(angle);
+          float beta = - 1 * degreeToRadian(angle);
+          float sin_gamma = std::sin(gamma);
+          float cos_gamma = std::cos(gamma);
+          float sin_beta = std::sin(beta);
+          float cos_beta = std::cos(beta);
+          normal[0] = cos_beta * cos_gamma * cos_gamma0 - sin_beta * sin_gamma0;
+          normal[1] = sin_gamma * cos_gamma0;
+          normal[2] = -cos_gamma0 * sin_beta * cos_gamma - cos_beta * sin_gamma0;
+
+          // 最终向量求解
           float out[VECTOR_SIZE] = {0};
           float k = vector[0] * normal[0] + vector[1] * normal[1] + vector[2] * normal[2];
           for(int i = 0; i < VECTOR_SIZE; i++)
@@ -642,8 +638,6 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
           x = distance * out[0];
           y = distance * out[1];
           z = distance * out[2];
-
-//          std::cout << (currentBlock.units[laserID].GetAzimuth() * ASENSING_AZIMUTH_UNIT / 2.0) << " , " << (currentBlock.units[laserID].GetElevation() * ASENSING_ELEVATION_UNIT / 2.0) << std::endl;
       }
 
       this->Points->SetPoint(current_pt_id, x, y, z);
