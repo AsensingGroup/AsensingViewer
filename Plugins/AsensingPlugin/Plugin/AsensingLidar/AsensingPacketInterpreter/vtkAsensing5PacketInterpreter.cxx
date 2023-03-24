@@ -224,7 +224,7 @@ void vtkAsensing5PacketInterpreter::LoadCalibration(const std::string& filename)
       }
     }
 
-    this->RTMatEnabled = true;
+    this->RTMatEnabled = cJSON_GetObjectItemCaseSensitive(root, "RT_enable")->valueint ? true : false;
 
     /* Print all RT matrix */
 
