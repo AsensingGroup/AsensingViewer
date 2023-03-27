@@ -601,7 +601,7 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
 
       // 角度算法处理x，y，z
       {
-          // 法向量求解
+          // 入射向量求解
           float vector[VECTOR_SIZE] = {0};
           float theta = degreeToRadian(m_angles[laserID / 2]);
           float gamma0 = degreeToRadian(m_angles[ANGLE_SIZE-1]);
@@ -612,13 +612,13 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
           vector[1] = std::sin(theta);
           vector[2] =  2.0 * cos_theta * sin_gamma0 * cos_gamma0;
 
-          // 入射向量求解
+          // 法向量求解
           float normal[VECTOR_SIZE] = {0};
           float angle = currentBlock.units[laserID].GetAzimuth() * ASENSING_AZIMUTH_UNIT;
-          angle = (angle > 120) ? (angle - 180) : angle;
-          angle = static_cast<float>(currentBlock.units[laserID].GetElevation()) * ASENSING_ELEVATION_UNIT;
-          angle = (angle > 120) ? (angle - 180) : angle;
+          angle = (angle > 120) ? (angle - 360) : angle;
           float gamma = degreeToRadian(angle);
+          angle = static_cast<float>(currentBlock.units[laserID].GetElevation()) * ASENSING_ELEVATION_UNIT;
+          angle = (angle > 120) ? (angle - 360) : angle;
           float beta = - 1 * degreeToRadian(angle);
           float sin_gamma = std::sin(gamma);
           float cos_gamma = std::cos(gamma);
