@@ -22,6 +22,7 @@
 #include "PacketConsumer.h"
 #include "PacketFileWriter.h"
 #include "PacketReceiver.h"
+#include "../../../../Plugins/AsensingPlugin/Plugin/AsensingLidar/AsensingPacketInterpreter/Asensing5PacketFormat.h"
 
 //-----------------------------------------------------------------------------
 vtkStream::vtkStream()
@@ -204,6 +205,23 @@ bool vtkStream::IsRecording()
 //-----------------------------------------------------------------------------
 void vtkStream::EnqueuePacket(NetworkPacket* packet)
 {
+#if false
+  const AsensingPacket  *ap = reinterpret_cast<const AsensingPacket*>(packet->GetPayloadData());
+  static int count = ap->header.GetSeqNum();
+  if(ap->header.GetSeqNum() == count) {
+      count++;
+  }
+  else if(ap->header.GetSeqNum() == 0) {
+      count = 1;
+  }
+  else {
+      std::cout << "error seq : " << ap->header.GetSeqNum() << std::endl;
+      count = ap->header.GetSeqNum() + 1;
+      //assert(false);
+  }
+  //std::cout << "seq : " << ap->header.GetSeqNum() << std::endl;
+#endif
+
   NetworkPacket* packet2 = nullptr;
   if (this->WriterThread)
   {
