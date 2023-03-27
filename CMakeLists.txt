@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.20.3 FATAL_ERROR)
 project(NeptuneViewer)
+set(CMAKE_BUILD_TYPE "RelWithDebInfo")
 #Thanks to ExternalProject CMAKE_SOURCE_DIR will correctly be the same as this PROJECT_SOURCE_DIR
 
 # add path to get all the needed modules used to config Lidarview

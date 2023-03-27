@@ -616,7 +616,7 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
           float normal[VECTOR_SIZE] = {0};
           float angle = currentBlock.units[laserID].GetAzimuth() * ASENSING_AZIMUTH_UNIT;
           angle = (angle > 120) ? (angle - 360) : angle;
-          float gamma = degreeToRadian(angle);
+          float gamma = degreeToRadian(-angle);
           angle = static_cast<float>(currentBlock.units[laserID].GetElevation()) * ASENSING_ELEVATION_UNIT;
           angle = (angle > 120) ? (angle - 360) : angle;
           float beta = - 1 * degreeToRadian(angle);

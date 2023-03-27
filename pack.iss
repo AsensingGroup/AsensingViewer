@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "NeptuneViewer"
-#define MyAppVersion "V0.43.0"
+#define MyAppVersion "V0.45.0"
 #define MyAppPublisher "Copyright @2022 广州导远电子科技有限公司"
 #define MyAppURL "http://www.asensing.com/"
 #define MyAppExeName "NeptuneViewer.exe"
@@ -26,9 +26,9 @@ ChangesAssociations=yes
 DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
-OutputDir=C:\Users\Admin\Desktop
+OutputDir=C:\Users\heaven\Desktop
 OutputBaseFilename=NeptuneViewer-{#MyAppVersion}-Windows-AMD64
-SetupIconFile=C:\Users\Admin\Desktop\AsensingViewer-main\Application\SoftwareInformation\logo.ico
+SetupIconFile=E:\workspace\AsensingViewer\Application\SoftwareInformation\logo.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -40,8 +40,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "C:\builds\install\bin\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\builds\install\bin\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "E:\asensing\debug\bin\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "E:\asensing\debug\bin\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]
