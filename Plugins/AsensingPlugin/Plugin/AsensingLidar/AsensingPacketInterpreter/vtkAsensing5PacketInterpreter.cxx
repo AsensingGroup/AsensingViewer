@@ -600,6 +600,8 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
       }
 
       // 角度算法处理x，y，z
+      auto type = dataPacket->header.GetLidarInfo() & 0x03;
+      if(type == 0x02 || type == 0x03)
       {
           // 入射向量求解
           float vector[VECTOR_SIZE] = {0};
@@ -615,9 +617,30 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
           // 法向量求解
           float normal[VECTOR_SIZE] = {0};
           float angle = currentBlock.units[laserID].GetAzimuth() * ASENSING_AZIMUTH_UNIT;
+//          std::cout << "azi : " << angle << std::endl;
           angle = (angle > 120) ? (angle - 360) : angle;
+          if(type == 0x03)
+          {
+              if(laserID / 2 == 0)
+              {
+                  angle += 50;
+              }
+              else if(laserID / 2 == 1)
+              {
+                  angle += 25;
+              }
+              else if(laserID / 2 == 3)
+              {
+                  angle -= 25;
+              }
+              else if(laserID / 2 == 4)
+              {
+                  angle -= 50;
+              }
+          }
           float gamma = degreeToRadian(-angle);
           angle = static_cast<float>(currentBlock.units[laserID].GetElevation()) * ASENSING_ELEVATION_UNIT;
+//          std::cout << "ele : " << angle << std::endl;
           angle = (angle > 120) ? (angle - 360) : angle;
           float beta = - 1 * degreeToRadian(angle);
           float sin_gamma = std::sin(gamma);

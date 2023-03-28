@@ -166,7 +166,8 @@ private:
   boost::endian::little_uint32_t FrameID;
   boost::endian::little_uint16_t SeqNum;
   boost::endian::little_uint16_t PkgLen;
-  boost::endian::little_uint16_t LidarType;
+  boost::endian::little_uint8_t LidarType;
+  boost::endian::little_uint8_t LidarInfo;
   boost::endian::little_uint8_t  VersionMajor;  /* Protocol version */
   boost::endian::little_uint8_t  VersionMinor;
 
@@ -200,8 +201,10 @@ public:
   SET_NATIVE_UINT(16, SeqNum)
   GET_NATIVE_UINT(16, PkgLen)
   SET_NATIVE_UINT(16, PkgLen)
-  GET_NATIVE_UINT(16, LidarType)
-  SET_NATIVE_UINT(16, LidarType)
+  GET_NATIVE_UINT(8, LidarType)
+  SET_NATIVE_UINT(8, LidarType)
+  GET_NATIVE_UINT(8, LidarInfo)
+  SET_NATIVE_UINT(8, LidarInfo)
   GET_NATIVE_UINT(8, VersionMajor)
   SET_NATIVE_UINT(8, VersionMajor)
   GET_NATIVE_UINT(8, VersionMinor)
