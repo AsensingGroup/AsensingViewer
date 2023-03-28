@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "NeptuneViewer"
-#define MyAppVersion "V0.45.0"
+#define MyAppVersion "V0.45.1"
 #define MyAppPublisher "Copyright @2022 广州导远电子科技有限公司"
 #define MyAppURL "http://www.asensing.com/"
 #define MyAppExeName "NeptuneViewer.exe"
