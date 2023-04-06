@@ -457,7 +457,6 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
 #endif
       //std::cout << "Split Frame =>> " << "FrameID: " << this->current_frame_id << ", total: " << this->points_per_frame  << std::endl; 
       this->SplitFrame();
-      this->seq_num_counter = 0;
     }
 
     for (int laserID = 0; laserID < ASENSING_LASER_NUM; laserID++)
@@ -596,7 +595,6 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
         }
 #endif
         this->SplitFrame();
-        this->seq_num_counter = 0;
       }
 
       // 角度算法处理x，y，z
@@ -723,6 +721,7 @@ vtkSmartPointer<vtkPolyData> vtkAsensing5PacketInterpreter::CreateNewEmptyFrame(
   // points
   current_pt_id = 0;
   current_seq_num = 0;
+  seq_num_counter = 0;
   vtkNew<vtkPoints> points;
   points->SetDataTypeToFloat();
   points->SetNumberOfPoints(defaultPrereservedNumberOfPointsPerFrame);
