@@ -133,6 +133,7 @@ private:
   uint8_t laser_num = 0;
   uint8_t echo_count = 1;
   uint32_t current_pt_id = 0;
+  uint32_t structured_pt_id = 0;
   uint32_t points_per_frame = ASENSING_POINT_NUM_MAX;
   uint32_t current_frame_id = 0;
 
