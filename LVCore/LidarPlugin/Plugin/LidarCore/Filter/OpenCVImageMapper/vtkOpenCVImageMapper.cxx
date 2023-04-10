@@ -17,7 +17,7 @@
 
 
 // LOCAL
-#include "Filter/vtkOpenCVImageMapper.h"
+#include "Filter/OpenCVImageMapper/vtkOpenCVImageMapper.h"
 #include "Common/vtkOpenCVConversions.h"
 #include "vtkPipelineTools.h"
 
