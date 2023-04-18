@@ -76,10 +76,8 @@ private:
   void operator=(const vtkPointCloudLinearProjector&) = delete;
 
   // Information of the Image data
-  double Origin[3] = {0, 0, 0};
-  unsigned int Resolution[2] = {750, 750};
+  unsigned int Resolution[2] = {1048, 64};
   double PixelSize[2] = {0.1, 0.1};
-  double Spacing[3] = {1, 1, 1};
 
   // Percentile to extract when performing rank filter.
   double RankPercentile = 0.5;
@@ -101,6 +99,19 @@ private:
   Eigen::Matrix3d DiagonalizedProjector = Eigen::Matrix3d::Identity();
   Eigen::Matrix3d ChangeOfBasis = Eigen::Matrix3d::Identity();
   Eigen::Matrix3d Projector = Eigen::Matrix3d::Identity();
+
+  //! Height of the output image
+  //! automatically computed depending
+  //! on the calibration table provided
+  int Height = 125;
+  //! Width of the output image
+  int Width = 1250;
+  //! Spacing of the output image
+  double Spacing[3] = {1,1,1};
+  //! Origin of the output image
+  double Origin[3] = {0,0,0};
+  ///! Scale of the image
+  double Scale = 1.0;
 };
 
 #endif // VTK_POINTCLOUD_LINEAR_PROJECTOR_H
