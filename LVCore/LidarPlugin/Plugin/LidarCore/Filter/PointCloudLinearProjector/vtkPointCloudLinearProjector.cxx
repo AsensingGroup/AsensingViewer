@@ -125,6 +125,8 @@ int vtkPointCloudLinearProjector::RequestData(vtkInformation* vtkNotUsed(request
       return 0;
     }
 
+    vtkDataArray* intensity = input->GetPointData()->GetArray("Intensity");
+
     for (unsigned int indexPoint = 0; indexPoint < input->GetNumberOfPoints(); ++indexPoint)
     {
         double points[3];
@@ -137,7 +139,8 @@ int vtkPointCloudLinearProjector::RequestData(vtkInformation* vtkNotUsed(request
         double y_img = std::atan2(z_lidar, d_lidar) / v_res_rad;
         x_img -= x_min;
         y_img -= y_min;
-        auto pixel_value = -1 * ((int)d_lidar % 255);
+//        auto pixel_value = -1 * ((int)d_lidar % 255);
+        unsigned char pixel_value = intensity->GetVariantValue(indexPoint).ToUnsignedChar();
         outputImage->SetScalarComponentFromDouble(x_img, y_img, 0, 0, pixel_value);
     }
     return VTK_OK;
