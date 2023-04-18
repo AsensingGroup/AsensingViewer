@@ -103,9 +103,9 @@ private:
   //! Height of the output image
   //! automatically computed depending
   //! on the calibration table provided
-  int Height = 125;
+  unsigned int Height = 150;
   //! Width of the output image
-  int Width = 1250;
+  unsigned int Width = 3600;
   //! Spacing of the output image
   double Spacing[3] = {1,1,1};
   //! Origin of the output image

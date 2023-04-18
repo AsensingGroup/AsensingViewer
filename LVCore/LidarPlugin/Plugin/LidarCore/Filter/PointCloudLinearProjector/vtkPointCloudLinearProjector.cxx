@@ -89,6 +89,22 @@ int vtkPointCloudLinearProjector::RequestData(vtkInformation* vtkNotUsed(request
   vtkInformationVector** inputVector,
   vtkInformationVector* outputVector)
 {
+    double h_fov[2] = {-125.0, 125.0};
+    double v_fov[2] = {-12.5, 12.5};
+    double v_fov_total = -v_fov[0] + v_fov[1];
+    double h_res = 0.1;
+    double v_res = 0.2;
+    double v_res_rad = v_res * (vtkMath::Pi() / 180);
+    double h_res_rad = h_res * (vtkMath::Pi() / 180);
+    double y_fudge = 0;
+    double x_min = h_fov[0] / h_res / 2;
+    double x_max = h_fov[1] / h_res;
+    double y_min = v_fov[0] / v_res;
+    double y_max = v_fov_total / v_res;
+    y_max += y_fudge;
+    this->Width = std::floor(x_max + 1);
+    this->Height = std::floor(y_max + 1);
+
     // Get the inputs
     vtkPolyData * input = vtkPolyData::GetData(inputVector[0]->GetInformationObject(0));
 
@@ -109,11 +125,6 @@ int vtkPointCloudLinearProjector::RequestData(vtkInformation* vtkNotUsed(request
       return 0;
     }
 
-    double h_fov[2] = {-125.0, 125.0};
-    double v_fov[2] = {-12.5, 12.5};
-    double h_res = 0.1;
-    double v_res = 0.2;
-    double y_fudge = 0;
     for (unsigned int indexPoint = 0; indexPoint < input->GetNumberOfPoints(); ++indexPoint)
     {
         double points[3];
@@ -122,25 +133,12 @@ int vtkPointCloudLinearProjector::RequestData(vtkInformation* vtkNotUsed(request
         double y_lidar = points[1];
         double z_lidar = points[2];
         double d_lidar = std::sqrt(x_lidar * x_lidar + y_lidar * y_lidar);
-        double v_fov_total = -v_fov[0] + v_fov[1];
-
-        double v_res_rad = v_res * (vtkMath::Pi() / 180);
-        double h_res_rad = h_res * (vtkMath::Pi() / 180);
         double x_img = std::atan2(-y_lidar, x_lidar) / h_res_rad;
         double y_img = std::atan2(z_lidar, d_lidar) / v_res_rad;
-
-        double x_min = h_fov[0] / h_res / 2;
         x_img -= x_min;
-        double x_max = h_fov[1] / h_res;
-
-        double y_min = v_fov[0] / v_res;
         y_img -= y_min;
-        double y_max = v_fov_total / v_res;
-        y_max += y_fudge;
-
-        double pixel_value = -d_lidar;
-        if((x_img < x_max && x_img > x_min) && (y_img < y_max && y_img > y_min))
-            outputImage->SetScalarComponentFromDouble(x_img, y_img, 0, 0, pixel_value);
+        auto pixel_value = -1 * ((int)d_lidar % 255);
+        outputImage->SetScalarComponentFromDouble(x_img, y_img, 0, 0, pixel_value);
     }
     return VTK_OK;
 }
