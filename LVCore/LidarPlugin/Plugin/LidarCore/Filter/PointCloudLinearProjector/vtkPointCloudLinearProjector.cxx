@@ -89,7 +89,7 @@ int vtkPointCloudLinearProjector::RequestData(vtkInformation* vtkNotUsed(request
   vtkInformationVector** inputVector,
   vtkInformationVector* outputVector)
 {
-    double h_fov[2] = {-125.0, 125.0};
+    double h_fov[2] = {-125, 125};
     double v_fov[2] = {-12.5, 12.5};
     double v_fov_total = -v_fov[0] + v_fov[1];
     double h_res = 0.1;
@@ -121,11 +121,12 @@ int vtkPointCloudLinearProjector::RequestData(vtkInformation* vtkNotUsed(request
     vtkDataArray* arrayToUse = this->GetInputArrayToProcess(0, inputVector);
     if (!arrayToUse)
     {
-      vtkErrorMacro("No input array selected!");
-      return 0;
+        vtkErrorMacro("No input array selected!");
+        return 0;
     }
 
-    vtkDataArray* intensity = input->GetPointData()->GetArray("Intensity");
+//    vtkDataArray* Azimuth = input->GetPointData()->GetArray("Azimuth");
+//    vtkDataArray* Elevation = input->GetPointData()->GetArray("Elevation");
 
     for (unsigned int indexPoint = 0; indexPoint < input->GetNumberOfPoints(); ++indexPoint)
     {
@@ -134,13 +135,21 @@ int vtkPointCloudLinearProjector::RequestData(vtkInformation* vtkNotUsed(request
         double x_lidar = points[0];
         double y_lidar = points[1];
         double z_lidar = points[2];
-        double d_lidar = std::sqrt(x_lidar * x_lidar + y_lidar * y_lidar);
+        double d_lidar = std::sqrt(x_lidar * x_lidar + y_lidar * y_lidar + z_lidar * z_lidar);
+//        double angle = 0;
+//        if(y_lidar > 0) {
+//            angle = std::atan2(-y_lidar, x_lidar) / vtkMath::Pi() * 180;
+//        }
+//        else {
+//            angle = std::atan2(-y_lidar, x_lidar) / vtkMath::Pi() * 180;
+//        }
+
+//        angle = angle / 180 * vtkMath::Pi();
         double x_img = std::atan2(-y_lidar, x_lidar) / h_res_rad;
         double y_img = std::atan2(z_lidar, d_lidar) / v_res_rad;
         x_img -= x_min;
         y_img -= y_min;
-//        auto pixel_value = -1 * ((int)d_lidar % 255);
-        unsigned char pixel_value = intensity->GetVariantValue(indexPoint).ToUnsignedChar();
+        double pixel_value = -d_lidar;
         outputImage->SetScalarComponentFromDouble(x_img, y_img, 0, 0, pixel_value);
     }
     return VTK_OK;
@@ -149,6 +158,7 @@ int vtkPointCloudLinearProjector::RequestData(vtkInformation* vtkNotUsed(request
 //------------------------------------------------------------------------------
 void vtkPointCloudLinearProjector::SetPlaneNormal(double w0, double w1, double w2)
 {
+#if 0
   // Here we will construct a new base of R3 using
   // the normal of the plane as the Z-axis. To proceed,
   // we will compute the rotation that map ez toward n
@@ -192,4 +202,5 @@ void vtkPointCloudLinearProjector::SetPlaneNormal(double w0, double w1, double w
     this->ChangeOfBasis = R;
   }
   this->Projector = this->DiagonalizedProjector * this->ChangeOfBasis.inverse();
+#endif
 }
