@@ -102,8 +102,8 @@ int vtkPointCloudLinearProjector::RequestData(vtkInformation* vtkNotUsed(request
     double y_min = v_fov[0] / v_res;
     double y_max = v_fov_total / v_res;
     y_max += y_fudge;
-    this->Width = std::floor(x_max + 1);
-    this->Height = std::floor(y_max + 1);
+    this->Width = std::floor(x_max / 2 + 1);
+    this->Height = std::floor(y_max / 2 + 1);
 
     // Get the inputs
     vtkPolyData * input = vtkPolyData::GetData(inputVector[0]->GetInformationObject(0));
@@ -131,19 +131,20 @@ int vtkPointCloudLinearProjector::RequestData(vtkInformation* vtkNotUsed(request
         double x_lidar = points[0];
         double y_lidar = points[1];
         double z_lidar = points[2];
-        double d_lidar = std::sqrt(x_lidar * x_lidar + y_lidar * y_lidar + z_lidar * z_lidar);
+        double d_lidar = std::sqrt(x_lidar * x_lidar + y_lidar * y_lidar/* + z_lidar * z_lidar*/);
         double x_img;
         if(y_lidar > 0) {
             x_img = std::atan2(-y_lidar, x_lidar) / h_res_rad;
         }
         else {
             x_img = (- std::atan2(y_lidar, x_lidar)) / h_res_rad;
+            std::cout << "+ angle : " << (- std::atan2(y_lidar, x_lidar) / vtkMath::Pi() * 180) << " , " << (x_img - x_min) << std::endl;
         }
         double y_img = std::atan2(z_lidar, d_lidar) / v_res_rad;
         x_img -= x_min;
         y_img -= y_min;
-        double pixel_value = -d_lidar;
-        outputImage->SetScalarComponentFromDouble(x_img, y_img, 0, 0, pixel_value);
+        double pixel_value = /*d_lidar / 255 * 100*/-d_lidar;
+        outputImage->SetScalarComponentFromDouble(x_img / 2, y_img / 2, 0, 0, pixel_value);
     }
     return VTK_OK;
 }
