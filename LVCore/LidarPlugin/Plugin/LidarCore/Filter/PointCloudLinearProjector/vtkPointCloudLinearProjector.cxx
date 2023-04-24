@@ -89,8 +89,8 @@ int vtkPointCloudLinearProjector::RequestData(vtkInformation* vtkNotUsed(request
   vtkInformationVector** inputVector,
   vtkInformationVector* outputVector)
 {
-    double h_fov[2] = {-125, 125};
-    double v_fov[2] = {-12.5, 12.5};
+    double h_fov[2] = {-130, 130};
+    double v_fov[2] = {-15, 15};
     double v_fov_total = -v_fov[0] + v_fov[1];
     double h_res = 0.1;
     double v_res = 0.2;
@@ -124,10 +124,6 @@ int vtkPointCloudLinearProjector::RequestData(vtkInformation* vtkNotUsed(request
         vtkErrorMacro("No input array selected!");
         return 0;
     }
-
-//    vtkDataArray* Azimuth = input->GetPointData()->GetArray("Azimuth");
-//    vtkDataArray* Elevation = input->GetPointData()->GetArray("Elevation");
-
     for (unsigned int indexPoint = 0; indexPoint < input->GetNumberOfPoints(); ++indexPoint)
     {
         double points[3];
@@ -136,16 +132,13 @@ int vtkPointCloudLinearProjector::RequestData(vtkInformation* vtkNotUsed(request
         double y_lidar = points[1];
         double z_lidar = points[2];
         double d_lidar = std::sqrt(x_lidar * x_lidar + y_lidar * y_lidar + z_lidar * z_lidar);
-//        double angle = 0;
-//        if(y_lidar > 0) {
-//            angle = std::atan2(-y_lidar, x_lidar) / vtkMath::Pi() * 180;
-//        }
-//        else {
-//            angle = std::atan2(-y_lidar, x_lidar) / vtkMath::Pi() * 180;
-//        }
-
-//        angle = angle / 180 * vtkMath::Pi();
-        double x_img = std::atan2(-y_lidar, x_lidar) / h_res_rad;
+        double x_img;
+        if(y_lidar > 0) {
+            x_img = std::atan2(-y_lidar, x_lidar) / h_res_rad;
+        }
+        else {
+            x_img = (- std::atan2(y_lidar, x_lidar)) / h_res_rad;
+        }
         double y_img = std::atan2(z_lidar, d_lidar) / v_res_rad;
         x_img -= x_min;
         y_img -= y_min;
