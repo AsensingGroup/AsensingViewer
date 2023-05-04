@@ -601,7 +601,7 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
 
       // 角度算法处理x，y，z
       auto type = dataPacket->header.GetLidarInfo() & 0x03;
-      if(type == 0x02 || type == 0x03)
+//      if(type == 0x02 || type == 0x03)
       {
           // 入射向量求解
           float vector[VECTOR_SIZE] = {0};

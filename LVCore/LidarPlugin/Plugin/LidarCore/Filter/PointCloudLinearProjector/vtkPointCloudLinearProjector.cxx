@@ -32,6 +32,9 @@
 #include <vtkPointData.h>
 #include <vtkPolyData.h>
 #include <vtkStreamingDemandDrivenPipeline.h>
+#include <vtkDoubleArray.h>
+#include <vtkUnsignedIntArray.h>
+#include <vtkCellData.h>
 
 // BOOST
 #include <boost/algorithm/string.hpp>
@@ -124,6 +127,18 @@ int vtkPointCloudLinearProjector::RequestData(vtkInformation* vtkNotUsed(request
         vtkErrorMacro("No input array selected!");
         return 0;
     }
+    vtkSmartPointer<vtkDoubleArray> arrayX = vtkSmartPointer<vtkDoubleArray>::New();
+    arrayX->SetNumberOfValues(input->GetNumberOfPoints());
+    arrayX->SetName("point_x");
+    vtkSmartPointer<vtkDoubleArray> arrayY = vtkSmartPointer<vtkDoubleArray>::New();
+    arrayY->SetNumberOfValues(input->GetNumberOfPoints());
+    arrayY->SetName("point_y");
+    vtkSmartPointer<vtkDoubleArray> arrayZ = vtkSmartPointer<vtkDoubleArray>::New();
+    arrayZ->SetNumberOfValues(input->GetNumberOfPoints());
+    arrayZ->SetName("point_z");
+    vtkSmartPointer<vtkUnsignedIntArray> point_id = vtkSmartPointer<vtkUnsignedIntArray>::New();
+    point_id->SetNumberOfValues(input->GetNumberOfPoints());
+    point_id->SetName("point_id");
     for (unsigned int indexPoint = 0; indexPoint < input->GetNumberOfPoints(); ++indexPoint)
     {
         double points[3];
@@ -131,6 +146,13 @@ int vtkPointCloudLinearProjector::RequestData(vtkInformation* vtkNotUsed(request
         double x_lidar = points[0];
         double y_lidar = points[1];
         double z_lidar = points[2];
+        /*if(indexPoint < 49476)*/ {
+            arrayX->SetValue(indexPoint, points[0]);
+            arrayY->SetValue(indexPoint, points[1]);
+            arrayZ->SetValue(indexPoint, points[2]);
+            point_id->SetValue(indexPoint, indexPoint);
+        }
+
         double d_lidar = std::sqrt(x_lidar * x_lidar + y_lidar * y_lidar/* + z_lidar * z_lidar*/);
         double x_img;
         if(y_lidar > 0) {
@@ -138,14 +160,23 @@ int vtkPointCloudLinearProjector::RequestData(vtkInformation* vtkNotUsed(request
         }
         else {
             x_img = (- std::atan2(y_lidar, x_lidar)) / h_res_rad;
-            std::cout << "+ angle : " << (- std::atan2(y_lidar, x_lidar) / vtkMath::Pi() * 180) << " , " << (x_img - x_min) << std::endl;
+//            std::cout << "+ angle : " << (- std::atan2(y_lidar, x_lidar) / vtkMath::Pi() * 180) << " , " << (x_img - x_min) << std::endl;
         }
         double y_img = std::atan2(z_lidar, d_lidar) / v_res_rad;
         x_img -= x_min;
         y_img -= y_min;
-        double pixel_value = /*d_lidar / 255 * 100*/-d_lidar;
+        double pixel_value = /*d_lidar / 255 * 100*/d_lidar;
         outputImage->SetScalarComponentFromDouble(x_img / 2, y_img / 2, 0, 0, pixel_value);
     }
+
+    outputImage->GetFieldData()->AddArray(arrayX);
+    outputImage->GetFieldData()->AddArray(arrayY);
+    outputImage->GetFieldData()->AddArray(arrayZ);
+    outputImage->GetFieldData()->AddArray(point_id);
+//    outputImage->GetPointData()->AddArray(arrayX);
+//    outputImage->GetPointData()->AddArray(arrayY);
+//    outputImage->GetPointData()->AddArray(arrayZ);
+//    outputImage->GetPointData()->AddArray(point_id);
     return VTK_OK;
 }
 
