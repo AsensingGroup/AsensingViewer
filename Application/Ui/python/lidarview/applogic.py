@@ -653,7 +653,7 @@ def initAsensingRendering():
     # Create a new horizontal layout
     if renderingWindowLayout is None:
         renderingWindowLayout = smp.GetLayout()
-        renderingWindowLayout.SplitVertical(0, 0.70)
+        renderingWindowLayout.SplitVertical(0, 0.80)
     # create a new render view
     if imageView is None:
         imageView = smp.CreateView("RenderView")
@@ -759,6 +759,8 @@ def onOpenPCAP():
     initAsensingRendering()
     smp.SetActiveSource(trailingFrame)
     setAsensing3DDisplayPropertied(pointcloud)
+    smp.ResetCamera(imageView)
+    imageView.CameraParallelScale = 80
     smp.Render()
 
 # Generic Helpers
