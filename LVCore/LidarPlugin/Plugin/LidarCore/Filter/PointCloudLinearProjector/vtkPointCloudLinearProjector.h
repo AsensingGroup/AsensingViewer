@@ -109,9 +109,9 @@ private:
   //! Spacing of the output image
   double Spacing[3] = {1,1,1};
   //! Origin of the output image
-  double Origin[3] = {0,0,0};
+  double Origin[3] = {-50,-5,0};
   ///! Scale of the image
-  double Scale = 1.0;
+  double Scale = 0.6;
 };
 
 #endif // VTK_POINTCLOUD_LINEAR_PROJECTOR_H

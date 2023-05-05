@@ -35,6 +35,7 @@
 #include <vtkDoubleArray.h>
 #include <vtkUnsignedIntArray.h>
 #include <vtkCellData.h>
+#include <vtkImageResize.h>
 
 // BOOST
 #include <boost/algorithm/string.hpp>
@@ -92,26 +93,19 @@ int vtkPointCloudLinearProjector::RequestData(vtkInformation* vtkNotUsed(request
   vtkInformationVector** inputVector,
   vtkInformationVector* outputVector)
 {
-    double h_fov[2] = {-130, 130};
-    double v_fov[2] = {-15, 15};
-    double v_fov_total = -v_fov[0] + v_fov[1];
+    double h_fov = 130;
+    double v_fov = 15;
     double h_res = 0.1;
     double v_res = 0.2;
     double v_res_rad = v_res * (vtkMath::Pi() / 180);
     double h_res_rad = h_res * (vtkMath::Pi() / 180);
-    double y_fudge = 0;
-    double x_min = h_fov[0] / h_res / 2;
-    double x_max = h_fov[1] / h_res;
-    double y_min = v_fov[0] / v_res;
-    double y_max = v_fov_total / v_res;
-    y_max += y_fudge;
-    this->Width = std::floor(x_max / 2 + 1);
-    this->Height = std::floor(y_max / 2 + 1);
-
-    // Get the inputs
+    double x_min = -h_fov / h_res / 2;
+    double x_max = h_fov / h_res;
+    double y_min = -v_fov / v_res;
+    double y_max = v_fov * 2 / v_res - 30;
+    this->Width = std::floor(x_max + 1);
+    this->Height = std::floor(y_max + 1);
     vtkPolyData * input = vtkPolyData::GetData(inputVector[0]->GetInformationObject(0));
-
-    // Get the output image and fill with zeros
     vtkImageData* outputImage = vtkImageData::GetData(outputVector->GetInformationObject(0));
     outputImage->SetDimensions(this->Width, this->Height, 1);
     outputImage->SetSpacing(this->Spacing);
@@ -119,26 +113,12 @@ int vtkPointCloudLinearProjector::RequestData(vtkInformation* vtkNotUsed(request
     outputImage->AllocateScalars(VTK_DOUBLE, 1);
     unsigned char* dataPointer = static_cast<unsigned char*>(outputImage->GetScalarPointer());
     std::fill(dataPointer, dataPointer + this->Height * this->Width, 0);
-
-    // Get the required array
     vtkDataArray* arrayToUse = this->GetInputArrayToProcess(0, inputVector);
     if (!arrayToUse)
     {
         vtkErrorMacro("No input array selected!");
         return 0;
     }
-    vtkSmartPointer<vtkDoubleArray> arrayX = vtkSmartPointer<vtkDoubleArray>::New();
-    arrayX->SetNumberOfValues(input->GetNumberOfPoints());
-    arrayX->SetName("point_x");
-    vtkSmartPointer<vtkDoubleArray> arrayY = vtkSmartPointer<vtkDoubleArray>::New();
-    arrayY->SetNumberOfValues(input->GetNumberOfPoints());
-    arrayY->SetName("point_y");
-    vtkSmartPointer<vtkDoubleArray> arrayZ = vtkSmartPointer<vtkDoubleArray>::New();
-    arrayZ->SetNumberOfValues(input->GetNumberOfPoints());
-    arrayZ->SetName("point_z");
-    vtkSmartPointer<vtkUnsignedIntArray> point_id = vtkSmartPointer<vtkUnsignedIntArray>::New();
-    point_id->SetNumberOfValues(input->GetNumberOfPoints());
-    point_id->SetName("point_id");
     for (unsigned int indexPoint = 0; indexPoint < input->GetNumberOfPoints(); ++indexPoint)
     {
         double points[3];
@@ -146,37 +126,23 @@ int vtkPointCloudLinearProjector::RequestData(vtkInformation* vtkNotUsed(request
         double x_lidar = points[0];
         double y_lidar = points[1];
         double z_lidar = points[2];
-        /*if(indexPoint < 49476)*/ {
-            arrayX->SetValue(indexPoint, points[0]);
-            arrayY->SetValue(indexPoint, points[1]);
-            arrayZ->SetValue(indexPoint, points[2]);
-            point_id->SetValue(indexPoint, indexPoint);
-        }
-
-        double d_lidar = std::sqrt(x_lidar * x_lidar + y_lidar * y_lidar/* + z_lidar * z_lidar*/);
+        double d_lidar = std::sqrt(x_lidar * x_lidar + y_lidar * y_lidar + z_lidar * z_lidar);
         double x_img;
         if(y_lidar > 0) {
             x_img = std::atan2(-y_lidar, x_lidar) / h_res_rad;
         }
         else {
             x_img = (- std::atan2(y_lidar, x_lidar)) / h_res_rad;
-//            std::cout << "+ angle : " << (- std::atan2(y_lidar, x_lidar) / vtkMath::Pi() * 180) << " , " << (x_img - x_min) << std::endl;
         }
         double y_img = std::atan2(z_lidar, d_lidar) / v_res_rad;
         x_img -= x_min;
         y_img -= y_min;
-        double pixel_value = /*d_lidar / 255 * 100*/d_lidar;
-        outputImage->SetScalarComponentFromDouble(x_img / 2, y_img / 2, 0, 0, pixel_value);
+        int x = x_img * this->Scale;
+        int y = y_img * this->Scale + 15;
+//        outputImage->SetScalarComponentFromDouble(x, y, 0, 0, d_lidar);
+//        outputImage->SetScalarComponentFromDouble(x, y + 50, 0, 0, z_lidar + 100);
+        outputImage->SetScalarComponentFromDouble(x, y, 0, 0, arrayToUse->GetTuple1(indexPoint));
     }
-
-    outputImage->GetFieldData()->AddArray(arrayX);
-    outputImage->GetFieldData()->AddArray(arrayY);
-    outputImage->GetFieldData()->AddArray(arrayZ);
-    outputImage->GetFieldData()->AddArray(point_id);
-//    outputImage->GetPointData()->AddArray(arrayX);
-//    outputImage->GetPointData()->AddArray(arrayY);
-//    outputImage->GetPointData()->AddArray(arrayZ);
-//    outputImage->GetPointData()->AddArray(point_id);
     return VTK_OK;
 }
 
