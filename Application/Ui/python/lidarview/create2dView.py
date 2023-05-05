@@ -238,7 +238,7 @@ if pointcloudView is None:
 smp.SetActiveView(pointcloudView)
 smp.SetActiveSource(trailingFrame)
 smp.Show(trailingFrame, pointcloudView)
-colorByIntensity(trailingFrame)
+# colorByIntensity(trailingFrame)
 showSourceInSpreadSheet(pointcloud)
 
 #smp.SetActiveView(app.mainView)

@@ -33,6 +33,12 @@ from PythonQt.paraview import vvCropReturnsDialog, vvSelectFramesDialog #WIP ren
 # without this plugin, GetClientSideObject(), would return the first mother class known by paraview
 import LidarPlugin.LidarCore # NOQA
 
+renderingWindowLayout = None
+pointcloud = None
+pointcloudView = None
+imageView = None
+trailingFrame = None
+
 class AppLogic(object):
 
     def __init__(self):
@@ -638,6 +644,122 @@ def onClose():
     # Disable Actions
     disableSaveActions()
 
+def initAsensingRendering():
+    global renderingWindowLayout
+    global pointcloud
+    global pointcloudView
+    global imageView
+    global trailingFrame
+    # Create a new horizontal layout
+    if renderingWindowLayout is None:
+        renderingWindowLayout = smp.GetLayout()
+        renderingWindowLayout.SplitVertical(0, 0.70)
+    # create a new render view
+    if imageView is None:
+        imageView = smp.CreateView("RenderView")
+        imageView.AxesGrid = 'GridAxes3DActor'
+        imageView.StereoType = 0
+        imageView.Background = [0.0, 0.0, 0.0]
+        renderingWindowLayout.AssignView(2, imageView)
+        imageView.InteractionMode = '2D'
+        imageView.OrientationAxesVisibility = 0 # Hide the tri-axe
+        # BLock the rotation arount the normal of the image plane
+        imageView.Camera2DManipulators = ['Pan', 'None', 'Zoom', 'Zoom', 'Zoom', 'ZoomToMouse', 'Roll', 'Pan', 'Rotate']
+    # Create a lidar as image
+    pointcloud = smp.FindSource('LidarReader1')
+    LidarAsImage = smp.PointCloudLinearProjector(pointcloud)
+    # show the image
+    smp.SetActiveView(imageView)
+    smp.SetActiveSource(LidarAsImage)
+    lidarAsImageDisplay = smp.Show(LidarAsImage, imageView)
+    # Hacky to update automatically lidar as image
+    dataDisplay = smp.Show(pointcloud, imageView)
+    smp.Hide(pointcloud, imageView)
+    # Set color scale
+    imageScalarsLUT = smp.GetColorTransferFunction('ImageScalars')
+    #  imageScalarsLUT = smp.GetColorTransferFunction('LidarAsImage')
+    imageScalarsLUT.RescaleTransferFunction(0.0, 255.0)
+    imageScalarsLUT.ApplyPreset('Viridis (matplotlib)', True)
+    # render
+    smp.Render()
+
+    # Set default pointcloud colorization to intensity
+    smp.SetActiveView(pointcloudView)
+    smp.SetActiveSource(trailingFrame)
+
+    if trailingFrame is not None:
+        pointcloudViewDisplay = smp.GetDisplayProperties(trailingFrame, view=pointcloudView)
+        smp.ColorBy(pointcloudViewDisplay, ('POINTS', 'Intensity'))
+        pointcloudViewDisplay.RescaleTransferFunctionToDataRange(True, False)
+        pointcloudViewDisplay.SetScalarBarVisibility(pointcloudView, True)
+        # render
+        smp.Show(trailingFrame, pointcloudView)
+        smp.Render()
+
+def setAsensing3DDisplayPropertied(source):
+    rep = smp.GetDisplayProperties(source)
+    rep.RescaleTransferFunctionToDataRange(False, True)
+    rep.ColorArrayName = 'Intensity'
+    rep.LookupTable = smp.GetLookupTableForArray('Intensity', 1) # not needed ?
+    intensityLUT = smp.GetColorTransferFunction('Intensity')
+    # Ouster documentation do not indicate which range can be expected
+    # so this range could be improved
+    intensityLUT.RescaleTransferFunction(0.0, 1600.0)
+    intensityLUT.ApplyPreset('Viridis (matplotlib)', True)
+
+    intensityLUT = smp.GetColorTransferFunction('Intensity')
+    # Ouster documentation do not indicate which range can be expected
+    # so this range could be improved
+    intensityLUT.RescaleTransferFunction(0.0, 1600.0)
+    intensityLUT.ApplyPreset('Viridis (matplotlib)', True)
+
+    reflectivityLUT = smp.GetColorTransferFunction('Reflectivity')
+    # again, no indication of expected range in documentation
+    reflectivityLUT.RescaleTransferFunction(0.0, 20000.0)
+    reflectivityLUT.ApplyPreset('Viridis (matplotlib)', True)
+
+    rangeLUT = smp.GetColorTransferFunction('Range')
+    # tresholding distance to 50 meters
+    rangeLUT.RescaleTransferFunction(0.0, 50000.0) # range is in millimeters
+    rangeLUT.ApplyPreset('Viridis (matplotlib)', True)
+
+
+def colorByIntensity(sourceProxy):
+    if not hasArrayName(sourceProxy, 'Intensity'):
+        print(sourceProxy, "no intensity array, returning")
+        return False
+    setDefaultLookupTables(sourceProxy)
+    rep = smp.GetDisplayProperties(sourceProxy)
+    rep.ColorArrayName = 'Intensity'
+    rep.LookupTable = smp.GetLookupTableForArray('Intensity', 1)
+    return True
+
+def getSpreadSheetViewProxy():
+    return smp.servermanager.ProxyManager().GetProxy("views", "main spreadsheet view")
+    
+def onOpenPCAP():
+    global renderingWindowLayout
+    global pointcloud
+    global pointcloudView
+    global imageView
+    global trailingFrame
+    ########## Asensing #############
+    # Get tailing frame
+    if trailingFrame is None:
+        trailingFrame = smp.FindSource("TrailingFrame1")
+    if pointcloudView is None:
+        pointcloudView = smp.FindViewOrCreate('RenderView1', viewtype='RenderView')
+    smp.SetActiveView(pointcloudView)
+    smp.SetActiveSource(trailingFrame)
+    smp.Show(trailingFrame, pointcloudView)
+    # colorByIntensity(trailingFrame)
+    showSourceInSpreadSheet(pointcloud)
+
+    #smp.SetActiveView(app.mainView)
+    initAsensingRendering()
+    smp.SetActiveSource(trailingFrame)
+    setAsensing3DDisplayPropertied(pointcloud)
+    smp.Render()
 
 # Generic Helpers
 def _setSaveActionsEnabled(enabled):
@@ -1010,6 +1132,7 @@ def setupActions():
     app.actions['actionAbout_LidarView'].connect('triggered()', lambda : lidarview.aboutDialog.showDialog(getMainWindow()) )
     app.actions['actionShowPosition'].connect('triggered()', ShowPosition)
     app.actions['actionShowRPM'].connect('triggered()', toggleRPM)
+    app.actions['actionOpenPcap'].connect('triggered()', onOpenPCAP)
 
     # Restore action states from settings
     settings = getPVSettings()
