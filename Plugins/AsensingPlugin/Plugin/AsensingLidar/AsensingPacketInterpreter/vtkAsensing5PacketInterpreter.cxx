@@ -436,29 +436,30 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
   }
   // [HACK end]
 
+  AsensingSpecificFrameInformation* frameInfo = reinterpret_cast<AsensingSpecificFrameInformation*>(this->ParserMetaData.SpecificInformation.get());
+  if (frameInfo->IsNewFrame(1, current_frame_id))
+  {
+#if PACKET_STAT_DEBUG
+    /* If fewer UDP packets are received than expected, means packet loss */
+    if (current_frame_id > 0 && this->seq_num_counter < (this->points_per_frame / ASENSING_POINT_PER_PACKET)) {
+        vtkWarningMacro(<< "Incomplete frame (id: " << (current_frame_id - 1)
+                        << ", packets: " << seq_num_counter
+                        << ", total: " << (this->points_per_frame / ASENSING_POINT_PER_PACKET)
+                        << ", lsn: " << this->last_seq_num 
+                        << ", points: " << this->points_per_frame << ")" );
+    }
+#endif
+    //std::cout << "Split Frame =>> " << "FrameID: " << this->current_frame_id << ", total: " << this->points_per_frame  << std::endl; 
+    this->SplitFrame();
+  }
+
+  if (current_seq_num != 0 && current_seq_num != last_seq_num+1) { 
+    structured_pt_id += ASENSING_POINT_PER_PACKET;
+  }
+
   for (int blockID = start_block; blockID < end_block; blockID++)
   {
     AsensingBlock currentBlock = dataPacket->blocks[blockID];
-
-    AsensingSpecificFrameInformation* frameInfo =
-      reinterpret_cast<AsensingSpecificFrameInformation*>(
-        this->ParserMetaData.SpecificInformation.get());
-    if (frameInfo->IsNewFrame(1, current_frame_id))
-    {
-#if PACKET_STAT_DEBUG
-      /* If fewer UDP packets are received than expected, means packet loss */
-      if (current_frame_id > 0 && this->seq_num_counter < (this->points_per_frame / ASENSING_POINT_PER_PACKET)) {
-          vtkWarningMacro(<< "Incomplete frame (id: " << (current_frame_id - 1)
-                          << ", packets: " << seq_num_counter
-                          << ", total: " << (this->points_per_frame / ASENSING_POINT_PER_PACKET)
-                          << ", lsn: " << this->last_seq_num 
-                          << ", points: " << this->points_per_frame << ")" );
-      }
-#endif
-      //std::cout << "Split Frame =>> " << "FrameID: " << this->current_frame_id << ", total: " << this->points_per_frame  << std::endl; 
-      this->SplitFrame();
-      this->seq_num_counter = 0;
-    }
 
     for (int laserID = 0; laserID < ASENSING_LASER_NUM; laserID++)
     {
@@ -596,12 +597,11 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
         }
 #endif
         this->SplitFrame();
-        this->seq_num_counter = 0;
       }
 
       // 角度算法处理x，y，z
-      auto type = dataPacket->header.GetLidarInfo() & 0x03;
-//      if(type == 0x02 || type == 0x03)
+      auto type = dataPacket->header.GetLidarInfo() >> 6;
+      if(type == 0x02 || type == 0x03)  // 0x02 -> 0°, 0x03 -> 25°
       {
           // 入射向量求解
           float vector[VECTOR_SIZE] = {0};
@@ -617,7 +617,6 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
           // 法向量求解
           float normal[VECTOR_SIZE] = {0};
           float angle = currentBlock.units[laserID].GetAzimuth() * ASENSING_AZIMUTH_UNIT;
-//          std::cout << "azi : " << angle << std::endl;
           angle = (angle > 120) ? (angle - 360) : angle;
           if(type == 0x03)
           {
@@ -640,7 +639,6 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
           }
           float gamma = degreeToRadian(-angle);
           angle = static_cast<float>(currentBlock.units[laserID].GetElevation()) * ASENSING_ELEVATION_UNIT;
-//          std::cout << "ele : " << angle << std::endl;
           angle = (angle > 120) ? (angle - 360) : angle;
           float beta = - 1 * degreeToRadian(angle);
           float sin_gamma = std::sin(gamma);
@@ -668,12 +666,13 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
       TrySetValue(this->PointsX, current_pt_id, x);
       TrySetValue(this->PointsY, current_pt_id, y);
       TrySetValue(this->PointsZ, current_pt_id, z);
-      TrySetValue(this->PointID, current_pt_id, current_pt_id);
+      TrySetValue(this->PointID, current_pt_id, structured_pt_id);
       TrySetValue(this->LaserID, current_pt_id, laserID);
       TrySetValue(this->Intensities, current_pt_id, intensity);
       TrySetValue(this->Timestamps, current_pt_id, timestamp);
       TrySetValue(this->Distances, current_pt_id, distance);
       current_pt_id++;
+      structured_pt_id++;
     }
   }
 
@@ -723,8 +722,10 @@ vtkSmartPointer<vtkPolyData> vtkAsensing5PacketInterpreter::CreateNewEmptyFrame(
   vtkSmartPointer<vtkPolyData> polyData = vtkSmartPointer<vtkPolyData>::New();
 
   // points
+  structured_pt_id = 0;
   current_pt_id = 0;
   current_seq_num = 0;
+  seq_num_counter = 0;
   vtkNew<vtkPoints> points;
   points->SetDataTypeToFloat();
   points->SetNumberOfPoints(defaultPrereservedNumberOfPointsPerFrame);

@@ -758,7 +758,7 @@ def onOpenPCAP():
     #smp.SetActiveView(app.mainView)
     initAsensingRendering()
     smp.SetActiveSource(trailingFrame)
-    setAsensing3DDisplayPropertied(pointcloud)
+#    setAsensing3DDisplayPropertied(pointcloud)
     smp.ResetCamera(imageView)
     imageView.CameraParallelScale = 80
     smp.Render()
