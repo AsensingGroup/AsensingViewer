@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.20.3)
 
 project(LidarViewSuperBuild)
 
-set(CMAKE_BUILD_TYPE "Debug")
-set(SUPERBUILD_ALLOW_DEBUG ON)
+set(CMAKE_BUILD_TYPE "RelWithDebInfo")
+#set(SUPERBUILD_ALLOW_DEBUG ON)
 
 #-----------------------------------------------------------------------------
 # All the function and variable bellow are here because we rely on lidarview's

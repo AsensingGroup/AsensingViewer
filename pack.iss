@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "NeptuneViewer"
-#define MyAppVersion "V0.45.1"
+#define MyAppVersion "V0.45.2"
 #define MyAppPublisher "Copyright @2022 广州导远电子科技有限公司"
 #define MyAppURL "http://www.asensing.com/"
 #define MyAppExeName "NeptuneViewer.exe"
@@ -27,7 +27,7 @@ DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputDir=C:\Users\heaven\Desktop
-OutputBaseFilename=NeptuneViewer-{#MyAppVersion}-Windows-AMD64
+OutputBaseFilename=NeptuneViewer-{#MyAppVersion}-Windows-AMD64-alpha
 SetupIconFile=E:\workspace\AsensingViewer\Application\SoftwareInformation\logo.ico
 Compression=lzma
 SolidCompression=yes
