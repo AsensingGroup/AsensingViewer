@@ -1,5 +1,10 @@
 # 更改日志
 
+## NeptuneViewer V0.46.0
+
+- 支持深度图模式（加载pcap时）
+- 解决csv文件导出时间戳精度丢失的问题
+
 ## NeptuneViewer V0.45.0
 
 - 修复不同mems类型切换崩溃的问题
