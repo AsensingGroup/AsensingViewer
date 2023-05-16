@@ -14,7 +14,7 @@
    <bool>true</bool>
   </property>
   <property name="windowTitle">
-   <string>NeptuneViewer</string>
+   <string>AsensingView</string>
   </property>
   <property name="windowIcon">
    <iconset resource="vvResources.qrc">
@@ -101,10 +101,10 @@
     </property>
     <action name="actionResetDefaultSettings">
      <property name="text">
-      <string>Reset NeptuneViewer settings</string>
+      <string>Reset AsensingView settings</string>
      </property>
      <property name="iconText">
-      <string>This will reset all NeptuneViewer settings by default</string>
+      <string>This will reset all AsensingView settings by default</string>
      </property>
     </action>
     <addaction name="actionAbout_LidarView"/>

@@ -1,9 +1,17 @@
 # 更改日志
 
+## AsensingView V0.47.0
+
+- 将上位机软件名称由 NeptuneViewer 修改为 AsensingView
+
 ## NeptuneViewer V0.46.0
 
 - 支持深度图模式（加载pcap时）
 - 解决csv文件导出时间戳精度丢失的问题
+
+## NeptuneViewer V0.45.2
+
+- 修复导入双回波 pcap 数据时崩溃的问题
 
 ## NeptuneViewer V0.45.0
 

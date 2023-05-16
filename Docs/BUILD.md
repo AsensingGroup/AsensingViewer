@@ -86,7 +86,7 @@ cmake --build . -j
 启动上位机软件
 
 ```bash
-./install/bin/NeptuneViewer
+./install/bin/AsensingView
 ```
 
 编译 Debug 版本
@@ -99,7 +99,7 @@ cmake --build . -j
 以调试模式启动
 
 ```bash
-gdb ./install/bin/NeptuneViewer
+gdb ./install/bin/AsensingView
 ```
 
 ## Windows 系统
@@ -183,7 +183,7 @@ cmake --build . -j
 启动程序
 
 ```bash
-install\bin\NeptuneViewer
+install\bin\AsensingView
 ```
 
 ## 增量构建说明
@@ -232,5 +232,5 @@ ctest
   ```
 - 编译后的可执行文件位于“C:\builds\install\bin”；
 - 使用 Inno Setup Compiler 软件打开桌面的 pack.iss 文件，修改版本信息，点击工具栏中的“Compile”按钮开始打包程序。
-- 等待打包完成，将在桌面生成一个 NeptuneViewer.exe 可执行文件。
+- 等待打包完成，将在桌面生成一个 AsensingView.exe 可执行文件。
 
