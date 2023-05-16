@@ -40,7 +40,7 @@
 #define ASENSING_POINT_PER_PACKET    (ASENSING_BLOCK_NUM * ASENSING_LASER_NUM)    /* eg. 12 * 8 = 96, 12 * 10 = 120 */
 
 #define ASENSING_POINT_NUM           (4800 * ASENSING_LASER_NUM)  /* 忽略，使用动态计算 (38400) */
-#define ASENSING_POINT_NUM_MAX       (ASENSING_POINT_NUM * 6)     /* Dual echo & High precision for max ROI */
+#define ASENSING_POINT_NUM_MAX       (ASENSING_POINT_NUM * 8)     /* Dual echo & High precision for max ROI */
 
 #define ASENSING_SOB_SIZE            (4)
 #define ASENSING_FRAME_ID_SIZE       (4)

@@ -182,6 +182,7 @@ void vtkAsensing5PacketInterpreter::LoadCalibration(const std::string& filename)
     NoLaserAngle = true;
   }
 
+#if USING_RT_MATRIX
   if (!(cJSON_IsArray(RT0) && cJSON_IsArray(RT1) && cJSON_IsArray(RT2) && cJSON_IsArray(RT3)))
   {
     std::cout << "Warning: Please check RT matrix" << std::endl;
@@ -268,6 +269,7 @@ void vtkAsensing5PacketInterpreter::LoadCalibration(const std::string& filename)
       std::cout << std::endl;
     }
   }
+#endif
 
   /* If no Laser angle data */
 
