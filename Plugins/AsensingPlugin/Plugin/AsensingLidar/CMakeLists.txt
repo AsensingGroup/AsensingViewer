@@ -14,6 +14,7 @@ set(asensingplugin_xml
   #${AsensingInterpreter_xml}
   ${CMAKE_CURRENT_SOURCE_DIR}/AsensingPacketInterpreter/AsensingPacketInterpreter.xml
   ${CMAKE_CURRENT_SOURCE_DIR}/AsensingPacketInterpreter/Asensing5PacketInterpreter.xml
+  ${CMAKE_CURRENT_SOURCE_DIR}/AsensingPacketInterpreter/A2PacketInterpreter.xml
   #${CMAKE_CURRENT_SOURCE_DIR}/AsensingGeneralPacketInterpreter/AsensingGeneralPacketInterpreter.xml
   )
 
@@ -21,6 +22,7 @@ set(asensingplugin_classes
   #${AsensingInterpreter_cxx}
   ${CMAKE_CURRENT_SOURCE_DIR}/AsensingPacketInterpreter/vtkAsensingPacketInterpreter
   ${CMAKE_CURRENT_SOURCE_DIR}/AsensingPacketInterpreter/vtkAsensing5PacketInterpreter
+  ${CMAKE_CURRENT_SOURCE_DIR}/AsensingPacketInterpreter/vtkA2PacketInterpreter
   #${CMAKE_CURRENT_SOURCE_DIR}/AsensingGeneralPacketInterpreter/vtkAsensingGeneralPacketInterpreter
   )
 
