@@ -119,7 +119,7 @@ void vtkAsensingPacketInterpreter::LoadCalibration(const std::string& filename)
 
   std::cout << "Load Calibration File: " << filename << std::endl;
 
-  std::string keyword("No-Correction");
+  std::string keyword("A0-Correction");
   std::size_t found = filename.find(keyword);
   if (std::string::npos != found)
   {

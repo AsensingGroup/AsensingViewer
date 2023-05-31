@@ -145,7 +145,7 @@ void lqUpdateCalibrationReaction::setCalibrationFileAndDefaultInterpreter(vtkSMP
     if (interpreterName == "interpreterRadio_asensing") {
       QFileInfo fileInfo(QFile(calibrationFile).fileName());
       QString fileName(fileInfo.fileName());
-      if (fileName == "No-Correction-5.json")
+      if (fileName == "A0-Correction-5.json")
       {
         defaultProxy = proxyListDomain->FindProxy("LidarPacketInterpreter", "Asensing5PacketInterpreter");
       }

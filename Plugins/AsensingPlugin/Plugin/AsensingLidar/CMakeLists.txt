@@ -52,10 +52,9 @@ target_include_directories(AsensingLidar
   )
 
 set(calib_files
-  Neptune48.json
-  RT-Matrix.json
-  No-Correction.json
-  No-Correction-5.json
+  A0-Correction.json
+  A0-Correction-5.json
+  A2-Correction.json
 )
 
 # Copy the calibration to the build folder
