@@ -3,6 +3,10 @@
 ## AsensingView V0.47.0
 
 - 将上位机软件名称由 NeptuneViewer 修改为 AsensingView
+- 增加 A2 点云协议支持
+- 修复选择帧重新导出 pcap 文件功能
+- 增加导入路径对中文字符的支持
+- 优化深度图转换功能
 
 ## NeptuneViewer V0.46.0
 
