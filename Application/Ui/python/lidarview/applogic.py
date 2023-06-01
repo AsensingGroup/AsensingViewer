@@ -352,11 +352,11 @@ def saveLASFrames(filename, first, last, transform = 0):
     if getPosition() is not None:
         position = getPosition().GetClientSideObject().GetOutput()
 
-        PythonQt.paraview.lqLidarViewManager.saveFramesToLAS(
+        PythonQt.paraview.lqLidarCoreManager.saveFramesToLAS(
             reader, position, first, last, filename, transform)
 
     else:
-        PythonQt.paraview.lqLidarViewManager.saveFramesToLAS(
+        PythonQt.paraview.lqLidarCoreManager.saveFramesToLAS(
             reader, None, first, last, filename, transform)
 
 
@@ -569,7 +569,7 @@ def onSavePCAP():
     fileName = getSaveFileName('Save PCAP', 'pcap', defaultFileName)
     if not fileName:
         return
-    PythonQt.paraview.lqLidarViewManager.saveFramesToPCAP(getReader().SMProxy, frameOptions.start, frameOptions.stop, fileName)
+    PythonQt.paraview.lqLidarCoreManager.saveFramesToPCAP(getReader().SMProxy, frameOptions.start, frameOptions.stop, fileName)
 
 def getFrameFromAnimationTime(time):
     if not getReader():
@@ -1134,7 +1134,7 @@ def setupActions():
     app.actions['actionAbout_LidarView'].connect('triggered()', lambda : lidarview.aboutDialog.showDialog(getMainWindow()) )
     app.actions['actionShowPosition'].connect('triggered()', ShowPosition)
     app.actions['actionShowRPM'].connect('triggered()', toggleRPM)
-    app.actions['actionOpenPcap'].connect('triggered()', onOpenPCAP)
+    # app.actions['actionOpenPcap'].connect('triggered()', onOpenPCAP)
 
     # Restore action states from settings
     settings = getPVSettings()
