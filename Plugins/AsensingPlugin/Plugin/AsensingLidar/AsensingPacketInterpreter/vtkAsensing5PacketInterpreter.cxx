@@ -772,18 +772,19 @@ bool vtkAsensing5PacketInterpreter::PreProcessPacket(unsigned char const* data,
 
   for (int blockID = 0; blockID < ASENSING_BLOCK_NUM; blockID++)
   {
-    //AsensingBlock currentBlock = dataPacket->blocks[blockID];
-
-    AsensingSpecificFrameInformation* frameInfo =
-      reinterpret_cast<AsensingSpecificFrameInformation*>(
-        this->ParserMetaData.SpecificInformation.get());
-    if (frameInfo->IsNewFrame(0, dataPacket->header.GetFrameID()) && frameCatalog)
+    AsensingSpecificFrameInformation* frameInfo =  reinterpret_cast<AsensingSpecificFrameInformation*>(this->ParserMetaData.SpecificInformation.get());
+	auto frameID = dataPacket->header.GetFrameID();
+	isNewFrame = frameInfo->IsNewFrame(0, frameID);
+    if (isNewFrame)
     {
-      isNewFrame = true;
-      frameCatalog->push_back(this->ParserMetaData);
+		if (frameCatalog) {
+			frameCatalog->push_back(this->ParserMetaData);
+		}
+		else {
+			return true;
+		}
     }
   }
-
   return isNewFrame;
 }
 

@@ -16,6 +16,44 @@
 
 #include <cstring>
 
+#ifdef WIN32
+char *wchar2char(const wchar_t* source)
+{
+    char * data;
+    int len= WideCharToMultiByte( CP_ACP ,0,source ,wcslen( source ), NULL,0, NULL ,NULL );
+    data= new char[len+1];
+    WideCharToMultiByte( CP_ACP ,0,source ,wcslen( source ),data,len, NULL ,NULL );
+    data[len]= '\0';
+    return data;
+}
+
+const char *stringToChar(const std::string& str)
+{
+    //定义一个空的std::wstring
+    std::wstring wstr = L"";
+
+    //lpWideCharStr设为NULL,cchWideChar设为0,该步骤用于获取缓冲区大小
+    int len = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), str.size(), NULL, 0);
+
+    //创建wchar_t数组作为缓冲区,用于接收转换出来的内容,数组长度为len+1的原因是字符串需要以'\0'结尾,所以+1用来存储'\0'
+    wchar_t* wchar = new wchar_t[len + 1];
+
+    //缓冲区和所需缓冲区大小都已确定,执行转换
+    MultiByteToWideChar(CP_UTF8, 0, str.c_str(), str.size(), wchar, len);
+
+    //使用'\0'结尾
+    wchar[len] = '\0';
+
+    //缓冲区拼接到std::wstring
+    wstr.append(wchar);
+
+    const char *data = wchar2char(wchar);
+    //切记要清空缓冲区,否则内存泄漏
+    delete[]wchar;
+    return data;
+}
+#endif
+
 //--------------------------------------------------------------------------------
 vtkPacketFileWriter::vtkPacketFileWriter()
 {
@@ -33,7 +71,13 @@ vtkPacketFileWriter::~vtkPacketFileWriter()
 bool vtkPacketFileWriter::Open(const std::string& filename)
 {
   this->PCAPFile = pcap_open_dead(DLT_EN10MB, 65535);
+#ifdef WIN32
+  const char *path = stringToChar(filename);
+  this->PCAPDump = pcap_dump_open(this->PCAPFile, path);
+  delete [] path;
+#else
   this->PCAPDump = pcap_dump_open(this->PCAPFile, filename.c_str());
+#endif
 
   if (!this->PCAPDump)
   {
