@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.20.3)
 project(LidarViewSuperBuild)
 
 set(CMAKE_BUILD_TYPE "RelWithDebInfo")
+#set(SUPERBUILD_OFFLINE_BUILD ON)
+set(WITH_STATIC_LASZIP OFF)
 #set(SUPERBUILD_ALLOW_DEBUG ON)
 
 #-----------------------------------------------------------------------------
