@@ -56,3 +56,6 @@ Thumbs.db
 ######################
 .*~
 /Documentation/html
+/builds
+/ms-builds
+/qt-builds

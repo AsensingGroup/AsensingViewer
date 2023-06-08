@@ -40,8 +40,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "E:\workspace\AsensingViewer\builds\bin\RelWithDebInfo\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\workspace\AsensingViewer\builds\bin\RelWithDebInfo\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "E:\workspace\AsensingViewer\ms-builds\bin\RelWithDebInfo\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "E:\workspace\AsensingViewer\ms-builds\bin\RelWithDebInfo\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]
