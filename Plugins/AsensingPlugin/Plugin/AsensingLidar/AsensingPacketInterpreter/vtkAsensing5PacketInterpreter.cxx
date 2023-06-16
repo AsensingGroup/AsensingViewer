@@ -473,7 +473,7 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
             continue;
       }
 
-      double x, y, z;
+      double x, y, z, azimuth, pitch;
 
       double distance =
         static_cast<double>(currentBlock.units[laserID].GetDistance()) * ASENSING_DISTANCE_UNIT;
@@ -489,14 +489,23 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
         // double azimuth_correction = this->AzimuthCorrection[laserID];
         // double elevation_correction = this->ElevationCorrection[laserID];
 
-        float azimuth = static_cast<float>(currentBlock.units[laserID].GetAzimuth()) * ASENSING_AZIMUTH_UNIT;
-        float pitch = static_cast<float>(currentBlock.units[laserID].GetElevation()) * ASENSING_ELEVATION_UNIT;
+        azimuth = static_cast<float>(currentBlock.units[laserID].GetAzimuth()) * ASENSING_AZIMUTH_UNIT;
+        pitch = static_cast<float>(currentBlock.units[laserID].GetElevation()) * ASENSING_ELEVATION_UNIT;
+
+        if (azimuth < 0)
+        {
+          azimuth += 360.0f;
+        }
+        else if (azimuth >= 270.0f)
+        {
+          azimuth -= 360.0f;
+        }
 
         if (pitch < 0)
         {
           pitch += 360.0f;
         }
-        else if (pitch >= 360.0f)
+        else if (pitch >= 270.0f)
         {
           pitch -= 360.0f;
         }
@@ -668,6 +677,8 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
       TrySetValue(this->PointsX, current_pt_id, x);
       TrySetValue(this->PointsY, current_pt_id, y);
       TrySetValue(this->PointsZ, current_pt_id, z);
+      TrySetValue(this->Azimuth, current_pt_id, azimuth);
+      TrySetValue(this->Elevation, current_pt_id, pitch);
       TrySetValue(this->PointID, current_pt_id, structured_pt_id);
       TrySetValue(this->LaserID, current_pt_id, laserID);
       TrySetValue(this->Intensities, current_pt_id, intensity);
@@ -742,6 +753,10 @@ vtkSmartPointer<vtkPolyData> vtkAsensing5PacketInterpreter::CreateNewEmptyFrame(
     true, "Y", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
   this->PointsZ = CreateDataArray<vtkDoubleArray>(
     true, "Z", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
+  this->Azimuth = CreateDataArray<vtkDoubleArray>(
+    false, "Azimuth", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
+  this->Elevation = CreateDataArray<vtkDoubleArray>(
+    false, "Elevation", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
 
   this->PointID = CreateDataArray<vtkUnsignedIntArray>(
     false, "PointID", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);

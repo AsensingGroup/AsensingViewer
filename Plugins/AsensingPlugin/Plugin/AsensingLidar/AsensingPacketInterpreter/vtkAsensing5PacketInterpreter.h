@@ -98,6 +98,8 @@ protected:
   vtkSmartPointer<vtkDoubleArray> PointsX;
   vtkSmartPointer<vtkDoubleArray> PointsY;
   vtkSmartPointer<vtkDoubleArray> PointsZ;
+  vtkSmartPointer<vtkDoubleArray> Azimuth;
+  vtkSmartPointer<vtkDoubleArray> Elevation;
 
   vtkSmartPointer<vtkUnsignedIntArray> PointID;
   vtkSmartPointer<vtkUnsignedCharArray> LaserID;
