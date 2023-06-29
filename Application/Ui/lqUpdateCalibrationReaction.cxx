@@ -149,6 +149,10 @@ void lqUpdateCalibrationReaction::setCalibrationFileAndDefaultInterpreter(vtkSMP
       {
         defaultProxy = proxyListDomain->FindProxy("LidarPacketInterpreter", "Asensing5PacketInterpreter");
       }
+      else if (fileName == "A2-Correction.json")
+      {
+        defaultProxy = proxyListDomain->FindProxy("LidarPacketInterpreter", "A2PacketInterpreter");
+      }
       else
       {
         defaultProxy = proxyListDomain->FindProxy("LidarPacketInterpreter", "AsensingPacketInterpreter");

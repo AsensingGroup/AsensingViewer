@@ -35,8 +35,8 @@
 #define ASENSING_AZIMUTH_UNIT        (0.01f)
 #define ASENSING_ELEVATION_UNIT      (0.01f)
 
-#define ASENSING_LASER_NUM           (LASER_MODULE_NUM * CHANNEL_NUM_PER_MODULE)  /* eg. 4 * 2 = 8 */
-#define ASENSING_BLOCK_NUM           (12)                                         /* 12 blocks per packet */
+#define ASENSING_LASER_NUM           (96)
+#define ASENSING_BLOCK_NUM           (1)
 #define ASENSING_POINT_PER_PACKET    (ASENSING_BLOCK_NUM * ASENSING_LASER_NUM)    /* eg. 12 * 8 = 96, 12 * 10 = 120 */
 
 #define ASENSING_POINT_NUM           (4800 * ASENSING_LASER_NUM)  /* 忽略，使用动态计算 (38400) */
@@ -100,23 +100,17 @@
 class AsensingUnit
 {
 private :
-  boost::endian::little_uint16_t Distance;  /* 球坐标系径向距离 radius（单位 cm） */
-  boost::endian::little_uint16_t Azimuth;   /* 球坐标系水平夹角，方位角（分辨率 0.01°） */
-  boost::endian::little_uint16_t Elevation; /* 球坐标系垂直夹角，俯仰角/极角（分辨率 0.01°） */
-  boost::endian::little_uint8_t  Intensity; /* 反射强度 intensity */
-  boost::endian::little_uint16_t Reserved;  /* 保留 */
+  boost::endian::little_uint16_t Distance;    /* 球坐标系径向距离 radius（单位 cm） */
+  boost::endian::little_uint8_t  Intensity;   /* 反射强度 intensity */
+  boost::endian::little_uint8_t  Confidence;  /* 置信度 */
 
 public :
   GET_NATIVE_UINT(16, Distance)
   SET_NATIVE_UINT(16, Distance)
-  GET_NATIVE_UINT(16, Azimuth)
-  SET_NATIVE_UINT(16, Azimuth)
-  GET_NATIVE_UINT(16, Elevation)
-  SET_NATIVE_UINT(16, Elevation)
-  GET_NATIVE_UINT(8,  Intensity)
-  SET_NATIVE_UINT(8,  Intensity)
-  GET_NATIVE_UINT(16, Reserved)
-  SET_NATIVE_UINT(16, Reserved)
+  GET_NATIVE_UINT(8, Intensity)
+  SET_NATIVE_UINT(8, Intensity)
+  GET_NATIVE_UINT(8, Confidence)
+  SET_NATIVE_UINT(8, Confidence)
 };
 #pragma pack(pop)
 
@@ -125,23 +119,23 @@ public :
 class AsensingBlock
 {
 private :
-  boost::endian::little_uint8_t channelNum;
-  boost::endian::little_uint8_t timeOffSet;
-  boost::endian::little_uint8_t returnSn;
-  boost::endian::little_uint8_t reserved;
+  boost::endian::little_uint8_t BlockSn;
+  boost::endian::little_uint8_t ChannelNum;
+  boost::endian::little_uint16_t Azimuth;   /* 球坐标系水平夹角，方位角（分辨率 0.01°） */
+  boost::endian::little_uint16_t Elevation; /* 球坐标系垂直夹角，俯仰角/极角（分辨率 0.01°） */
 
 public :
-  AsensingUnit units[ASENSING_LASER_NUM];
+  AsensingUnit units[ASENSING_LASER_NUM][2];
 
 public :
-  GET_NATIVE_UINT(8, channelNum)
-  SET_NATIVE_UINT(8, channelNum)
-  GET_NATIVE_UINT(8, timeOffSet)
-  SET_NATIVE_UINT(8, timeOffSet)
-  GET_NATIVE_UINT(8, returnSn)
-  SET_NATIVE_UINT(8, returnSn)
-  GET_NATIVE_UINT(8, reserved)
-  SET_NATIVE_UINT(8, reserved)
+  GET_NATIVE_UINT(8, BlockSn)
+  SET_NATIVE_UINT(8, BlockSn)
+  GET_NATIVE_UINT(8, ChannelNum)
+  SET_NATIVE_UINT(8, ChannelNum)
+  GET_NATIVE_UINT(16, Azimuth)
+  SET_NATIVE_UINT(16, Azimuth)
+  GET_NATIVE_UINT(16, Elevation)
+  SET_NATIVE_UINT(16, Elevation)
 };
 #pragma pack(pop)
 
@@ -166,7 +160,8 @@ private:
   boost::endian::little_uint32_t FrameID;
   boost::endian::little_uint16_t SeqNum;
   boost::endian::little_uint16_t PkgLen;
-  boost::endian::little_uint16_t LidarType;
+  boost::endian::little_uint8_t  LidarType;
+  boost::endian::little_uint8_t  ScanOption;
   boost::endian::little_uint8_t  VersionMajor;  /* Protocol version */
   boost::endian::little_uint8_t  VersionMinor;
 
@@ -185,11 +180,9 @@ private:
   boost::endian::little_uint8_t  EchoCount;     /* Wave mode: 第一回波、最后回波、最强回波、双回波 */
   boost::endian::little_uint8_t  TimeSyncMode;  /* 1: System time, 2: 1PPS, 3: PTP */
   boost::endian::little_uint8_t  TimeSyncStat;
-  boost::endian::little_uint8_t  MemsTemp;      /* Temperature of MEMS */
-  boost::endian::little_uint8_t  SlotNum;
-
+  boost::endian::little_uint16_t Reserved1; 
   boost::endian::little_uint32_t PointNum;      /* The number of points in a frame */
-  boost::endian::little_uint16_t Reserved1;     /* e.g DistUnit, Flags ... */
+  boost::endian::little_uint16_t Reserved2;     /* e.g DistUnit, Flags ... */
 
 public:
   GET_NATIVE_UINT(32, Sob)
@@ -200,8 +193,10 @@ public:
   SET_NATIVE_UINT(16, SeqNum)
   GET_NATIVE_UINT(16, PkgLen)
   SET_NATIVE_UINT(16, PkgLen)
-  GET_NATIVE_UINT(16, LidarType)
-  SET_NATIVE_UINT(16, LidarType)
+  GET_NATIVE_UINT(8, LidarType)
+  SET_NATIVE_UINT(8, LidarType)
+  GET_NATIVE_UINT(8, ScanOption)
+  SET_NATIVE_UINT(8, ScanOption)
   GET_NATIVE_UINT(8, VersionMajor)
   SET_NATIVE_UINT(8, VersionMajor)
   GET_NATIVE_UINT(8, VersionMinor)
@@ -235,15 +230,12 @@ public:
   SET_NATIVE_UINT(8, TimeSyncMode)
   GET_NATIVE_UINT(8, TimeSyncStat)
   SET_NATIVE_UINT(8, TimeSyncStat)
-  GET_NATIVE_UINT(8, MemsTemp)
-  SET_NATIVE_UINT(8, MemsTemp)
-  GET_NATIVE_UINT(8, SlotNum)
-  SET_NATIVE_UINT(8, SlotNum)
-
-  GET_NATIVE_UINT(32, PointNum)
-  SET_NATIVE_UINT(32, PointNum)
   GET_NATIVE_UINT(16, Reserved1)
   SET_NATIVE_UINT(16, Reserved1)
+  GET_NATIVE_UINT(32, PointNum)
+  SET_NATIVE_UINT(32, PointNum)
+  GET_NATIVE_UINT(16, Reserved2)
+  SET_NATIVE_UINT(16, Reserved2)
 };
 #pragma pack(pop)
 
@@ -253,8 +245,11 @@ public:
 class AsensingTail
 {
 private:
+  boost::endian::little_uint32_t CRC;
   boost::endian::little_uint32_t Reserved;
 public:
+  GET_NATIVE_UINT(32, CRC)
+  SET_NATIVE_UINT(32, CRC)
   GET_NATIVE_UINT(32, Reserved)
   SET_NATIVE_UINT(32, Reserved)
 };
