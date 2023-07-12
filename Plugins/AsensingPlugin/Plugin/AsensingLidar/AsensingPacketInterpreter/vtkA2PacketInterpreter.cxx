@@ -70,7 +70,7 @@ vtkStandardNewMacro(vtkA2PacketInterpreter)
 //-----------------------------------------------------------------------------
 vtkA2PacketInterpreter::vtkA2PacketInterpreter()
 {
-  std::cout << "Size of AsensingPacket = " << sizeof(AsensingPacket) << std::endl;
+  std::cout << "Size of A2 Packet = " << sizeof(AsensingPacket) << std::endl;
 
   // Initialize Elevation and Azimuth correction
   for (int i = 0; i < TEST_LASER_NUM; i++)
@@ -117,27 +117,26 @@ void vtkA2PacketInterpreter::LoadCalibration(const std::string& filename)
   // 4th Column = Z' vector
   // Notes: Effective for each 200 separate arrays
 
-  std::cout << "Load Calibration File: " << filename << std::endl;
+  std::cout << "[A2] Load Calibration File: " << filename << std::endl;
 
   std::string keyword("A2-Correction");
   std::size_t found = filename.find(keyword);
-  if (std::string::npos != found)
+  if (std::string::npos == found)
   {
-    std::cout << "Do not need to correct data" << std::endl;
+    std::cout << "[A2] Do not need to correct data" << std::endl;
     this->CalibEnabled = false;
     this->IsCalibrated = true;
     return;
   }
 
   /* Correct point cloud */
-  std::cout << "Version " << CJSON_VERSION_MAJOR << "." << CJSON_VERSION_MINOR << "."
-            << CJSON_VERSION_PATCH << std::endl;
-
   FILE* fp = fopen(filename.c_str(), "rb");
   if (fp == NULL)
   {
-    std::cout << "Can not open " << filename << std::endl;
+    std::cout << "[A2] Can not open " << filename << std::endl;
   }
+
+  std::cout << "[A2] Parse calibration file ..." << std::endl;
 
   fseek(fp, 0, SEEK_SET);
   long begin = ftell(fp);
@@ -155,7 +154,23 @@ void vtkA2PacketInterpreter::LoadCalibration(const std::string& filename)
   }
 
   cJSON* root = cJSON_Parse(jsonData);
-  // printf("%s\n\n", cJSON_Print(root));
+  cJSON* elevations = cJSON_GetObjectItem(root, "elevation");
+
+  if (cJSON_IsArray(elevations)) 
+  {
+    printf("%s\n\n", cJSON_Print(elevations));
+
+    int ElevationSize = cJSON_GetArraySize(elevations);
+    if (ASENSING_LASER_NUM == ElevationSize) {
+      for (int i = 0; i < ASENSING_LASER_NUM; i++)
+      {
+        elevation_offset_[i] = cJSON_GetArrayItem(elevations, i)->valuedouble;
+      }
+    }
+    else {
+      vtkWarningMacro("[A2] Invalid calibration data");
+    }
+  }
 
   cJSON_Delete(root);
   free(jsonData);
@@ -244,32 +259,27 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
 
     for (int laserID = 0; laserID < ASENSING_LASER_NUM; laserID++)
     {
+      for (int echo = 0; echo < 2; echo++)
+      {
+        const AsensingUnit &unit = currentBlock.units[laserID][echo];
+
       /* Eliminate invalid points */
-      if (0 == currentBlock.units[laserID].GetAzimuth() &&
-          0 == currentBlock.units[laserID].GetElevation() &&
-          0 == currentBlock.units[laserID].GetDistance() &&
-          0 == currentBlock.units[laserID].GetIntensity()) {
-            continue;
-      }
+      // if (0 == currentBlock.units[laserID].GetAzimuth() &&
+      //     0 == currentBlock.units[laserID].GetElevation() &&
+      //     0 == currentBlock.units[laserID].GetDistance() &&
+      //     0 == currentBlock.units[laserID].GetIntensity()) {
+      //       continue;
+      // }
 
       double x, y, z;
+      double distance = static_cast<double>(unit.GetDistance()) * ASENSING_DISTANCE_UNIT;
 
-      double distance =
-        static_cast<double>(currentBlock.units[laserID].GetDistance()) * ASENSING_DISTANCE_UNIT;
-
-      if (this->CalibEnabled)
-      {
-        x = distance * this->XCorrection[current_pt_id];
-        y = distance * this->YCorrection[current_pt_id];
-        z = distance * this->ZCorrection[current_pt_id];
-      }
-      else
       {
         // double azimuth_correction = this->AzimuthCorrection[laserID];
         // double elevation_correction = this->ElevationCorrection[laserID];
 
-        float azimuth = static_cast<float>(currentBlock.units[laserID].GetAzimuth()) * ASENSING_AZIMUTH_UNIT;
-        float pitch = static_cast<float>(currentBlock.units[laserID].GetElevation()) * ASENSING_ELEVATION_UNIT;
+        float azimuth = static_cast<float>(currentBlock.GetAzimuth()) * ASENSING_AZIMUTH_UNIT;
+        float pitch = static_cast<float>(currentBlock.GetElevation()) * ASENSING_ELEVATION_UNIT + elevation_offset_[laserID];
 
         if (pitch < 0)
         {
@@ -303,12 +313,11 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
 #endif
       } /* End of this->CalibEnabled */
 
-      uint8_t intensity = currentBlock.units[laserID].GetIntensity();
-
-      int offset = currentBlock.GettimeOffSet();
+      uint8_t intensity = unit.GetIntensity();
 
       // Compute timestamp of the point
-      timestamp += offset;
+      // int offset = currentBlock.GettimeOffSet();
+      // timestamp += offset;
 
 #if DEBUG
        //std::cout << "Point " << current_frame_id << ": " << distance << ", " << azimuth << ", " << pitch << ", " << x << ", " << y << ", " << z << std::endl;
@@ -334,19 +343,20 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
 #endif
         this->SplitFrame();
         this->seq_num_counter = 0;
+        }
+
+        this->Points->SetPoint(current_pt_id, x, y, z);
+
+        TrySetValue(this->PointsX, current_pt_id, x);
+        TrySetValue(this->PointsY, current_pt_id, y);
+        TrySetValue(this->PointsZ, current_pt_id, z);
+        TrySetValue(this->PointID, current_pt_id, current_pt_id);
+        TrySetValue(this->LaserID, current_pt_id, laserID);
+        TrySetValue(this->Intensities, current_pt_id, intensity);
+        TrySetValue(this->Timestamps, current_pt_id, timestamp);
+        TrySetValue(this->Distances, current_pt_id, distance);
+        current_pt_id++;
       }
-
-      this->Points->SetPoint(current_pt_id, x, y, z);
-
-      TrySetValue(this->PointsX, current_pt_id, x);
-      TrySetValue(this->PointsY, current_pt_id, y);
-      TrySetValue(this->PointsZ, current_pt_id, z);
-      TrySetValue(this->PointID, current_pt_id, current_pt_id);
-      TrySetValue(this->LaserID, current_pt_id, laserID);
-      TrySetValue(this->Intensities, current_pt_id, intensity);
-      TrySetValue(this->Timestamps, current_pt_id, timestamp);
-      TrySetValue(this->Distances, current_pt_id, distance);
-      current_pt_id++;
     }
   }
 

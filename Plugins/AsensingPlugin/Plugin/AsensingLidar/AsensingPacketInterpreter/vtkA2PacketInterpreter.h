@@ -114,16 +114,11 @@ private:
   std::vector<double> ElevationCorrection;
   std::vector<double> AzimuthCorrection;
 
-#if 0
-  std::vector<struct point_xyz> Correction;
-#else
-  std::vector<double> XCorrection;  // 9600 / 2 * 8 = 38400
-  std::vector<double> YCorrection;
-  std::vector<double> ZCorrection;
+  std::vector<float> ElevationOffset;
+  float elevation_offset_[96] = {0};
 
   bool CalibEnabled = false;
   
-#endif
   uint8_t laser_num = 0;
   uint8_t echo_count = 1;
   uint32_t current_pt_id = 0;
