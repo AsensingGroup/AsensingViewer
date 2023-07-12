@@ -145,12 +145,21 @@ def setDefaultLookupTables(sourceProxy):
 
     # LUT for 'intensity'
     smp.GetLookupTableForArray(
-      'intensity', 1,
+      'Intensity', 1,
       ScalarRangeInitialized=1.0,
       ColorSpace='HSV',
-      RGBPoints=[0.0, 0.0, 0.0, 1.0,
-               100.0, 1.0, 1.0, 0.0,
-               256.0, 1.0, 0.0, 0.0])
+      RGBPoints=[10.0,
+			0.0,
+			0.0,
+			1.0,
+			184.21279907226563,
+			1.0,
+			1.0,
+			0.0,
+			255.0,
+			1.0,
+			0.0,
+			0.0])
 
     # LUT for 'reflectivity'
     smp.GetLookupTableForArray(
@@ -291,11 +300,11 @@ def UpdateApplogicReader(lidarName, posOrName): # WIP could explicit send Proxy 
 
 
     smp.SetActiveView(smp.GetActiveView())
+    smp.SetActiveSource(reader)
 
-    showSourceInSpreadSheet(getTrailingFrame())
+    showSourceInSpreadSheet(reader)
 
     setDefaultLookupTables(reader)
-    setDefaultLookupTables(getTrailingFrame())
     updateUIwithNewLidar()
 
 def rotateCSVFile(filename):
@@ -738,30 +747,7 @@ def getSpreadSheetViewProxy():
     return smp.servermanager.ProxyManager().GetProxy("views", "main spreadsheet view")
     
 def onOpenPCAP():
-    global renderingWindowLayout
-    global pointcloud
-    global pointcloudView
-    global imageView
-    global trailingFrame
-    ########## Asensing #############
-    # Get tailing frame
-    if trailingFrame is None:
-        trailingFrame = smp.FindSource("TrailingFrame1")
-    if pointcloudView is None:
-        pointcloudView = smp.FindViewOrCreate('RenderView1', viewtype='RenderView')
-    smp.SetActiveView(pointcloudView)
-    smp.SetActiveSource(trailingFrame)
-    smp.Show(trailingFrame, pointcloudView)
-    # colorByIntensity(trailingFrame)
-    showSourceInSpreadSheet(pointcloud)
-
-    #smp.SetActiveView(app.mainView)
-    initAsensingRendering()
-    smp.SetActiveSource(trailingFrame)
-#    setAsensing3DDisplayPropertied(pointcloud)
-    smp.ResetCamera(imageView)
-    imageView.CameraParallelScale = 80
-    smp.Render()
+    smp.SetActiveSource(getReader())
 
 # Generic Helpers
 def _setSaveActionsEnabled(enabled):
@@ -1134,7 +1120,7 @@ def setupActions():
     app.actions['actionAbout_LidarView'].connect('triggered()', lambda : lidarview.aboutDialog.showDialog(getMainWindow()) )
     app.actions['actionShowPosition'].connect('triggered()', ShowPosition)
     app.actions['actionShowRPM'].connect('triggered()', toggleRPM)
-    # app.actions['actionOpenPcap'].connect('triggered()', onOpenPCAP)
+    app.actions['actionOpenPcap'].connect('triggered()', onOpenPCAP)
 
     # Restore action states from settings
     settings = getPVSettings()

@@ -1,5 +1,11 @@
 # 更改日志
 
+## AsensingView V0.48.0
+
+- 支持高亮colormap配色
+- 解决上位机长时间播放卡顿问题
+- 默认编译模式为release
+
 ## AsensingView V0.47.0
 
 - 将上位机软件名称由 NeptuneViewer 修改为 AsensingView

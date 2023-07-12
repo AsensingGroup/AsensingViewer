@@ -492,23 +492,14 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
         azimuth = static_cast<float>(currentBlock.units[laserID].GetAzimuth()) * ASENSING_AZIMUTH_UNIT;
         pitch = static_cast<float>(currentBlock.units[laserID].GetElevation()) * ASENSING_ELEVATION_UNIT;
 
-        if (azimuth < 0)
-        {
-          azimuth += 360.0f;
-        }
-        else if (azimuth >= 270.0f)
-        {
-          azimuth -= 360.0f;
-        }
-
-        if (pitch < 0)
-        {
-          pitch += 360.0f;
-        }
-        else if (pitch >= 270.0f)
-        {
-          pitch -= 360.0f;
-        }
+		if (pitch < 0)
+		{
+			pitch += 360.0f;
+		}
+		else if (pitch >= 360.0f)
+		{
+			pitch -= 360.0f;
+		}
 
         float xyDistance = distance * this->Cos_all_angle[static_cast<int>(pitch * 100 + 0.5)];
 
@@ -673,6 +664,24 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
       }
 
       this->Points->SetPoint(current_pt_id, x, y, z);
+
+	  if (azimuth < 0)
+	  {
+		  azimuth += 360.0f;
+	  }
+	  else if (azimuth >= 270.0f)
+	  {
+		  azimuth -= 360.0f;
+	  }
+
+	  if (pitch < 0)
+	  {
+		  pitch += 360.0f;
+	  }
+	  else if (pitch >= 270.0f)
+	  {
+		  pitch -= 360.0f;
+	  }
 
       TrySetValue(this->PointsX, current_pt_id, x);
       TrySetValue(this->PointsY, current_pt_id, y);

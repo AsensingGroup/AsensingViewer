@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "AsensingView"
-#define MyAppVersion "V0.47.0"
+#define MyAppVersion "V0.48.0"
 #define MyAppPublisher "Copyright @2022 广州导远电子科技有限公司"
 #define MyAppURL "http://www.asensing.com/"
 #define MyAppExeName "AsensingView.exe"
@@ -40,8 +40,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "E:\workspace\AsensingViewer\ms-builds\bin\RelWithDebInfo\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\workspace\AsensingViewer\ms-builds\bin\RelWithDebInfo\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "E:\release\install\bin\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "E:\release\install\bin\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]

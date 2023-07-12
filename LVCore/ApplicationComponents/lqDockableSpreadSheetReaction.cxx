@@ -60,6 +60,9 @@ void lqDockableSpreadSheetReaction::onTriggered()
 //-----------------------------------------------------------------------------
 void lqDockableSpreadSheetReaction::onDockVisibilityChanged()
 {
+	static bool flag = true;
+	if (!flag) return;
+	flag = false;
   // update dock content
   if (this->dock->isVisible())
   {
