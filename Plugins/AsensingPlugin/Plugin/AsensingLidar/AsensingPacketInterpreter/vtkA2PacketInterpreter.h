@@ -12,7 +12,7 @@
 #include <memory>
 
 #define USING_MATH_LIB           0
-#define CHECK_LIDAR_PACKET       0
+#define CHECK_LIDAR_PACKET       1
 #define PACKET_STAT_DEBUG        0
 
 struct point_xyz {
@@ -94,7 +94,7 @@ protected:
   vtkSmartPointer<vtkDoubleArray> PointsZ;
 
   vtkSmartPointer<vtkUnsignedIntArray> PointID;
-  vtkSmartPointer<vtkUnsignedCharArray> LaserID;
+  vtkSmartPointer<vtkUnsignedCharArray> Channel;
   vtkSmartPointer<vtkUnsignedCharArray> Intensities;
   vtkSmartPointer<vtkDoubleArray> Timestamps;
   vtkSmartPointer<vtkDoubleArray> Distances;
@@ -116,13 +116,14 @@ private:
 
   std::vector<float> ElevationOffset;
   float elevation_offset_[96] = {0};
+  float azimuth_offset_[96] = {0};
 
   bool CalibEnabled = false;
   
-  uint8_t laser_num = 0;
+  uint8_t channel_num = 0;
   uint8_t echo_count = 1;
   uint32_t current_pt_id = 0;
-  uint32_t points_per_frame = ASENSING_POINT_NUM_MAX;
+  uint32_t points_per_frame = A2_POINT_NUM_MAX;
   uint32_t current_frame_id = 0;
 
   uint16_t current_seq_num = 0;

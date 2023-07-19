@@ -5,6 +5,9 @@
 - 支持高亮colormap配色
 - 解决上位机长时间播放卡顿问题
 - 默认编译模式为release
+- 更新 A2 点云协议
+- 增加 A2 雷达水平角度偏移设置
+- A2 点云增加 Channel 字段信息
 
 ## AsensingView V0.47.0
 

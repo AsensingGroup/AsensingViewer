@@ -155,16 +155,33 @@ void vtkA2PacketInterpreter::LoadCalibration(const std::string& filename)
 
   cJSON* root = cJSON_Parse(jsonData);
   cJSON* elevations = cJSON_GetObjectItem(root, "elevation");
+  cJSON* azimuths = cJSON_GetObjectItem(root, "azimuth");
 
   if (cJSON_IsArray(elevations)) 
   {
-    printf("%s\n\n", cJSON_Print(elevations));
+    printf("elevation offset:\n%s\n\n", cJSON_Print(elevations));
 
     int ElevationSize = cJSON_GetArraySize(elevations);
-    if (ASENSING_LASER_NUM == ElevationSize) {
-      for (int i = 0; i < ASENSING_LASER_NUM; i++)
+    if (A2_CHANNEL_NUM == ElevationSize) {
+      for (int i = 0; i < A2_CHANNEL_NUM; i++)
       {
         elevation_offset_[i] = cJSON_GetArrayItem(elevations, i)->valuedouble;
+      }
+    }
+    else {
+      vtkWarningMacro("[A2] Invalid calibration data");
+    }
+  }
+
+  if (cJSON_IsArray(azimuths)) 
+  {
+    printf("azimuth offset:\n%s\n\n", cJSON_Print(azimuths));
+
+    int AzimuthSize = cJSON_GetArraySize(azimuths);
+    if (A2_CHANNEL_NUM == AzimuthSize) {
+      for (int i = 0; i < A2_CHANNEL_NUM; i++)
+      {
+        azimuth_offset_[i] = cJSON_GetArrayItem(azimuths, i)->valuedouble;
       }
     }
     else {
@@ -175,7 +192,6 @@ void vtkA2PacketInterpreter::LoadCalibration(const std::string& filename)
   cJSON_Delete(root);
   free(jsonData);
   fclose(fp);
-
 
   this->IsCalibrated = true;
   this->CalibEnabled = true;
@@ -214,8 +230,8 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
   // Timestamp in second of the packet
   double timestamp = unix_second + (timestampPacket / 1000000.0);
 
-  laser_num = dataPacket->header.GetLaserNum();
-  echo_count = dataPacket->header.GetEchoCount();
+  channel_num = dataPacket->header.GetChannelNum();
+  // echo_count = dataPacket->header.GetEchoCount();
   current_frame_id = dataPacket->header.GetFrameID();
   current_seq_num = dataPacket->header.GetSeqNum();
   seq_num_counter++;
@@ -226,7 +242,7 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
 
   // [HACK start] Proccess only one return in case of dual mode for performance issue
   int start_block = 0;
-  int end_block = ASENSING_BLOCK_NUM;
+  int end_block = A2_BLOCK_NUM;
   if (returnMode == 0x39 || returnMode == 0x3B || returnMode == 0x3C)
   {
     end_block = 1;
@@ -244,10 +260,10 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
     {
 #if PACKET_STAT_DEBUG
       /* If fewer UDP packets are received than expected, means packet loss */
-      if (current_frame_id > 0 && this->seq_num_counter < (this->points_per_frame / ASENSING_POINT_PER_PACKET)) {
+      if (current_frame_id > 0 && this->seq_num_counter < (this->points_per_frame / A2_POINT_PER_PACKET)) {
           vtkWarningMacro(<< "Incomplete frame (id: " << (current_frame_id - 1)
                           << ", packets: " << seq_num_counter
-                          << ", total: " << (this->points_per_frame / ASENSING_POINT_PER_PACKET)
+                          << ", total: " << (this->points_per_frame / A2_POINT_PER_PACKET)
                           << ", lsn: " << this->last_seq_num 
                           << ", points: " << this->points_per_frame << ")" );
       }
@@ -257,29 +273,21 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
       this->seq_num_counter = 0;
     }
 
-    for (int laserID = 0; laserID < ASENSING_LASER_NUM; laserID++)
+    for (int chan = 0; chan < A2_CHANNEL_NUM; chan++)
     {
       for (int echo = 0; echo < 2; echo++)
       {
-        const AsensingUnit &unit = currentBlock.units[laserID][echo];
+        const AsensingUnit &unit = currentBlock.units[chan][echo];
 
-      /* Eliminate invalid points */
-      // if (0 == currentBlock.units[laserID].GetAzimuth() &&
-      //     0 == currentBlock.units[laserID].GetElevation() &&
-      //     0 == currentBlock.units[laserID].GetDistance() &&
-      //     0 == currentBlock.units[laserID].GetIntensity()) {
-      //       continue;
-      // }
-
-      double x, y, z;
-      double distance = static_cast<double>(unit.GetDistance()) * ASENSING_DISTANCE_UNIT;
+        double x, y, z;
+        double distance = static_cast<double>(unit.GetDistance()) * ASENSING_DISTANCE_UNIT;
 
       {
-        // double azimuth_correction = this->AzimuthCorrection[laserID];
-        // double elevation_correction = this->ElevationCorrection[laserID];
+        // double azimuth_correction = this->AzimuthCorrection[chan];
+        // double elevation_correction = this->ElevationCorrection[chan];
 
-        float azimuth = static_cast<float>(currentBlock.GetAzimuth()) * ASENSING_AZIMUTH_UNIT;
-        float pitch = static_cast<float>(currentBlock.GetElevation()) * ASENSING_ELEVATION_UNIT + elevation_offset_[laserID];
+        float azimuth = static_cast<float>(currentBlock.GetAzimuth()) * ASENSING_AZIMUTH_UNIT + azimuth_offset_[chan];
+        float pitch = elevation_offset_[chan];
 
         if (pitch < 0)
         {
@@ -321,9 +329,9 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
 
 #if DEBUG
        //std::cout << "Point " << current_frame_id << ": " << distance << ", " << azimuth << ", " << pitch << ", " << x << ", " << y << ", " << z << std::endl;
-       std::cout << "Point " << current_frame_id << ": " << currentBlock.units[laserID].GetDistance() 
-                 << ", " << currentBlock.units[laserID].GetAzimuth() 
-                 << ", " << currentBlock.units[laserID].GetElevation() << ", " << x << ", " << y << ", " << z << std::endl;
+       std::cout << "Point " << current_frame_id << ": " << currentBlock.units[chan].GetDistance() 
+                 << ", " << currentBlock.units[chan].GetAzimuth() 
+                 << ", " << currentBlock.units[chan].GetElevation() << ", " << x << ", " << y << ", " << z << std::endl;
 #endif
 
       if (current_pt_id >= this->points_per_frame)
@@ -332,11 +340,11 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
         // SplitFrame for safety to not overflow allcoated arrays
         vtkWarningMacro(<< "Received more datapoints than expected" << " (" << current_pt_id << ", " << current_frame_id << ")");
 
-        if (current_frame_id > 0 && this->seq_num_counter < (this->points_per_frame / ASENSING_POINT_PER_PACKET)) {
+        if (current_frame_id > 0 && this->seq_num_counter < (this->points_per_frame / A2_POINT_PER_PACKET)) {
 
           vtkWarningMacro(<< "Incomplete frame 2 (id: " << (current_frame_id - 1)
                           << ", packets: " << seq_num_counter
-                          << ", total: " << (this->points_per_frame / ASENSING_POINT_PER_PACKET)
+                          << ", total: " << (this->points_per_frame / A2_POINT_PER_PACKET)
                           << ", lsn: " << this->last_seq_num 
                           << ", points: " << this->points_per_frame << ")" );
         }
@@ -351,7 +359,7 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
         TrySetValue(this->PointsY, current_pt_id, y);
         TrySetValue(this->PointsZ, current_pt_id, z);
         TrySetValue(this->PointID, current_pt_id, current_pt_id);
-        TrySetValue(this->LaserID, current_pt_id, laserID);
+        TrySetValue(this->Channel, current_pt_id, chan);
         TrySetValue(this->Intensities, current_pt_id, intensity);
         TrySetValue(this->Timestamps, current_pt_id, timestamp);
         TrySetValue(this->Distances, current_pt_id, distance);
@@ -375,12 +383,12 @@ bool vtkA2PacketInterpreter::IsLidarPacket(
   const AsensingPacket* dataPacket = reinterpret_cast<const AsensingPacket*>(data);
 
   if (dataLength != sizeof(struct AsensingPacket)) {
-    vtkWarningMacro("Invaild point cloud data packet (length mismatch)");
+    vtkWarningMacro("Invaild point cloud data packet (length mismatch " << sizeof(AsensingPacket) << ")");
     return false;
   }
 
   /* Check sob flag of packet header */
-  uint32_t sob = htole32(0x5AA555AA); /* 0xAA, 0x55, 0xA5, 0x5A */
+  uint32_t sob = htole16(0xA255); /* 0x55, 0xA2 */
   if (sob != dataPacket->header.GetSob()) {
     vtkWarningMacro("Invaild point cloud data packet (header flag mismatch)");
     return false;
@@ -422,8 +430,8 @@ vtkSmartPointer<vtkPolyData> vtkA2PacketInterpreter::CreateNewEmptyFrame(
 
   this->PointID = CreateDataArray<vtkUnsignedIntArray>(
     false, "PointID", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
-  this->LaserID = CreateDataArray<vtkUnsignedCharArray>(
-    false, "LaserID", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
+  this->Channel = CreateDataArray<vtkUnsignedCharArray>(
+    false, "Channel", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
   this->Intensities = CreateDataArray<vtkUnsignedCharArray>(
     false, "Intensity", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
   this->Timestamps = CreateDataArray<vtkDoubleArray>(
@@ -447,7 +455,7 @@ bool vtkA2PacketInterpreter::PreProcessPacket(unsigned char const* data,
 
   const AsensingPacket* dataPacket = reinterpret_cast<const AsensingPacket*>(data);
 
-  for (int blockID = 0; blockID < ASENSING_BLOCK_NUM; blockID++)
+  for (int blockID = 0; blockID < A2_BLOCK_NUM; blockID++)
   {
     //AsensingBlock currentBlock = dataPacket->blocks[blockID];
 
