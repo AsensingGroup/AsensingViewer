@@ -70,7 +70,7 @@ vtkStandardNewMacro(vtkA2PacketInterpreter)
 //-----------------------------------------------------------------------------
 vtkA2PacketInterpreter::vtkA2PacketInterpreter()
 {
-  std::cout << "Size of A2 Packet = " << sizeof(AsensingPacket) << std::endl;
+  std::cout << "Size of A2 Packet = " << sizeof(A2Packet) << std::endl;
 
   // Initialize Elevation and Azimuth correction
   for (int i = 0; i < TEST_LASER_NUM; i++)
@@ -205,7 +205,7 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
     return;
   }
 
-  const AsensingPacket* dataPacket = reinterpret_cast<const AsensingPacket*>(data);
+  const A2Packet* dataPacket = reinterpret_cast<const A2Packet*>(data);
 
   struct tm t;
   t.tm_year = dataPacket->header.GetUTCTime0();
@@ -251,7 +251,7 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
 
   for (int blockID = start_block; blockID < end_block; blockID++)
   {
-    AsensingBlock currentBlock = dataPacket->blocks[blockID];
+    A2Block currentBlock = dataPacket->blocks[blockID];
 
     AsensingSpecificFrameInformation* frameInfo =
       reinterpret_cast<AsensingSpecificFrameInformation*>(
@@ -277,7 +277,7 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
     {
       for (int echo = 0; echo < 2; echo++)
       {
-        const AsensingUnit &unit = currentBlock.units[chan][echo];
+        const A2Unit &unit = currentBlock.units[chan][echo];
 
         double x, y, z;
         double distance = static_cast<double>(unit.GetDistance()) * ASENSING_DISTANCE_UNIT;
@@ -453,11 +453,11 @@ bool vtkA2PacketInterpreter::PreProcessPacket(unsigned char const* data,
   this->ParserMetaData.FirstPacketDataTime = 0.0; // TODO
   this->ParserMetaData.FirstPacketNetworkTime = packetNetworkTime;
 
-  const AsensingPacket* dataPacket = reinterpret_cast<const AsensingPacket*>(data);
+  const A2Packet* dataPacket = reinterpret_cast<const A2Packet*>(data);
 
   for (int blockID = 0; blockID < A2_BLOCK_NUM; blockID++)
   {
-    //AsensingBlock currentBlock = dataPacket->blocks[blockID];
+    //A2Block currentBlock = dataPacket->blocks[blockID];
 
     AsensingSpecificFrameInformation* frameInfo =
       reinterpret_cast<AsensingSpecificFrameInformation*>(

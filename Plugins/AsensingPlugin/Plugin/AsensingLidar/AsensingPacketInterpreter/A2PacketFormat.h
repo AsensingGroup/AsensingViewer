@@ -80,7 +80,7 @@
 
 /* Custom */
 #pragma pack(push, 1)
-class AsensingUnit
+class A2Unit
 {
 private :
   boost::endian::little_uint16_t Distance;    /* 球坐标系径向距离 radius（单位 cm） */
@@ -99,14 +99,14 @@ public :
 
 
 #pragma pack(push, 1)
-class AsensingBlock
+class A2Block
 {
 private :
   boost::endian::little_uint16_t TimeOffset;
   boost::endian::little_uint16_t Azimuth;   /* 球坐标系水平夹角，方位角（分辨率 0.01°） */
 
 public :
-  AsensingUnit units[A2_CHANNEL_NUM][2];
+  A2Unit units[A2_CHANNEL_NUM][2];
 
 public :
   GET_NATIVE_UINT(16, TimeOffset)
@@ -130,7 +130,7 @@ public :
   |    EchoCount   |   EchoNum     |          Reserved            |
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
-class AsensingHeader
+class A2Header
 {
 private:
   boost::endian::little_uint16_t Sob;
@@ -204,7 +204,7 @@ public:
 
 #pragma pack(push, 1)
 //! @brief class representing the Raw packet
-class AsensingTail
+class A2Tail
 {
 private:
   boost::endian::little_uint32_t CRC;
@@ -220,9 +220,9 @@ public:
 
 #pragma pack(push, 1)
 //! @brief class representing the Asensing Packet
-struct AsensingPacket {
-  AsensingHeader header;
-  AsensingBlock blocks[A2_BLOCK_NUM];
+struct A2Packet {
+  A2Header header;
+  A2Block blocks[A2_BLOCK_NUM];
 
   // Reserved CRC_SIZE is equal to 4
   //boost::endian::little_uint32_t crc;
@@ -230,7 +230,7 @@ struct AsensingPacket {
   // Reserved FUNCTION_SAFETY_SIZE is equal to 17
   //boost::endian::little_uint8_t functionSafety[17];
 
-  AsensingTail tail;
+  A2Tail tail;
 };
 #pragma pack(pop)
 

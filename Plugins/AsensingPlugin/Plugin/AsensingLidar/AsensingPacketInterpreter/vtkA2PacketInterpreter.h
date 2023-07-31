@@ -12,7 +12,7 @@
 #include <memory>
 
 #define USING_MATH_LIB           0
-#define CHECK_LIDAR_PACKET       1
+#define CHECK_LIDAR_PACKET       0
 #define PACKET_STAT_DEBUG        0
 
 struct point_xyz {
