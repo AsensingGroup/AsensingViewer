@@ -14,6 +14,9 @@ add_library(ApplicationUi
   Widgets/vvCropReturnsDialog.cxx
   Widgets/vvCropReturnsDialog.h
   Widgets/vvCropReturnsDialog.ui
+  Widgets/vvFilterDialog.cxx
+  Widgets/vvFilterDialog.h
+  Widgets/vvFilterDialog.ui
   Widgets/vvSelectFramesDialog.cxx
   Widgets/vvSelectFramesDialog.h
   Widgets/vvSelectFramesDialog.ui
