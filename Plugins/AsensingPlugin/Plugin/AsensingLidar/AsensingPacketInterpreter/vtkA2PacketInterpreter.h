@@ -96,6 +96,7 @@ protected:
   vtkSmartPointer<vtkDoubleArray> Elevation;
 
   vtkSmartPointer<vtkUnsignedIntArray> PointID;
+  vtkSmartPointer<vtkUnsignedCharArray> FaceID;
   vtkSmartPointer<vtkUnsignedCharArray> Channel;
   vtkSmartPointer<vtkUnsignedCharArray> Intensities;
   vtkSmartPointer<vtkDoubleArray> Timestamps;

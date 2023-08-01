@@ -233,6 +233,7 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
   channel_num = dataPacket->header.GetChannelNum();
   // echo_count = dataPacket->header.GetEchoCount();
   current_frame_id = dataPacket->header.GetFrameID();
+  auto face_id = current_frame_id % 4;
   current_seq_num = dataPacket->header.GetSeqNum();
   seq_num_counter++;
 
@@ -361,6 +362,7 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
         TrySetValue(this->Azimuth, current_pt_id, azimuth);
         TrySetValue(this->Elevation, current_pt_id, pitch);
         TrySetValue(this->PointID, current_pt_id, current_pt_id);
+        TrySetValue(this->FaceID, current_pt_id, face_id);
         TrySetValue(this->Channel, current_pt_id, chan);
         TrySetValue(this->Intensities, current_pt_id, intensity);
         TrySetValue(this->Timestamps, current_pt_id, timestamp);
@@ -436,6 +438,8 @@ vtkSmartPointer<vtkPolyData> vtkA2PacketInterpreter::CreateNewEmptyFrame(
 
   this->PointID = CreateDataArray<vtkUnsignedIntArray>(
     false, "PointID", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
+  this->FaceID = CreateDataArray<vtkUnsignedCharArray>(
+    false, "FaceID", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
   this->Channel = CreateDataArray<vtkUnsignedCharArray>(
     false, "Channel", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
   this->Intensities = CreateDataArray<vtkUnsignedCharArray>(
