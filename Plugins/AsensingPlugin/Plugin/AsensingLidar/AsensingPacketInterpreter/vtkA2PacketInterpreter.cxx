@@ -279,15 +279,15 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
       {
         const A2Unit &unit = currentBlock.units[chan][echo];
 
-        double x, y, z;
+        double x, y, z, azimuth, pitch;
         double distance = static_cast<double>(unit.GetDistance()) * ASENSING_DISTANCE_UNIT;
 
       {
         // double azimuth_correction = this->AzimuthCorrection[chan];
         // double elevation_correction = this->ElevationCorrection[chan];
 
-        float azimuth = static_cast<float>(currentBlock.GetAzimuth()) * ASENSING_AZIMUTH_UNIT + azimuth_offset_[chan];
-        float pitch = elevation_offset_[chan];
+        azimuth = static_cast<float>(currentBlock.GetAzimuth()) * ASENSING_AZIMUTH_UNIT + azimuth_offset_[chan];
+        pitch = elevation_offset_[chan];
 
         if (pitch < 0)
         {
@@ -358,6 +358,8 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
         TrySetValue(this->PointsX, current_pt_id, x);
         TrySetValue(this->PointsY, current_pt_id, y);
         TrySetValue(this->PointsZ, current_pt_id, z);
+        TrySetValue(this->Azimuth, current_pt_id, azimuth);
+        TrySetValue(this->Elevation, current_pt_id, pitch);
         TrySetValue(this->PointID, current_pt_id, current_pt_id);
         TrySetValue(this->Channel, current_pt_id, chan);
         TrySetValue(this->Intensities, current_pt_id, intensity);
@@ -427,6 +429,10 @@ vtkSmartPointer<vtkPolyData> vtkA2PacketInterpreter::CreateNewEmptyFrame(
     true, "Y", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
   this->PointsZ = CreateDataArray<vtkDoubleArray>(
     true, "Z", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
+  this->Azimuth = CreateDataArray<vtkDoubleArray>(
+    false, "Azimuth", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
+  this->Elevation = CreateDataArray<vtkDoubleArray>(
+    false, "Elevation", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
 
   this->PointID = CreateDataArray<vtkUnsignedIntArray>(
     false, "PointID", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
