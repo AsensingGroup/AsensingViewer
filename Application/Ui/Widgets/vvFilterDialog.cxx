@@ -12,20 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include "vvFilterDialog.h"
-
 #include "ui_vvFilterDialog.h"
-
-#include <vtkSetGet.h> //vtkNotUsed
-
 #include <pqApplicationCore.h>
 #include <pqSettings.h>
-
 #include <QPushButton>
 #include <QDialog>
 #include <QStyle>
-
-#include "ctkDoubleRangeSlider.h"
-
 #include <sstream>
 
 //-----------------------------------------------------------------------------
@@ -44,18 +36,6 @@ public:
     void restoreSettings();
 
     QDialog *External;
-
-    QPushButton *CancelButton;
-    QPushButton *ApplyButton;
-    QPushButton *ApplyAndSaveButton;
-
-    ctkDoubleRangeSlider XDoubleRangeSlider;
-    ctkDoubleRangeSlider YDoubleRangeSlider;
-    ctkDoubleRangeSlider ZDoubleRangeSlider;
-
-    double xRange[2];
-    double yRange[2];
-    double zRange[2];
 
     pqSettings* const Settings;
 };

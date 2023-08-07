@@ -94,6 +94,7 @@
     <addaction name="separator"/>
     <addaction name="separator"/>
     <addaction name="actionFull_Screen"/>
+    <addaction name="actionFilterParser"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -789,6 +790,11 @@
    </property>
    <property name="text">
     <string>Full Screen</string>
+   </property>
+  </action>
+  <action name="actionFilterParser">
+   <property name="text">
+    <string>Filter Parser</string>
    </property>
   </action>
  </widget>

@@ -33,6 +33,7 @@
 #include "lqLiveSourceScalarColoringBehavior.h"
 #include "lqLoadLidarStateReaction.h"
 #include "lqOpenPcapReaction.h"
+#include "lqFilterParserReaction.h"
 #include "lqOpenRecentFilesReaction.h"
 #include "lqOpenSensorReaction.h"
 #include "lqSaveLASReaction.h"
@@ -425,6 +426,7 @@ void vvMainWindow::setupGUICustom()
 
   new lqOpenSensorReaction(this->Internals->actionOpen_Sensor_Stream);
   new lqOpenPcapReaction(this->Internals->actionOpenPcap);
+  new lqFilterParserReaction(this->Internals->actionFilterParser);
 
   new lqUpdateCalibrationReaction(this->Internals->actionChoose_Calibration_File); // Requires lqSensorListWidget init
   // Following is required if intend to use the lqSensorListWidget
