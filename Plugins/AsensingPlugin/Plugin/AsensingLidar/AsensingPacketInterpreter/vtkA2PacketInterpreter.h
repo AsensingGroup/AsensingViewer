@@ -120,6 +120,9 @@ private:
   std::vector<float> ElevationOffset;
   float elevation_offset_[96] = {0};
   float azimuth_offset_[96] = {0};
+  bool channels[96] = {0};
+  uint32_t filter_point_id = NAN;
+  bool faces[4] = {0};
 
   bool CalibEnabled = false;
   
