@@ -19,6 +19,9 @@
 #include <QDialog>
 #include <QStyle>
 #include <sstream>
+#include <QCheckBox>
+#include <QLineEdit>
+#include <QLabel>
 
 //-----------------------------------------------------------------------------
 class vvFilterDialog::pqInternal : public Ui::vvFilterDialog
@@ -30,13 +33,40 @@ public:
         this->External = external;
         this->setupUi(external);
 
+        int beginX = 50;
+        int beginY = 50;
+        int width = 40;
+        int height = 20;
+
+        for(int i = 0; i < 4; i++) {
+            auto item = new QCheckBox(external);
+            item->setText(QString("face%1").arg(i));
+            item->setGeometry(beginX + i * 70, 20, 70, 20);
+            this->face[i] = item;
+        }
+        for(int i = 0; i < 8; i++) {
+            for(int j = 0; j < 12; j++) {
+                auto item = new QCheckBox(external);
+                item->setGeometry((width + 10) * i + beginX, (height + 5) * j + beginY, width, height);
+                item->setText(QString::number(i * 12 + j));
+                this->channel[i * 12 + j] = item;
+            }
+        }
+
+        filterId = new QLineEdit(external);
+        filterId->setGeometry(150, 12 * 25 + 40, 60, 20);
+        auto label = new QLabel(external);
+        label->setText("Filter Id :");
+        label->setGeometry(50, 12 * 25 + 40, 100, 20);
     }
 
     void saveSettings();
     void restoreSettings();
 
     QDialog *External;
-
+    QCheckBox *channel[96];
+    QCheckBox *face[4];
+    QLineEdit *filterId;
     pqSettings* const Settings;
 };
 
