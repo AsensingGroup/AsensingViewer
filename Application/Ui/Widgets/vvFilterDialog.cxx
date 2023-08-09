@@ -25,6 +25,11 @@
 #include <QGroupBox>
 #include <QVBoxLayout>
 #include <QJsonObject>
+#include <QJsonDocument>
+#include <QJsonArray>
+#include <QFile>
+#include <QByteArray>
+#include <QDebug>
 
 //-----------------------------------------------------------------------------
 class vvFilterDialog::pqInternal : public Ui::vvFilterDialog
@@ -36,6 +41,22 @@ public:
         this->External = external;
         this->setupUi(external);
         this->createA2();
+
+        QFile file("./share/A2-Correction.json");
+        if(file.open(QIODevice::ReadOnly)) {
+            auto message = file.readAll();
+            auto data = message.simplified().trimmed();
+            QJsonParseError jsonerror;
+            auto doc = QJsonDocument::fromJson(data, &jsonerror);
+            m_json = doc.object();
+            qDebug() << m_json;
+        }
+
+
+    }
+
+    void createA0() {
+
     }
 
     void createA2() {
@@ -53,6 +74,13 @@ public:
             auto item = new QCheckBox(widget);
             item->setText(QString("face%1").arg(i));
             item->setGeometry(beginX + i * 70, 20, 70, 20);
+            item->setProperty("seq", i);
+            connect(item, &QCheckBox::clicked, [&, i, item](bool check) {
+                qDebug() << "face : " << item->property("seq").toInt() << " -> " << check;
+                auto array = m_json["face"].toArray();
+                array[i] = check;
+                m_json["face"] = array;
+            });
             this->face[i] = item;
         }
         for(int i = 0; i < 8; i++) {
@@ -60,6 +88,13 @@ public:
                 auto item = new QCheckBox(widget);
                 item->setGeometry((width + 10) * i + beginX, (height + 5) * j + beginY, width, height);
                 item->setText(QString::number(i * 12 + j));
+                item->setProperty("seq", i * 12 + j);
+                connect(item, &QCheckBox::clicked, [&, i, item](bool check) {
+                    qDebug() << "channel : " << item->property("seq").toInt() << " -> " << check;
+                    auto array = m_json["channel"].toArray();
+                    array[i] = check;
+                    m_json["channel"] = array;
+                });
                 this->channel[i * 12 + j] = item;
             }
         }
@@ -71,27 +106,25 @@ public:
         label->setGeometry(50, 12 * 25 + 50, 100, 20);
     }
 
-    void saveSettings();
-    void restoreSettings();
+    void saveSettings() {
+        QFile file("./share/A2-Correction.json");
+        if(file.open(QIODevice::WriteOnly)) {
+            QJsonDocument doc(m_json);
+            file.write(doc.toBinaryData());
+            file.close();
+        }
+    }
+    void restoreSettings() {
+
+    }
 
     QDialog *External;
     QCheckBox *channel[96];
     QCheckBox *face[4];
     QLineEdit *filterId;
     pqSettings* const Settings;
+    QJsonObject m_json;
 };
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::pqInternal::saveSettings()
-{
-
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::pqInternal::restoreSettings()
-{
-
-}
 
 //-----------------------------------------------------------------------------
 vvFilterDialog::vvFilterDialog(QWidget* p)
