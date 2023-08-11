@@ -300,7 +300,7 @@ def UpdateApplogicReader(lidarName, posOrName): # WIP could explicit send Proxy 
 
 
     smp.SetActiveView(smp.GetActiveView())
-    smp.SetActiveSource(reader)
+    #smp.SetActiveSource(reader)
 
     showSourceInSpreadSheet(reader)
 
@@ -1120,7 +1120,7 @@ def setupActions():
     app.actions['actionAbout_LidarView'].connect('triggered()', lambda : lidarview.aboutDialog.showDialog(getMainWindow()) )
     app.actions['actionShowPosition'].connect('triggered()', ShowPosition)
     app.actions['actionShowRPM'].connect('triggered()', toggleRPM)
-    app.actions['actionOpenPcap'].connect('triggered()', onOpenPCAP)
+    #app.actions['actionOpenPcap'].connect('triggered()', onOpenPCAP)
 
     # Restore action states from settings
     settings = getPVSettings()
