@@ -748,7 +748,7 @@ def getSpreadSheetViewProxy():
     return smp.servermanager.ProxyManager().GetProxy("views", "main spreadsheet view")
     
 def onOpenPCAP():
-    smp.SetActiveSource(getReader())
+    showSourceInSpreadSheet(getReader())
     
 def onShowSpreadSheet():
     showSourceInSpreadSheet(getReader())
@@ -1125,6 +1125,7 @@ def setupActions():
     app.actions['actionShowPosition'].connect('triggered()', ShowPosition)
     app.actions['actionShowRPM'].connect('triggered()', toggleRPM)
     app.actions['actionSpreadsheet'].connect('triggered()', onShowSpreadSheet)
+    app.actions['actionOpenPcap'].connect('triggered()', onOpenPCAP)
 
     # Restore action states from settings
     settings = getPVSettings()
