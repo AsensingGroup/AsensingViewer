@@ -1,5 +1,10 @@
 # 更改日志
 
+## AsensingView V0.48.1
+
+- 解决颜色配置冲突导致点云闪烁的问题
+- 点云大小默认为1
+
 ## AsensingView V0.48.0
 
 - 支持高亮colormap配色
