@@ -58,8 +58,12 @@ private:
   void setupGUICustom();  // LidarView Specific UI elements
   void setBranding();     // LidarView Specific Branding
 
+signals:
+  void showSpreadSheet();
+
 private:
   Qt::WindowFlags m_windowFlags;
+  QDockWidget *m_spreadSheet;
 };
 
 #endif

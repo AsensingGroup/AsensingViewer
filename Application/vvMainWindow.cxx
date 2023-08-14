@@ -402,6 +402,16 @@ void vvMainWindow::setupGUICustom()
 
   // LV Reactions
   new lqDockableSpreadSheetReaction(this->Internals->actionSpreadsheet, this);
+  for(auto &iter : this->findChildren<QDockWidget *>()) {
+      if(iter->windowTitle() == "SpreadSheet") {
+          m_spreadSheet = iter;
+          break;
+      }
+  }
+  connect(m_spreadSheet, &QDockWidget::visibilityChanged, this, [=](bool flag) {
+      if(flag) emit this->showSpreadSheet();
+  });
+
 
   //WIP SETTINGS GRID
   pqSettings* const settings = pqApplicationCore::instance()->settings();

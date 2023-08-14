@@ -300,11 +300,12 @@ def UpdateApplogicReader(lidarName, posOrName): # WIP could explicit send Proxy 
 
 
     smp.SetActiveView(smp.GetActiveView())
-    smp.SetActiveSource(reader)
+    #smp.SetActiveSource(reader)
 
-    showSourceInSpreadSheet(reader)
+    showSourceInSpreadSheet(getTrailingFrame())
 
     setDefaultLookupTables(reader)
+    setDefaultLookupTables(getTrailingFrame())
     updateUIwithNewLidar()
 
 def rotateCSVFile(filename):
@@ -747,7 +748,14 @@ def getSpreadSheetViewProxy():
     return smp.servermanager.ProxyManager().GetProxy("views", "main spreadsheet view")
     
 def onOpenPCAP():
-    smp.SetActiveSource(getReader())
+    spreadsheet = getMainWindow().findChild('QWidget', 'pqSpreadSheetViewDecorator')
+    if spreadsheet is None :
+        return 
+    if spreadsheet.isVisible() == True :
+        showSourceInSpreadSheet(getReader())
+    
+def onShowSpreadSheet():
+    showSourceInSpreadSheet(getReader())
 
 # Generic Helpers
 def _setSaveActionsEnabled(enabled):
@@ -1120,7 +1128,9 @@ def setupActions():
     app.actions['actionAbout_LidarView'].connect('triggered()', lambda : lidarview.aboutDialog.showDialog(getMainWindow()) )
     app.actions['actionShowPosition'].connect('triggered()', ShowPosition)
     app.actions['actionShowRPM'].connect('triggered()', toggleRPM)
+    #app.actions['actionSpreadsheet'].connect('triggered()', onShowSpreadSheet)
     app.actions['actionOpenPcap'].connect('triggered()', onOpenPCAP)
+    mW.connect('showSpreadSheet()', onShowSpreadSheet)
 
     # Restore action states from settings
     settings = getPVSettings()
