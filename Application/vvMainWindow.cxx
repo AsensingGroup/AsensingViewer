@@ -401,6 +401,13 @@ void vvMainWindow::setupGUICustom()
 
   // LV Reactions
   new lqDockableSpreadSheetReaction(this->Internals->actionSpreadsheet, this);
+  for(auto &iter : this->findChildren<QDockWidget *>()) {
+      if(iter->windowTitle() == "SpreadSheet") {
+          iter->installEventFilter(this);
+          m_spreadSheet = iter;
+          break;
+      }
+  }
 
   //WIP SETTINGS GRID
   pqSettings* const settings = pqApplicationCore::instance()->settings();
@@ -569,6 +576,9 @@ bool vvMainWindow::eventFilter(QObject *obj, QEvent *ev)
       this->Internals->actionFull_Screen->setChecked(false);
       return true;
     }
+  }
+  if(obj == m_spreadSheet && ev->type() == QEvent::Show) {
+      emit showSpreadSheet();
   }
   return QMainWindow::eventFilter(obj, ev);
 }
