@@ -172,6 +172,23 @@ void vtkAsensing5PacketInterpreter::LoadCalibration(const std::string& filename)
     std::cout << "angle " << i << " : " << m_angles[i] << std::endl;
   }
 
+  cJSON* channels = cJSON_GetObjectItem(root, "module");
+  if (cJSON_IsArray(channels))
+  {
+    printf("channels :\n%s\n\n", cJSON_Print(channels));
+
+    int channelSize = cJSON_GetArraySize(channels);
+    if (ASENSING_LASER_NUM == channelSize) {
+      for (int i = 0; i < ASENSING_LASER_NUM; i++)
+      {
+        this->channels[i] = cJSON_GetArrayItem(channels, i)->valueint;
+      }
+    }
+    else {
+      vtkWarningMacro("[A0] Invalid calibration data");
+    }
+  }
+
   bool NoLaserAngle = false;
   bool NoRTMatrix = false;
 
@@ -465,236 +482,332 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
 
     for (int laserID = 0; laserID < ASENSING_LASER_NUM; laserID++)
     {
-      /* Eliminate invalid points */
-      if (0 == currentBlock.units[laserID].GetAzimuth() &&
-          0 == currentBlock.units[laserID].GetElevation() &&
-          0 == currentBlock.units[laserID].GetDistance() &&
-          0 == currentBlock.units[laserID].GetIntensity()) {
-            continue;
-      }
-
-      double x, y, z, azimuth, pitch;
-
-      double distance =
-        static_cast<double>(currentBlock.units[laserID].GetDistance()) * ASENSING_DISTANCE_UNIT;
-
-      if (this->CalibEnabled)
-      {
-        x = distance * this->XCorrection[current_pt_id];
-        y = distance * this->YCorrection[current_pt_id];
-        z = distance * this->ZCorrection[current_pt_id];
-      }
-      else
-      {
-        // double azimuth_correction = this->AzimuthCorrection[laserID];
-        // double elevation_correction = this->ElevationCorrection[laserID];
-
-        azimuth = static_cast<float>(currentBlock.units[laserID].GetAzimuth()) * ASENSING_AZIMUTH_UNIT;
-        pitch = static_cast<float>(currentBlock.units[laserID].GetElevation()) * ASENSING_ELEVATION_UNIT;
-
-		if (pitch < 0)
-		{
-			pitch += 360.0f;
-		}
-		else if (pitch >= 360.0f)
-		{
-			pitch -= 360.0f;
-		}
-
-        float xyDistance = distance * this->Cos_all_angle[static_cast<int>(pitch * 100 + 0.5)];
-
-        int azimuthIdx = static_cast<int>(azimuth * 100 + 0.5);
-        if (azimuthIdx >= CIRCLE)
-        {
-          azimuthIdx -= CIRCLE;
-        }
-        else if (azimuthIdx < 0)
-        {
-          azimuthIdx += CIRCLE;
-        }
-
-#if USING_MATH_LIB
-       double x = xyDistance * sin(degreeToRadian(azimuth)); // this->Sin_all_angle[azimuthIdx];
-       double y = xyDistance * cos(degreeToRadian(azimuth)); // this->Cos_all_angle[azimuthIdx];
-       double z = distance * sin(degreeToRadian(pitch));     // this->Sin_all_angle[static_cast<int>(pitch * 100 + 0.5)];
-#else
-        x = xyDistance * this->Cos_all_angle[azimuthIdx];
-        y = xyDistance * this->Sin_all_angle[azimuthIdx];
-        z = distance * this->Sin_all_angle[static_cast<int>(pitch * 100 + 0.5)];
-#endif
-      } /* End of this->CalibEnabled */
-
-#if USING_RT_MATRIX
-      /* Matrix processing */
-      if (this->RTMatEnabled)
-      {
-        double x_ = x, y_ = y, z_ = z;
-
-        if (laserID == 0 || laserID == 1)
-        {
-          x = this->matrix_RT0[0][0] * x_ + this->matrix_RT0[0][1] * y_ +
-            this->matrix_RT0[0][2] * z_ + this->matrix_RT0[0][3];
-          y = this->matrix_RT0[1][0] * x_ + this->matrix_RT0[1][1] * y_ +
-            this->matrix_RT0[1][2] * z_ + this->matrix_RT0[1][3];
-          z = this->matrix_RT0[2][0] * x_ + this->matrix_RT0[2][1] * y_ +
-            this->matrix_RT0[2][2] * z_ + this->matrix_RT0[2][3];
-        }
-        else if (laserID == 2 || laserID == 3)
-        {
-          x = this->matrix_RT1[0][0] * x_ + this->matrix_RT1[0][1] * y_ +
-            this->matrix_RT1[0][2] * z_ + this->matrix_RT1[0][3];
-          y = this->matrix_RT1[1][0] * x_ + this->matrix_RT1[1][1] * y_ +
-            this->matrix_RT1[1][2] * z_ + this->matrix_RT1[1][3];
-          z = this->matrix_RT1[2][0] * x_ + this->matrix_RT1[2][1] * y_ +
-            this->matrix_RT1[2][2] * z_ + this->matrix_RT1[2][3];
-        }
-        else if (laserID == 4 || laserID == 5)
-        {
-          x = this->matrix_RT2[0][0] * x_ + this->matrix_RT2[0][1] * y_ +
-            this->matrix_RT2[0][2] * z_ + this->matrix_RT2[0][3];
-          y = this->matrix_RT2[1][0] * x_ + this->matrix_RT2[1][1] * y_ +
-            this->matrix_RT2[1][2] * z_ + this->matrix_RT2[1][3];
-          z = this->matrix_RT2[2][0] * x_ + this->matrix_RT2[2][1] * y_ +
-            this->matrix_RT2[2][2] * z_ + this->matrix_RT2[2][3];
-        }
-        else if (laserID == 6 || laserID == 7)
-        {
-          x = this->matrix_RT3[0][0] * x_ + this->matrix_RT3[0][1] * y_ +
-            this->matrix_RT3[0][2] * z_ + this->matrix_RT3[0][3];
-          y = this->matrix_RT3[1][0] * x_ + this->matrix_RT3[1][1] * y_ +
-            this->matrix_RT3[1][2] * z_ + this->matrix_RT3[1][3];
-          z = this->matrix_RT3[2][0] * x_ + this->matrix_RT3[2][1] * y_ +
-            this->matrix_RT3[2][2] * z_ + this->matrix_RT3[2][3];
-        }
-      }
-#endif /* USING_RT_MATRIX */
-
-      uint8_t intensity = currentBlock.units[laserID].GetIntensity();
-
-      int offset = currentBlock.GettimeOffSet();
-
-      // Compute timestamp of the point
-      timestamp += offset;
-
-#if DEBUG
-       //std::cout << "Point " << current_frame_id << ": " << distance << ", " << azimuth << ", " << pitch << ", " << x << ", " << y << ", " << z << std::endl;
-       std::cout << "Point " << current_frame_id << ": " << currentBlock.units[laserID].GetDistance() 
-                 << ", " << currentBlock.units[laserID].GetAzimuth() 
-                 << ", " << currentBlock.units[laserID].GetElevation() << ", " << x << ", " << y << ", " << z << std::endl;
-#endif
-
-      if (current_pt_id >= this->points_per_frame)
-      {
-#if PACKET_STAT_DEBUG
-        // SplitFrame for safety to not overflow allcoated arrays
-        vtkWarningMacro(<< "Received more datapoints than expected" << " (" << current_pt_id << ", " << current_frame_id << ")");
-
-        if (current_frame_id > 0 && this->seq_num_counter < (this->points_per_frame / ASENSING_POINT_PER_PACKET)) {
-
-          vtkWarningMacro(<< "Incomplete frame 2 (id: " << (current_frame_id - 1)
-                          << ", packets: " << seq_num_counter
-                          << ", total: " << (this->points_per_frame / ASENSING_POINT_PER_PACKET)
-                          << ", lsn: " << this->last_seq_num 
-                          << ", points: " << this->points_per_frame << ")" );
-        }
-#endif
-        this->SplitFrame();
-      }
-
-      // 角度算法处理x，y，z
-      auto type = dataPacket->header.GetLidarInfo() >> 6;
-      if(type == 0x02 || type == 0x03)  // 0x02 -> 0°, 0x03 -> 25°
-      {
-          // 入射向量求解
-          float vector[VECTOR_SIZE] = {0};
-          float theta = degreeToRadian(m_angles[laserID / 2]);
-          float gamma0 = degreeToRadian(m_angles[ANGLE_SIZE-1]);
-          float sin_gamma0 = std::sin(gamma0);
-          float cos_gamma0 = std::cos(gamma0);
-          float cos_theta = std::cos(theta);
-          vector[0] = cos_theta - 2.0 * cos_theta * cos_gamma0 * cos_gamma0;
-          vector[1] = std::sin(theta);
-          vector[2] =  2.0 * cos_theta * sin_gamma0 * cos_gamma0;
-
-          // 法向量求解
-          float normal[VECTOR_SIZE] = {0};
-          float angle = currentBlock.units[laserID].GetAzimuth() * ASENSING_AZIMUTH_UNIT;
-          angle = (angle > 120) ? (angle - 360) : angle;
-          if(type == 0x03)
-          {
-              if(laserID / 2 == 0)
-              {
-                  angle += 50;
-              }
-              else if(laserID / 2 == 1)
-              {
-                  angle += 25;
-              }
-              else if(laserID / 2 == 3)
-              {
-                  angle -= 25;
-              }
-              else if(laserID / 2 == 4)
-              {
-                  angle -= 50;
-              }
+      if(this->channels[laserID] == 1) {
+          /* Eliminate invalid points */
+          if (0 == currentBlock.units[laserID].GetAzimuth() &&
+              0 == currentBlock.units[laserID].GetElevation() &&
+              0 == currentBlock.units[laserID].GetDistance() &&
+              0 == currentBlock.units[laserID].GetIntensity()) {
+                continue;
           }
-          float gamma = degreeToRadian(-angle);
-          angle = static_cast<float>(currentBlock.units[laserID].GetElevation()) * ASENSING_ELEVATION_UNIT;
-          angle = (angle > 120) ? (angle - 360) : angle;
-          float beta = - 1 * degreeToRadian(angle);
-          float sin_gamma = std::sin(gamma);
-          float cos_gamma = std::cos(gamma);
-          float sin_beta = std::sin(beta);
-          float cos_beta = std::cos(beta);
-          normal[0] = cos_beta * cos_gamma * cos_gamma0 - sin_beta * sin_gamma0;
-          normal[1] = sin_gamma * cos_gamma0;
-          normal[2] = -cos_gamma0 * sin_beta * cos_gamma - cos_beta * sin_gamma0;
 
-          // 最终向量求解
-          float out[VECTOR_SIZE] = {0};
-          float k = vector[0] * normal[0] + vector[1] * normal[1] + vector[2] * normal[2];
-          for(int i = 0; i < VECTOR_SIZE; i++)
+          double x, y, z, azimuth, pitch;
+
+          double distance = static_cast<double>(currentBlock.units[laserID].GetDistance()) * ASENSING_DISTANCE_UNIT;
+
+          if (this->CalibEnabled)
           {
-              out[i] = vector[i] - 2 * k * normal[i];
+            x = distance * this->XCorrection[current_pt_id];
+            y = distance * this->YCorrection[current_pt_id];
+            z = distance * this->ZCorrection[current_pt_id];
           }
-          x = distance * out[0];
-          y = distance * out[1];
-          z = distance * out[2];
+          else
+          {
+            // double azimuth_correction = this->AzimuthCorrection[laserID];
+            // double elevation_correction = this->ElevationCorrection[laserID];
+
+            azimuth = static_cast<float>(currentBlock.units[laserID].GetAzimuth()) * ASENSING_AZIMUTH_UNIT;
+            pitch = static_cast<float>(currentBlock.units[laserID].GetElevation()) * ASENSING_ELEVATION_UNIT;
+
+            if (pitch < 0)
+            {
+                pitch += 360.0f;
+            }
+            else if (pitch >= 360.0f)
+            {
+                pitch -= 360.0f;
+            }
+
+            float xyDistance = distance * this->Cos_all_angle[static_cast<int>(pitch * 100 + 0.5)];
+
+            int azimuthIdx = static_cast<int>(azimuth * 100 + 0.5);
+            if (azimuthIdx >= CIRCLE)
+            {
+              azimuthIdx -= CIRCLE;
+            }
+            else if (azimuthIdx < 0)
+            {
+              azimuthIdx += CIRCLE;
+            }
+
+    #if USING_MATH_LIB
+           double x = xyDistance * sin(degreeToRadian(azimuth)); // this->Sin_all_angle[azimuthIdx];
+           double y = xyDistance * cos(degreeToRadian(azimuth)); // this->Cos_all_angle[azimuthIdx];
+           double z = distance * sin(degreeToRadian(pitch));     // this->Sin_all_angle[static_cast<int>(pitch * 100 + 0.5)];
+    #else
+            x = xyDistance * this->Cos_all_angle[azimuthIdx];
+            y = xyDistance * this->Sin_all_angle[azimuthIdx];
+            z = distance * this->Sin_all_angle[static_cast<int>(pitch * 100 + 0.5)];
+    #endif
+          } /* End of this->CalibEnabled */
+
+    #if USING_RT_MATRIX
+          /* Matrix processing */
+          if (this->RTMatEnabled)
+          {
+            double x_ = x, y_ = y, z_ = z;
+
+            if (laserID == 0 || laserID == 1)
+            {
+              x = this->matrix_RT0[0][0] * x_ + this->matrix_RT0[0][1] * y_ +
+                this->matrix_RT0[0][2] * z_ + this->matrix_RT0[0][3];
+              y = this->matrix_RT0[1][0] * x_ + this->matrix_RT0[1][1] * y_ +
+                this->matrix_RT0[1][2] * z_ + this->matrix_RT0[1][3];
+              z = this->matrix_RT0[2][0] * x_ + this->matrix_RT0[2][1] * y_ +
+                this->matrix_RT0[2][2] * z_ + this->matrix_RT0[2][3];
+            }
+            else if (laserID == 2 || laserID == 3)
+            {
+              x = this->matrix_RT1[0][0] * x_ + this->matrix_RT1[0][1] * y_ +
+                this->matrix_RT1[0][2] * z_ + this->matrix_RT1[0][3];
+              y = this->matrix_RT1[1][0] * x_ + this->matrix_RT1[1][1] * y_ +
+                this->matrix_RT1[1][2] * z_ + this->matrix_RT1[1][3];
+              z = this->matrix_RT1[2][0] * x_ + this->matrix_RT1[2][1] * y_ +
+                this->matrix_RT1[2][2] * z_ + this->matrix_RT1[2][3];
+            }
+            else if (laserID == 4 || laserID == 5)
+            {
+              x = this->matrix_RT2[0][0] * x_ + this->matrix_RT2[0][1] * y_ +
+                this->matrix_RT2[0][2] * z_ + this->matrix_RT2[0][3];
+              y = this->matrix_RT2[1][0] * x_ + this->matrix_RT2[1][1] * y_ +
+                this->matrix_RT2[1][2] * z_ + this->matrix_RT2[1][3];
+              z = this->matrix_RT2[2][0] * x_ + this->matrix_RT2[2][1] * y_ +
+                this->matrix_RT2[2][2] * z_ + this->matrix_RT2[2][3];
+            }
+            else if (laserID == 6 || laserID == 7)
+            {
+              x = this->matrix_RT3[0][0] * x_ + this->matrix_RT3[0][1] * y_ +
+                this->matrix_RT3[0][2] * z_ + this->matrix_RT3[0][3];
+              y = this->matrix_RT3[1][0] * x_ + this->matrix_RT3[1][1] * y_ +
+                this->matrix_RT3[1][2] * z_ + this->matrix_RT3[1][3];
+              z = this->matrix_RT3[2][0] * x_ + this->matrix_RT3[2][1] * y_ +
+                this->matrix_RT3[2][2] * z_ + this->matrix_RT3[2][3];
+            }
+          }
+    #endif /* USING_RT_MATRIX */
+
+          uint8_t intensity = currentBlock.units[laserID].GetIntensity();
+
+          int offset = currentBlock.GettimeOffSet();
+
+          // Compute timestamp of the point
+          timestamp += offset;
+
+    #if DEBUG
+           //std::cout << "Point " << current_frame_id << ": " << distance << ", " << azimuth << ", " << pitch << ", " << x << ", " << y << ", " << z << std::endl;
+           std::cout << "Point " << current_frame_id << ": " << currentBlock.units[laserID].GetDistance()
+                     << ", " << currentBlock.units[laserID].GetAzimuth()
+                     << ", " << currentBlock.units[laserID].GetElevation() << ", " << x << ", " << y << ", " << z << std::endl;
+    #endif
+
+          if (current_pt_id >= this->points_per_frame)
+          {
+    #if PACKET_STAT_DEBUG
+            // SplitFrame for safety to not overflow allcoated arrays
+            vtkWarningMacro(<< "Received more datapoints than expected" << " (" << current_pt_id << ", " << current_frame_id << ")");
+
+            if (current_frame_id > 0 && this->seq_num_counter < (this->points_per_frame / ASENSING_POINT_PER_PACKET)) {
+
+              vtkWarningMacro(<< "Incomplete frame 2 (id: " << (current_frame_id - 1)
+                              << ", packets: " << seq_num_counter
+                              << ", total: " << (this->points_per_frame / ASENSING_POINT_PER_PACKET)
+                              << ", lsn: " << this->last_seq_num
+                              << ", points: " << this->points_per_frame << ")" );
+            }
+    #endif
+            this->SplitFrame();
+          }
+
+          // 角度算法处理x，y，z
+          auto type = dataPacket->header.GetLidarInfo() >> 6;
+          if(type == 0x02 || type == 0x03)  // 0x02 -> 0°, 0x03 -> 25°
+          {
+              // 入射向量求解
+              float vector[VECTOR_SIZE] = {0};
+              float theta = degreeToRadian(m_angles[laserID / 2]);
+              float gamma0 = degreeToRadian(m_angles[ANGLE_SIZE-1]);
+              float sin_gamma0 = std::sin(gamma0);
+              float cos_gamma0 = std::cos(gamma0);
+              float cos_theta = std::cos(theta);
+              vector[0] = cos_theta - 2.0 * cos_theta * cos_gamma0 * cos_gamma0;
+              vector[1] = std::sin(theta);
+              vector[2] =  2.0 * cos_theta * sin_gamma0 * cos_gamma0;
+
+              // 法向量求解
+              float normal[VECTOR_SIZE] = {0};
+              float angle = currentBlock.units[laserID].GetAzimuth() * ASENSING_AZIMUTH_UNIT;
+              angle = (angle > 120) ? (angle - 360) : angle;
+              if(type == 0x03)
+              {
+                  if(laserID / 2 == 0)
+                  {
+                      angle += 50;
+                  }
+                  else if(laserID / 2 == 1)
+                  {
+                      angle += 25;
+                  }
+                  else if(laserID / 2 == 3)
+                  {
+                      angle -= 25;
+                  }
+                  else if(laserID / 2 == 4)
+                  {
+                      angle -= 50;
+                  }
+              }
+              float gamma = degreeToRadian(-angle);
+              angle = static_cast<float>(currentBlock.units[laserID].GetElevation()) * ASENSING_ELEVATION_UNIT;
+              angle = (angle > 120) ? (angle - 360) : angle;
+              float beta = - 1 * degreeToRadian(angle);
+              float sin_gamma = std::sin(gamma);
+              float cos_gamma = std::cos(gamma);
+              float sin_beta = std::sin(beta);
+              float cos_beta = std::cos(beta);
+              normal[0] = cos_beta * cos_gamma * cos_gamma0 - sin_beta * sin_gamma0;
+              normal[1] = sin_gamma * cos_gamma0;
+              normal[2] = -cos_gamma0 * sin_beta * cos_gamma - cos_beta * sin_gamma0;
+
+              // 最终向量求解
+              float out[VECTOR_SIZE] = {0};
+              float k = vector[0] * normal[0] + vector[1] * normal[1] + vector[2] * normal[2];
+              for(int i = 0; i < VECTOR_SIZE; i++)
+              {
+                  out[i] = vector[i] - 2 * k * normal[i];
+              }
+              x = distance * out[0];
+              y = distance * out[1];
+              z = distance * out[2];
+          }
+
+          this->Points->SetPoint(current_pt_id, x, y, z);
+
+          if (azimuth < 0)
+          {
+              azimuth += 360.0f;
+          }
+          else if (azimuth >= 270.0f)
+          {
+              azimuth -= 360.0f;
+          }
+
+          if (pitch < 0)
+          {
+              pitch += 360.0f;
+          }
+          else if (pitch >= 270.0f)
+          {
+              pitch -= 360.0f;
+          }
+
+          TrySetValue(this->PointsX, current_pt_id, x);
+          TrySetValue(this->PointsY, current_pt_id, y);
+          TrySetValue(this->PointsZ, current_pt_id, z);
+          TrySetValue(this->Azimuth, current_pt_id, azimuth);
+          TrySetValue(this->Elevation, current_pt_id, pitch);
+          TrySetValue(this->PointID, current_pt_id, structured_pt_id);
+          TrySetValue(this->LaserID, current_pt_id, laserID);
+          TrySetValue(this->Intensities, current_pt_id, intensity);
+          TrySetValue(this->Timestamps, current_pt_id, timestamp);
+          TrySetValue(this->Distances, current_pt_id, distance);
+          current_pt_id++;
+          structured_pt_id++;
       }
+      else {
 
-      this->Points->SetPoint(current_pt_id, x, y, z);
+          double x, y, z, azimuth, pitch;
 
-	  if (azimuth < 0)
-	  {
-		  azimuth += 360.0f;
-	  }
-	  else if (azimuth >= 270.0f)
-	  {
-		  azimuth -= 360.0f;
-	  }
+          double distance =
+            static_cast<double>(currentBlock.units[laserID].GetDistance()) * ASENSING_DISTANCE_UNIT;
 
-	  if (pitch < 0)
-	  {
-		  pitch += 360.0f;
-	  }
-	  else if (pitch >= 270.0f)
-	  {
-		  pitch -= 360.0f;
-	  }
+          if (this->CalibEnabled)
+          {
+            x = distance * this->XCorrection[current_pt_id];
+            y = distance * this->YCorrection[current_pt_id];
+            z = distance * this->ZCorrection[current_pt_id];
+          }
+          else
+          {
+            // double azimuth_correction = this->AzimuthCorrection[laserID];
+            // double elevation_correction = this->ElevationCorrection[laserID];
 
-      TrySetValue(this->PointsX, current_pt_id, x);
-      TrySetValue(this->PointsY, current_pt_id, y);
-      TrySetValue(this->PointsZ, current_pt_id, z);
-      TrySetValue(this->Azimuth, current_pt_id, azimuth);
-      TrySetValue(this->Elevation, current_pt_id, pitch);
-      TrySetValue(this->PointID, current_pt_id, structured_pt_id);
-      TrySetValue(this->LaserID, current_pt_id, laserID);
-      TrySetValue(this->Intensities, current_pt_id, intensity);
-      TrySetValue(this->Timestamps, current_pt_id, timestamp);
-      TrySetValue(this->Distances, current_pt_id, distance);
-      current_pt_id++;
-      structured_pt_id++;
+            azimuth = static_cast<float>(currentBlock.units[laserID].GetAzimuth()) * ASENSING_AZIMUTH_UNIT;
+            pitch = static_cast<float>(currentBlock.units[laserID].GetElevation()) * ASENSING_ELEVATION_UNIT;
+
+            if (pitch < 0)
+            {
+                pitch += 360.0f;
+            }
+            else if (pitch >= 360.0f)
+            {
+                pitch -= 360.0f;
+            }
+
+            float xyDistance = distance * this->Cos_all_angle[static_cast<int>(pitch * 100 + 0.5)];
+
+            int azimuthIdx = static_cast<int>(azimuth * 100 + 0.5);
+            if (azimuthIdx >= CIRCLE)
+            {
+              azimuthIdx -= CIRCLE;
+            }
+            else if (azimuthIdx < 0)
+            {
+              azimuthIdx += CIRCLE;
+            }
+
+    #if USING_MATH_LIB
+           double x = xyDistance * sin(degreeToRadian(azimuth)); // this->Sin_all_angle[azimuthIdx];
+           double y = xyDistance * cos(degreeToRadian(azimuth)); // this->Cos_all_angle[azimuthIdx];
+           double z = distance * sin(degreeToRadian(pitch));     // this->Sin_all_angle[static_cast<int>(pitch * 100 + 0.5)];
+    #else
+            x = xyDistance * this->Cos_all_angle[azimuthIdx];
+            y = xyDistance * this->Sin_all_angle[azimuthIdx];
+            z = distance * this->Sin_all_angle[static_cast<int>(pitch * 100 + 0.5)];
+    #endif
+          } /* End of this->CalibEnabled */
+
+
+          uint8_t intensity = currentBlock.units[laserID].GetIntensity();
+
+          int offset = currentBlock.GettimeOffSet();
+
+          // Compute timestamp of the point
+          timestamp += offset;
+
+
+          if (current_pt_id >= this->points_per_frame)
+          {
+    #if PACKET_STAT_DEBUG
+            // SplitFrame for safety to not overflow allcoated arrays
+            vtkWarningMacro(<< "Received more datapoints than expected" << " (" << current_pt_id << ", " << current_frame_id << ")");
+
+            if (current_frame_id > 0 && this->seq_num_counter < (this->points_per_frame / ASENSING_POINT_PER_PACKET)) {
+
+              vtkWarningMacro(<< "Incomplete frame 2 (id: " << (current_frame_id - 1)
+                              << ", packets: " << seq_num_counter
+                              << ", total: " << (this->points_per_frame / ASENSING_POINT_PER_PACKET)
+                              << ", lsn: " << this->last_seq_num
+                              << ", points: " << this->points_per_frame << ")" );
+            }
+    #endif
+            this->SplitFrame();
+          }
+
+          this->Points->SetPoint(current_pt_id, x, y, z);
+
+          TrySetValue(this->PointsX, current_pt_id, NAN);
+          TrySetValue(this->PointsY, current_pt_id, NAN);
+          TrySetValue(this->PointsZ, current_pt_id, NAN);
+          TrySetValue(this->Azimuth, current_pt_id, NAN);
+          TrySetValue(this->Elevation, current_pt_id, NAN);
+          TrySetValue(this->PointID, current_pt_id, structured_pt_id);
+          TrySetValue(this->LaserID, current_pt_id, laserID);
+          TrySetValue(this->Intensities, current_pt_id, NAN);
+          TrySetValue(this->Timestamps, current_pt_id, NAN);
+          TrySetValue(this->Distances, current_pt_id, NAN);
+          current_pt_id++;
+          structured_pt_id++;
+      }
     }
   }
 

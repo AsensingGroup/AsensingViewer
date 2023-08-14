@@ -41,14 +41,30 @@ public:
         this->External = external;
         this->setupUi(external);
 
-        QFile file("./share/A2-Correction.json");
-        if(file.open(QIODevice::ReadOnly)) {
-            auto message = file.readAll();
-            auto data = message.simplified().trimmed();
-            QJsonParseError jsonerror;
-            auto doc = QJsonDocument::fromJson(data, &jsonerror);
-            m_json = doc.object();
+        {
+            QFile fileA0("./share/A0-Correction-5.json");
+            if(fileA0.open(QIODevice::ReadOnly)) {
+                auto message = fileA0.readAll();
+                auto data = message.simplified().trimmed();
+                QJsonParseError jsonerror;
+                auto doc = QJsonDocument::fromJson(data, &jsonerror);
+                a0Json = doc.object();
+            }
         }
+
+        {
+            QFile fileA2("./share/A2-Correction.json");
+            if(fileA2.open(QIODevice::ReadOnly)) {
+                auto message = fileA2.readAll();
+                auto data = message.simplified().trimmed();
+                QJsonParseError jsonerror;
+                auto doc = QJsonDocument::fromJson(data, &jsonerror);
+                a2Json = doc.object();
+            }
+        }
+
+        m_layout = new QVBoxLayout(this->External);
+        this->createA0();
         this->createA2();
     }
 
@@ -57,13 +73,42 @@ public:
     }
 
     void createA0() {
+        auto groupA0 = new QGroupBox("A0", this->External);
+        groupA0->setFixedHeight(100);
+        m_layout->addWidget(groupA0);
+        auto widget = groupA0;
+        int beginX = 50;
+        int beginY = 50;
+        int width = 40;
+        int height = 20;
+        for(int i = 0; i < 10; i++) {
+            auto item = new QCheckBox(widget);
+            item->setText(QString("module%1").arg(i));
+            item->setGeometry(beginX + i * 70, 20, 70, 20);
+            item->setProperty("module", i);
+            item->setCheckState(a0Json["module"].toArray()[i].toInt() == 1 ? Qt::Checked : Qt::Unchecked);
+            connect(item, &QCheckBox::clicked, [&, i](int check) {
+                auto array = a0Json["module"].toArray();
+                array[i] = check;
+                a0Json["module"] = array;
+            });
+            this->a0Module[i] = item;
+        }
 
+        auto filter = new QLineEdit(widget);
+        filter->setGeometry(150, 70, 60, 20);
+        filter->setText(a0Json["filter_point_id"].toInt() == -1 ? "" : QString::number(a0Json["filter_point_id"].toInt()));
+        connect(filter, &QLineEdit::textChanged, [&](const QString &text) {
+            a0Json["filter_point_id"] = text.toInt();
+        });
+        auto label = new QLabel(widget);
+        label->setText("Filter Id :");
+        label->setGeometry(50, 70, 100, 20);
     }
 
     void createA2() {
-        auto layout = new QVBoxLayout(this->External);
         auto groupA2 = new QGroupBox("A2", this->External);
-        layout->addWidget(groupA2);
+        m_layout->addWidget(groupA2);
         auto widget = groupA2;
         int beginX = 50;
         int beginY = 50;
@@ -74,11 +119,11 @@ public:
             item->setText(QString("face%1").arg(i));
             item->setGeometry(beginX + i * 70, 20, 70, 20);
             item->setProperty("seq", i);
-            item->setCheckState(m_json["face"].toArray()[i].toInt() == 1 ? Qt::Checked : Qt::Unchecked);
+            item->setCheckState(a2Json["face"].toArray()[i].toInt() == 1 ? Qt::Checked : Qt::Unchecked);
             connect(item, &QCheckBox::clicked, [&, i](int check) {
-                auto array = m_json["face"].toArray();
+                auto array = a2Json["face"].toArray();
                 array[i] = check;
-                m_json["face"] = array;
+                a2Json["face"] = array;
             });
             this->face[i] = item;
         }
@@ -89,21 +134,21 @@ public:
                 item->setGeometry((width + 10) * i + beginX, (height + 5) * j + beginY, width, height);
                 item->setText(QString::number(index));
                 item->setProperty("seq", index);
-                item->setCheckState(m_json["channel"].toArray()[i].toInt() == 1 ? Qt::Checked : Qt::Unchecked);
+                item->setCheckState(a2Json["channel"].toArray()[i].toInt() == 1 ? Qt::Checked : Qt::Unchecked);
                 connect(item, &QCheckBox::clicked, [&, i](int check) {
-                    auto array = m_json["channel"].toArray();
+                    auto array = a2Json["channel"].toArray();
                     array[i] = check;
-                    m_json["channel"] = array;
+                    a2Json["channel"] = array;
                 });
-                this->channel[i * 12 + j] = item;
+                this->a2Channel[i * 12 + j] = item;
             }
         }
 
         filterId = new QLineEdit(widget);
         filterId->setGeometry(150, 12 * 25 + 50, 60, 20);
-        filterId->setText(m_json["filter_point_id"].toInt() == -1 ? "" : QString::number(m_json["filter_point_id"].toInt()));
+        filterId->setText(a2Json["filter_point_id"].toInt() == -1 ? "" : QString::number(a2Json["filter_point_id"].toInt()));
         connect(filterId, &QLineEdit::textChanged, [&](const QString &text) {
-            m_json["filter_point_id"] = text.toInt();
+            a2Json["filter_point_id"] = text.toInt();
         });
         auto label = new QLabel(widget);
         label->setText("Filter Id :");
@@ -111,11 +156,22 @@ public:
     }
 
     void saveSettings() {
-        QFile file("./share/A2-Correction.json");
-        if(file.open(QIODevice::WriteOnly)) {
-            QJsonDocument doc(m_json);
-            file.write(doc.toJson(QJsonDocument::Indented));
-            file.close();
+        {
+            QFile fileA0("./share/A0-Correction.json");
+            if(fileA0.open(QIODevice::WriteOnly)) {
+                QJsonDocument doc(a0Json);
+                fileA0.write(doc.toJson(QJsonDocument::Indented));
+                fileA0.close();
+            }
+        }
+
+        {
+            QFile fileA2("./share/A2-Correction.json");
+            if(fileA2.open(QIODevice::WriteOnly)) {
+                QJsonDocument doc(a2Json);
+                fileA2.write(doc.toJson(QJsonDocument::Indented));
+                fileA2.close();
+            }
         }
     }
     void restoreSettings() {
@@ -123,11 +179,14 @@ public:
     }
 
     QDialog *External;
-    QCheckBox *channel[96];
+    QCheckBox *a0Module[10];
+    QCheckBox *a2Channel[96];
     QCheckBox *face[4];
     QLineEdit *filterId;
     pqSettings* const Settings;
-    QJsonObject m_json;
+    QJsonObject a0Json;
+    QJsonObject a2Json;
+    QVBoxLayout *m_layout;
 };
 
 //-----------------------------------------------------------------------------
