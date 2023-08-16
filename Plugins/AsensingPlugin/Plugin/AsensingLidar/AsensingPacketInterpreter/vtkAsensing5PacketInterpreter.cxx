@@ -189,6 +189,9 @@ void vtkAsensing5PacketInterpreter::LoadCalibration(const std::string& filename)
     }
   }
 
+  cJSON* filter_point_id = cJSON_GetObjectItem(root, "filter_point_id");\
+  this->filter_point_id = filter_point_id->valueint;
+
   bool NoLaserAngle = false;
   bool NoRTMatrix = false;
 
@@ -680,8 +683,6 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
               z = distance * out[2];
           }
 
-          this->Points->SetPoint(current_pt_id, x, y, z);
-
           if (azimuth < 0)
           {
               azimuth += 360.0f;
@@ -700,16 +701,33 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
               pitch -= 360.0f;
           }
 
-          TrySetValue(this->PointsX, current_pt_id, x);
-          TrySetValue(this->PointsY, current_pt_id, y);
-          TrySetValue(this->PointsZ, current_pt_id, z);
-          TrySetValue(this->Azimuth, current_pt_id, azimuth);
-          TrySetValue(this->Elevation, current_pt_id, pitch);
-          TrySetValue(this->PointID, current_pt_id, structured_pt_id);
-          TrySetValue(this->LaserID, current_pt_id, laserID);
-          TrySetValue(this->Intensities, current_pt_id, intensity);
-          TrySetValue(this->Timestamps, current_pt_id, timestamp);
-          TrySetValue(this->Distances, current_pt_id, distance);
+          if((this->filter_point_id != -1 && filter_point_id == (int)current_pt_id) || this->filter_point_id == -1) {
+              this->Points->SetPoint(current_pt_id, x, y, z);
+              TrySetValue(this->PointsX, current_pt_id, x);
+              TrySetValue(this->PointsY, current_pt_id, y);
+              TrySetValue(this->PointsZ, current_pt_id, z);
+              TrySetValue(this->Azimuth, current_pt_id, azimuth);
+              TrySetValue(this->Elevation, current_pt_id, pitch);
+              TrySetValue(this->PointID, current_pt_id, structured_pt_id);
+              TrySetValue(this->LaserID, current_pt_id, laserID);
+              TrySetValue(this->Intensities, current_pt_id, intensity);
+              TrySetValue(this->Timestamps, current_pt_id, timestamp);
+              TrySetValue(this->Distances, current_pt_id, distance);
+          }
+          else {
+              this->Points->SetPoint(current_pt_id, NAN, NAN, NAN);
+              TrySetValue(this->PointsX, current_pt_id, NAN);
+              TrySetValue(this->PointsY, current_pt_id, NAN);
+              TrySetValue(this->PointsZ, current_pt_id, NAN);
+              TrySetValue(this->Azimuth, current_pt_id, NAN);
+              TrySetValue(this->Elevation, current_pt_id, NAN);
+              TrySetValue(this->PointID, current_pt_id, structured_pt_id);
+              TrySetValue(this->LaserID, current_pt_id, laserID);
+              TrySetValue(this->Intensities, current_pt_id, NAN);
+              TrySetValue(this->Timestamps, current_pt_id, NAN);
+              TrySetValue(this->Distances, current_pt_id, NAN);
+
+          }
           current_pt_id++;
           structured_pt_id++;
       }
@@ -793,7 +811,7 @@ void vtkAsensing5PacketInterpreter::ProcessPacket(unsigned char const* data, uns
             this->SplitFrame();
           }
 
-          this->Points->SetPoint(current_pt_id, x, y, z);
+          this->Points->SetPoint(current_pt_id, NAN, NAN, NAN);
 
           TrySetValue(this->PointsX, current_pt_id, NAN);
           TrySetValue(this->PointsY, current_pt_id, NAN);

@@ -395,25 +395,8 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
         this->seq_num_counter = 0;
         }
 
-        if(filter_point_id == current_pt_id) {
-            TrySetValue(this->PointsX, current_pt_id, NAN);
-            TrySetValue(this->PointsY, current_pt_id, NAN);
-            TrySetValue(this->PointsZ, current_pt_id, NAN);
-            TrySetValue(this->Azimuth, current_pt_id, NAN);
-            TrySetValue(this->Elevation, current_pt_id, NAN);
-            TrySetValue(this->PointID, current_pt_id, current_pt_id);
-            TrySetValue(this->FaceID, current_pt_id, NAN);
-            TrySetValue(this->Channel, current_pt_id, NAN);
-            TrySetValue(this->Intensities, current_pt_id, NAN);
-            TrySetValue(this->Timestamps, current_pt_id, NAN);
-            TrySetValue(this->Distances, current_pt_id, NAN);
-            current_pt_id++;
-            continue ;
-        }
-
         if(this->channels[chan] == 0) {
             this->Points->SetPoint(current_pt_id, NAN, NAN, NAN);
-
             TrySetValue(this->PointsX, current_pt_id, NAN);
             TrySetValue(this->PointsY, current_pt_id, NAN);
             TrySetValue(this->PointsZ, current_pt_id, NAN);
@@ -427,19 +410,34 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
             TrySetValue(this->Distances, current_pt_id, NAN);
         }
         else {
-            this->Points->SetPoint(current_pt_id, x, y, z);
-
-            TrySetValue(this->PointsX, current_pt_id, x);
-            TrySetValue(this->PointsY, current_pt_id, y);
-            TrySetValue(this->PointsZ, current_pt_id, z);
-            TrySetValue(this->Azimuth, current_pt_id, azimuth);
-            TrySetValue(this->Elevation, current_pt_id, pitch);
-            TrySetValue(this->PointID, current_pt_id, current_pt_id);
-            TrySetValue(this->FaceID, current_pt_id, face_id);
-            TrySetValue(this->Channel, current_pt_id, chan);
-            TrySetValue(this->Intensities, current_pt_id, intensity);
-            TrySetValue(this->Timestamps, current_pt_id, timestamp);
-            TrySetValue(this->Distances, current_pt_id, distance);
+            if((this->filter_point_id != -1 && filter_point_id == (int)current_pt_id) || this->filter_point_id == -1) {
+                this->Points->SetPoint(current_pt_id, x, y, z);
+                TrySetValue(this->PointsX, current_pt_id, x);
+                TrySetValue(this->PointsY, current_pt_id, y);
+                TrySetValue(this->PointsZ, current_pt_id, z);
+                TrySetValue(this->Azimuth, current_pt_id, azimuth);
+                TrySetValue(this->Elevation, current_pt_id, pitch);
+                TrySetValue(this->PointID, current_pt_id, current_pt_id);
+                TrySetValue(this->FaceID, current_pt_id, face_id);
+                TrySetValue(this->Channel, current_pt_id, chan);
+                TrySetValue(this->Intensities, current_pt_id, intensity);
+                TrySetValue(this->Timestamps, current_pt_id, timestamp);
+                TrySetValue(this->Distances, current_pt_id, distance);
+            }
+            else {
+                this->Points->SetPoint(current_pt_id, NAN, NAN, NAN);
+                TrySetValue(this->PointsX, current_pt_id, NAN);
+                TrySetValue(this->PointsY, current_pt_id, NAN);
+                TrySetValue(this->PointsZ, current_pt_id, NAN);
+                TrySetValue(this->Azimuth, current_pt_id, NAN);
+                TrySetValue(this->Elevation, current_pt_id, NAN);
+                TrySetValue(this->PointID, current_pt_id, current_pt_id);
+                TrySetValue(this->FaceID, current_pt_id, NAN);
+                TrySetValue(this->Channel, current_pt_id, NAN);
+                TrySetValue(this->Intensities, current_pt_id, NAN);
+                TrySetValue(this->Timestamps, current_pt_id, NAN);
+                TrySetValue(this->Distances, current_pt_id, NAN);
+            }
         }
         current_pt_id++;
       }
