@@ -3,8 +3,8 @@
 
 #define MyAppName "AsensingView"
 #define MyAppVersion "V0.48.1"
-#define MyAppPublisher "Copyright @2022 广州导远电子科技有限公司"
-#define MyAppURL "http://www.asensing.com/"
+#define MyAppPublisher "Copyright @2023 广州导远电子科技有限公司"
+#define MyAppURL "https://www.asensing.com/"
 #define MyAppExeName "AsensingView.exe"
 #define MyAppAssocName MyAppName + " File"
 #define MyAppAssocExt ".myp"
@@ -27,7 +27,7 @@ DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputDir=C:\Users\heaven\Desktop
-OutputBaseFilename=AsensingView-{#MyAppVersion}-Windows-AMD64
+OutputBaseFilename=AsensingView-{#MyAppVersion}-Windows-AMD64-Filter
 SetupIconFile=E:\workspace\AsensingViewer\Application\SoftwareInformation\logo.ico
 Compression=lzma
 SolidCompression=yes

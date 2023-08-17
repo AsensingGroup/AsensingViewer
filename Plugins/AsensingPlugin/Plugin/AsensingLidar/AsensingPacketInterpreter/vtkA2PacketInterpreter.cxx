@@ -324,6 +324,12 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
         double x, y, z, azimuth, pitch;
         double distance = static_cast<double>(unit.GetDistance()) * ASENSING_DISTANCE_UNIT;
 
+        if (0 == currentBlock.GetAzimuth() &&
+            0 == unit.GetDistance() &&
+            0 == unit.GetIntensity()) {
+              continue;
+        }
+
       {
         // double azimuth_correction = this->AzimuthCorrection[chan];
         // double elevation_correction = this->ElevationCorrection[chan];

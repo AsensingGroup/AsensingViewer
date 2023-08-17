@@ -31,6 +31,9 @@
 #include <QByteArray>
 #include <QDebug>
 
+#define A0_JSON_FILE "./share/A0-Correction-5.json"
+#define A2_JSON_FILE "./share/A2-Correction.json"
+
 //-----------------------------------------------------------------------------
 class vvFilterDialog::pqInternal : public Ui::vvFilterDialog
 {
@@ -42,7 +45,7 @@ public:
         this->setupUi(external);
 
         {
-            QFile fileA0("./share/A0-Correction-5.json");
+            QFile fileA0(A0_JSON_FILE);
             if(fileA0.open(QIODevice::ReadOnly)) {
                 auto message = fileA0.readAll();
                 auto data = message.simplified().trimmed();
@@ -53,7 +56,7 @@ public:
         }
 
         {
-            QFile fileA2("./share/A2-Correction.json");
+            QFile fileA2(A2_JSON_FILE);
             if(fileA2.open(QIODevice::ReadOnly)) {
                 auto message = fileA2.readAll();
                 auto data = message.simplified().trimmed();
@@ -134,13 +137,14 @@ public:
                 item->setGeometry((width + 10) * i + beginX, (height + 5) * j + beginY, width, height);
                 item->setText(QString::number(index));
                 item->setProperty("seq", index);
-                item->setCheckState(a2Json["channel"].toArray()[i].toInt() == 1 ? Qt::Checked : Qt::Unchecked);
-                connect(item, &QCheckBox::clicked, [&, i](int check) {
+                item->setCheckState(a2Json["channel"].toArray()[index].toInt() == 1 ? Qt::Checked : Qt::Unchecked);
+                connect(item, &QCheckBox::clicked, [&, index](int check) {
+                    qDebug() << "channel : " << index << " -> " << check;
                     auto array = a2Json["channel"].toArray();
-                    array[i] = check;
+                    array[index] = check;
                     a2Json["channel"] = array;
                 });
-                this->a2Channel[i * 12 + j] = item;
+                this->a2Channel[index] = item;
             }
         }
 
@@ -157,7 +161,7 @@ public:
 
     void saveSettings() {
         {
-            QFile fileA0("./share/A0-Correction.json");
+            QFile fileA0(A0_JSON_FILE);
             if(fileA0.open(QIODevice::WriteOnly)) {
                 QJsonDocument doc(a0Json);
                 fileA0.write(doc.toJson(QJsonDocument::Indented));
@@ -166,7 +170,7 @@ public:
         }
 
         {
-            QFile fileA2("./share/A2-Correction.json");
+            QFile fileA2(A2_JSON_FILE);
             if(fileA2.open(QIODevice::WriteOnly)) {
                 QJsonDocument doc(a2Json);
                 fileA2.write(doc.toJson(QJsonDocument::Indented));
