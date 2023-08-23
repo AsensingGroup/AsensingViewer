@@ -139,7 +139,6 @@ public:
                 item->setProperty("seq", index);
                 item->setCheckState(a2Json["channel"].toArray()[index].toInt() == 1 ? Qt::Checked : Qt::Unchecked);
                 connect(item, &QCheckBox::clicked, [&, index](int check) {
-                    qDebug() << "channel : " << index << " -> " << check;
                     auto array = a2Json["channel"].toArray();
                     array[index] = check;
                     a2Json["channel"] = array;

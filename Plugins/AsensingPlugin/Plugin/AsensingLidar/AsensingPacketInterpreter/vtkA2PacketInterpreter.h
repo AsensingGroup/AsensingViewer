@@ -96,8 +96,10 @@ protected:
   vtkSmartPointer<vtkDoubleArray> Elevation;
 
   vtkSmartPointer<vtkUnsignedIntArray> PointID;
+  vtkSmartPointer<vtkUnsignedIntArray> Seq;
   vtkSmartPointer<vtkUnsignedCharArray> FaceID;
   vtkSmartPointer<vtkUnsignedCharArray> Channel;
+  vtkSmartPointer<vtkUnsignedCharArray> Confidence;
   vtkSmartPointer<vtkUnsignedCharArray> Intensities;
   vtkSmartPointer<vtkDoubleArray> Timestamps;
   vtkSmartPointer<vtkDoubleArray> Distances;
@@ -123,6 +125,8 @@ private:
   bool channels[96] = {0};
   int filter_point_id = -1;
   bool faces[4] = {0};
+  float elevation_mirror_offset[4] = {0};
+  bool elevation_mirror_offset_enable = false;
 
   bool CalibEnabled = false;
   

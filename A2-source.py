@@ -31,7 +31,7 @@ Lidar_Flag1 = 0
 Lidar_Flag2 = 0
 Reserved1 = 0
 # PointNumInFrame = Laser_num*int((end_azimuth-start_azimuth)/horizontal_resolution)
-PointNumInFrame = 115200
+PointNumInFrame = 115200 * 2
 
 
 while True:
