@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20.3 FATAL_ERROR)
-project(AsensingView)
+project(AsensingViewer)
 set(CMAKE_BUILD_TYPE "Release")
 #Thanks to ExternalProject CMAKE_SOURCE_DIR will correctly be the same as this PROJECT_SOURCE_DIR
 

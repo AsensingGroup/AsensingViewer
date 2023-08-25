@@ -87,7 +87,7 @@ public:
         for(int i = 0; i < 10; i++) {
             auto item = new QCheckBox(widget);
             item->setText(QString("module%1").arg(i));
-            item->setGeometry(beginX + i * 70, 20, 70, 20);
+            item->setGeometry(beginX + i * 90, 20, 80, 20);
             item->setProperty("module", i);
             item->setCheckState(a0Json["module"].toArray()[i].toInt() == 1 ? Qt::Checked : Qt::Unchecked);
             connect(item, &QCheckBox::clicked, [&, i](int check) {
