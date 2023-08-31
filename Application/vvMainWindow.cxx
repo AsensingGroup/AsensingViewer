@@ -27,7 +27,7 @@
 
 #include "vvMainWindow.h"
 #include "ui_vvMainWindow.h"
-
+#include "difop_monitor.h"
 #include "lqDockableSpreadSheetReaction.h"
 #include "lqEnableAdvancedArraysReaction.h"
 #include "lqLiveSourceScalarColoringBehavior.h"
@@ -175,6 +175,12 @@ vvMainWindow::vvMainWindow()
   this->activateWindow();
 
   centralWidget()->installEventFilter(this);
+
+  auto dock = new DifopMonitor(this);
+  dock->setVisible(false);
+  dock->setWindowTitle("DIFOP Monitor");
+  dock->setObjectName("difopMonitor");
+  this->addDockWidget(Qt::RightDockWidgetArea, dock);
 }
 
 //-----------------------------------------------------------------------------

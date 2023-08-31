@@ -20,11 +20,13 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 set (source_files
+  difop_monitor.cpp
+  difop_monitor.h
+  difop_monitor.ui
+  vvMainWindow.cxx
   vvMainWindow.h
   vvMainWindow.ui
   vvResources.qrc
-  vvMainWindow.cxx
-  vvMainWindow.h
   )
 
 # Please make sure to adapt the AboutDialog text in the followin file
