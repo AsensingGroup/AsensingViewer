@@ -12,654 +12,195 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include "vvFilterDialog.h"
-
 #include "ui_vvFilterDialog.h"
-
-#include <vtkSetGet.h> //vtkNotUsed
-
 #include <pqApplicationCore.h>
 #include <pqSettings.h>
-
 #include <QPushButton>
 #include <QDialog>
 #include <QStyle>
-
-#include "ctkDoubleRangeSlider.h"
-
 #include <sstream>
+#include <QCheckBox>
+#include <QLineEdit>
+#include <QLabel>
+#include <QGroupBox>
+#include <QVBoxLayout>
+#include <QJsonObject>
+#include <QJsonDocument>
+#include <QJsonArray>
+#include <QFile>
+#include <QByteArray>
+#include <QDebug>
+
+#define A0_JSON_FILE "./share/A0-Correction-5.json"
+#define A2_JSON_FILE "./share/A2-Correction.json"
 
 //-----------------------------------------------------------------------------
 class vvFilterDialog::pqInternal : public Ui::vvFilterDialog
 {
 public:
-  pqInternal(QDialog *external)
-    : Settings(pqApplicationCore::instance()->settings())
-  {
-    this->External = external;
-    this->setupUi(external);
+    pqInternal(QDialog *external)
+        : Settings(pqApplicationCore::instance()->settings())
+    {
+        this->External = external;
+        this->setupUi(external);
 
-    this->CancelButton = new QPushButton("Cancel");
-    this->CancelButton->setIcon(external->style()->standardIcon(QStyle::SP_DialogCancelButton));
+        {
+            QFile fileA0(A0_JSON_FILE);
+            if(fileA0.open(QIODevice::ReadOnly)) {
+                auto message = fileA0.readAll();
+                auto data = message.simplified().trimmed();
+                QJsonParseError jsonerror;
+                auto doc = QJsonDocument::fromJson(data, &jsonerror);
+                a0Json = doc.object();
+            }
+        }
 
-    this->ApplyButton = new QPushButton("Apply");
-    this->ApplyButton->setIcon(external->style()->standardIcon(QStyle::SP_DialogOkButton));
+        {
+            QFile fileA2(A2_JSON_FILE);
+            if(fileA2.open(QIODevice::ReadOnly)) {
+                auto message = fileA2.readAll();
+                auto data = message.simplified().trimmed();
+                QJsonParseError jsonerror;
+                auto doc = QJsonDocument::fromJson(data, &jsonerror);
+                a2Json = doc.object();
+            }
+        }
 
-    this->ApplyAndSaveButton = new QPushButton("Apply and save for future sessions");
-    this->ApplyAndSaveButton->setIcon(external->style()->standardIcon(QStyle::SP_DialogSaveButton));
+        m_layout = new QVBoxLayout(this->External);
+        this->createA0();
+        this->createA2();
+    }
 
-    this->buttonBox->addButton(this->CancelButton, QDialogButtonBox::ActionRole);
-    this->buttonBox->addButton(this->ApplyButton, QDialogButtonBox::ActionRole);
-    this->buttonBox->addButton(this->ApplyAndSaveButton, QDialogButtonBox::ActionRole);
-  }
+    ~pqInternal() {
+        this->saveSettings();
+    }
 
-  void saveSettings();
-  void restoreSettings();
-  void SetSphericalSettings();
-  void SetCartesianSettings();
-  void ActivateSpinBox();
-  void DesactivateSpinBox();
-  void InitializeDoubleRangeSlider();
-  void SwitchSliderMode(bool isSliderMode);
-  void GetCropRegion(double output[6]);
-  void onXSliderChanged(double vmin, double vmax);
-  void onYSliderChanged(double vmin, double vmax);
-  void onZSliderChanged(double vmin, double vmax);
-  void updateRangeValues(bool isSliderMode);
+    void createA0() {
+        auto groupA0 = new QGroupBox("A0", this->External);
+        groupA0->setFixedHeight(100);
+        m_layout->addWidget(groupA0);
+        auto widget = groupA0;
+        int beginX = 50;
+        int beginY = 50;
+        int width = 40;
+        int height = 20;
+        for(int i = 0; i < 10; i++) {
+            auto item = new QCheckBox(widget);
+            item->setText(QString("module%1").arg(i));
+            item->setGeometry(beginX + i * 90, 20, 80, 20);
+            item->setProperty("module", i);
+            item->setCheckState(a0Json["module"].toArray()[i].toInt() == 1 ? Qt::Checked : Qt::Unchecked);
+            connect(item, &QCheckBox::clicked, [&, i](int check) {
+                auto array = a0Json["module"].toArray();
+                array[i] = check;
+                a0Json["module"] = array;
+            });
+            this->a0Module[i] = item;
+        }
 
-  QDialog *External;
+        auto filter = new QLineEdit(widget);
+        filter->setGeometry(150, 70, 60, 20);
+        filter->setText(a0Json["filter_point_id"].toInt() == -1 ? "" : QString::number(a0Json["filter_point_id"].toInt()));
+        connect(filter, &QLineEdit::textChanged, [&](const QString &text) {
+            a0Json["filter_point_id"] = text.toInt();
+        });
+        auto label = new QLabel(widget);
+        label->setText("Filter Id :");
+        label->setGeometry(50, 70, 100, 20);
+    }
 
-  QPushButton *CancelButton;
-  QPushButton *ApplyButton;
-  QPushButton *ApplyAndSaveButton;
+    void createA2() {
+        auto groupA2 = new QGroupBox("A2", this->External);
+        m_layout->addWidget(groupA2);
+        auto widget = groupA2;
+        int beginX = 50;
+        int beginY = 50;
+        int width = 40;
+        int height = 20;
+        for(int i = 0; i < 4; i++) {
+            auto item = new QCheckBox(widget);
+            item->setText(QString("face%1").arg(i));
+            item->setGeometry(beginX + i * 70, 20, 70, 20);
+            item->setProperty("seq", i);
+            item->setCheckState(a2Json["face"].toArray()[i].toInt() == 1 ? Qt::Checked : Qt::Unchecked);
+            connect(item, &QCheckBox::clicked, [&, i](int check) {
+                auto array = a2Json["face"].toArray();
+                array[i] = check;
+                a2Json["face"] = array;
+            });
+            this->face[i] = item;
+        }
+        for(int i = 0; i < 8; i++) {
+            for(int j = 0; j < 12; j++) {
+                auto item = new QCheckBox(widget);
+                auto index = i * 12 + j;
+                item->setGeometry((width + 10) * i + beginX, (height + 5) * j + beginY, width, height);
+                item->setText(QString::number(index));
+                item->setProperty("seq", index);
+                item->setCheckState(a2Json["channel"].toArray()[index].toInt() == 1 ? Qt::Checked : Qt::Unchecked);
+                connect(item, &QCheckBox::clicked, [&, index](int check) {
+                    auto array = a2Json["channel"].toArray();
+                    array[index] = check;
+                    a2Json["channel"] = array;
+                });
+                this->a2Channel[index] = item;
+            }
+        }
 
-  ctkDoubleRangeSlider XDoubleRangeSlider;
-  ctkDoubleRangeSlider YDoubleRangeSlider;
-  ctkDoubleRangeSlider ZDoubleRangeSlider;
+        filterId = new QLineEdit(widget);
+        filterId->setGeometry(150, 12 * 25 + 50, 60, 20);
+        filterId->setText(a2Json["filter_point_id"].toInt() == -1 ? "" : QString::number(a2Json["filter_point_id"].toInt()));
+        connect(filterId, &QLineEdit::textChanged, [&](const QString &text) {
+            a2Json["filter_point_id"] = text.toInt();
+        });
+        auto label = new QLabel(widget);
+        label->setText("Filter Id :");
+        label->setGeometry(50, 12 * 25 + 50, 100, 20);
+    }
 
-  QLabel XRangeLabel;
-  QLabel YRangeLabel;
-  QLabel ZRangeLabel;
+    void saveSettings() {
+        {
+            QFile fileA0(A0_JSON_FILE);
+            if(fileA0.open(QIODevice::WriteOnly)) {
+                QJsonDocument doc(a0Json);
+                fileA0.write(doc.toJson(QJsonDocument::Indented));
+                fileA0.close();
+            }
+        }
 
-  double xRange[2];
-  double yRange[2];
-  double zRange[2];
+        {
+            QFile fileA2(A2_JSON_FILE);
+            if(fileA2.open(QIODevice::WriteOnly)) {
+                QJsonDocument doc(a2Json);
+                fileA2.write(doc.toJson(QJsonDocument::Indented));
+                fileA2.close();
+            }
+        }
+    }
+    void restoreSettings() {
 
-  pqSettings* const Settings;
+    }
+
+    QDialog *External;
+    QCheckBox *a0Module[10];
+    QCheckBox *a2Channel[96];
+    QCheckBox *face[4];
+    QLineEdit *filterId;
+    pqSettings* const Settings;
+    QJsonObject a0Json;
+    QJsonObject a2Json;
+    QVBoxLayout *m_layout;
 };
 
 //-----------------------------------------------------------------------------
-void vvFilterDialog::pqInternal::saveSettings()
-{
-  this->Settings->setValue(
-    "LidarPlugin/CropReturnsDialog/EnableCropping", this->CropGroupBox->isChecked());
-
-  this->Settings->setValue(
-    "LidarPlugin/CropReturnsDialog/CropOutside", this->CropOutsideCheckBox->isChecked());
-
-  this->Settings->setValue("LidarPlugin/CropReturnsDialog/cartesianRadioButton", this->cartesianRadioButton->isChecked());
-  this->Settings->setValue("LidarPlugin/CropReturnsDialog/sphericalRadioButton", this->sphericalRadioButton->isChecked());
-
-  this->Settings->setValue("LidarPlugin/CropReturnsDialog/FirstCornerX", xRange[0]);
-  this->Settings->setValue("LidarPlugin/CropReturnsDialog/FirstCornerY", yRange[0]);
-  this->Settings->setValue("LidarPlugin/CropReturnsDialog/FirstCornerZ", zRange[0]);
-  this->Settings->setValue("LidarPlugin/CropReturnsDialog/SecondCornerX", xRange[1]);
-  this->Settings->setValue("LidarPlugin/CropReturnsDialog/SecondCornerY", yRange[1]);
-  this->Settings->setValue("LidarPlugin/CropReturnsDialog/SecondCornerZ", zRange[1]);
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::pqInternal::restoreSettings()
-{
-  this->sphericalRadioButton->setChecked(
-    this->Settings->value("LidarPlugin/CropReturnsDialog/sphericalRadioButton", true)
-      .toBool());
-  this->cartesianRadioButton->setChecked(
-    this->Settings->value("LidarPlugin/CropReturnsDialog/cartesianRadioButton", false)
-      .toBool());
-
-  if (this->cartesianRadioButton->isChecked())
-  {
-    this->SetCartesianSettings();
-  }
-
-  if (this->sphericalRadioButton->isChecked())
-  {
-    this->SetSphericalSettings();
-  }
-
-  this->CropGroupBox->setChecked(
-    this->Settings->value("LidarPlugin/CropReturnsDialog/EnableCropping", false).toBool());
-
-  this->CropOutsideCheckBox->setChecked(this->Settings
-                                            ->value("LidarPlugin/CropReturnsDialog/CropOutside",
-                                                    true)
-                                            .toBool());
-
-  this->X1SpinBox->setValue(
-    this->Settings
-      ->value("LidarPlugin/CropReturnsDialog/FirstCornerX", this->X1SpinBox->value())
-      .toDouble());
-  this->Y1SpinBox->setValue(
-    this->Settings
-      ->value("LidarPlugin/CropReturnsDialog/FirstCornerY", this->Y1SpinBox->value())
-      .toDouble());
-  this->Z1SpinBox->setValue(
-    this->Settings
-      ->value("LidarPlugin/CropReturnsDialog/FirstCornerZ", this->Z1SpinBox->value())
-      .toDouble());
-  this->X2SpinBox->setValue(
-    this->Settings
-      ->value("LidarPlugin/CropReturnsDialog/SecondCornerX", this->X2SpinBox->value())
-      .toDouble());
-  this->Y2SpinBox->setValue(
-    this->Settings
-      ->value("LidarPlugin/CropReturnsDialog/SecondCornerY", this->Y2SpinBox->value())
-      .toDouble());
-  this->Z2SpinBox->setValue(
-    this->Settings
-      ->value("LidarPlugin/CropReturnsDialog/SecondCornerZ", this->Z2SpinBox->value())
-      .toDouble());
-
-  xRange[0] = this->X1SpinBox->value();
-  xRange[1] = this->X2SpinBox->value();
-  yRange[0] = this->Y1SpinBox->value();
-  yRange[1] = this->Y2SpinBox->value();
-  zRange[0] = this->Z1SpinBox->value();
-  zRange[1] = this->Z2SpinBox->value();
-
-  this->X1SpinBox->setValue(xRange[0]);
-  this->X2SpinBox->setValue(xRange[1]);
-  this->Y1SpinBox->setValue(yRange[0]);
-  this->Y2SpinBox->setValue(yRange[1]);
-  this->Z1SpinBox->setValue(zRange[0]);
-  this->Z2SpinBox->setValue(zRange[1]);
-
-  this->XDoubleRangeSlider.setMinimumValue(xRange[0]);
-  this->XDoubleRangeSlider.setMaximumValue(xRange[1]);
-  this->YDoubleRangeSlider.setMinimumValue(yRange[0]);
-  this->YDoubleRangeSlider.setMaximumValue(yRange[1]);
-  this->ZDoubleRangeSlider.setMinimumValue(zRange[0]);
-  this->ZDoubleRangeSlider.setMaximumValue(zRange[1]);
-}
-
-//-----------------------------------------------------------------------------
 vvFilterDialog::vvFilterDialog(QWidget* p)
-  : QDialog(p)
-  , Internal(new pqInternal(this))
+    : QDialog(p)
+    , Internal(new pqInternal(this))
 {
-  this->Internal->InitializeDoubleRangeSlider();
 
-  connect(
-    this->Internal->X1SpinBox, SIGNAL(valueChanged(double)), this, SLOT(onSpinBoxChanged(double)));
-  connect(
-    this->Internal->X2SpinBox, SIGNAL(valueChanged(double)), this, SLOT(onSpinBoxChanged(double)));
-  connect(
-    this->Internal->Y1SpinBox, SIGNAL(valueChanged(double)), this, SLOT(onSpinBoxChanged(double)));
-  connect(
-    this->Internal->Y2SpinBox, SIGNAL(valueChanged(double)), this, SLOT(onSpinBoxChanged(double)));
-  connect(
-    this->Internal->Z1SpinBox, SIGNAL(valueChanged(double)), this, SLOT(onSpinBoxChanged(double)));
-  connect(
-    this->Internal->Z2SpinBox, SIGNAL(valueChanged(double)), this, SLOT(onSpinBoxChanged(double)));
-  connect(&this->Internal->XDoubleRangeSlider, SIGNAL(positionsChanged(double, double)), this,
-    SLOT(onXSliderChanged(double, double)));
-  connect(&this->Internal->YDoubleRangeSlider, SIGNAL(positionsChanged(double, double)), this,
-    SLOT(onYSliderChanged(double, double)));
-  connect(&this->Internal->ZDoubleRangeSlider, SIGNAL(positionsChanged(double, double)), this,
-    SLOT(onZSliderChanged(double, double)));
-  connect(this->Internal->sliderModeCheckBox, SIGNAL(clicked()), this, SLOT(onSliderBoxToggled()));
-  connect(
-    this->Internal->cartesianRadioButton, SIGNAL(clicked()), this, SLOT(onCartesianToggled()));
-  connect(
-    this->Internal->sphericalRadioButton, SIGNAL(clicked()), this, SLOT(onSphericalToggled()));
-  connect(this->Internal->CropGroupBox, SIGNAL(clicked()), this, SLOT(onCropGroupBoxToggled()));
-
-  connect(this->Internal->CancelButton, SIGNAL(clicked()), this, SLOT(reject()));
-  connect(this->Internal->ApplyButton, SIGNAL(clicked()), this, SLOT(apply()));
-  connect(this->Internal->ApplyAndSaveButton, SIGNAL(clicked()), this, SLOT(applyAndSave()));
-
-  this->Internal->restoreSettings();
 }
 
 //-----------------------------------------------------------------------------
 vvFilterDialog::~vvFilterDialog()
 {
-}
-
-//-----------------------------------------------------------------------------
-bool vvFilterDialog::croppingEnabled() const
-{
-  return this->Internal->CropGroupBox->isChecked();
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::setCroppingEnabled(bool checked)
-{
-  this->Internal->CropGroupBox->setChecked(checked);
-}
-
-//-----------------------------------------------------------------------------
-bool vvFilterDialog::cropOutside() const
-{
-  return this->Internal->CropOutsideCheckBox->isChecked();
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::setCropOutside(bool checked)
-{
-  this->Internal->CropOutsideCheckBox->setChecked(checked);
-}
-
-//-----------------------------------------------------------------------------
-QVector3D vvFilterDialog::firstCorner() const
-{
-  double cropRegion[6];
-  this->Internal->GetCropRegion(cropRegion);
-
-  if (this->Internal->sphericalRadioButton->isChecked())
-  {
-    return QVector3D(cropRegion[0], cropRegion[2], qMin(cropRegion[4], cropRegion[5]));
-  }
-  else
-  {
-    return QVector3D(qMin(cropRegion[0], cropRegion[1]), qMin(cropRegion[2], cropRegion[3]),
-      qMin(cropRegion[4], cropRegion[5]));
-  }
-}
-
-//-----------------------------------------------------------------------------
-QVector3D vvFilterDialog::secondCorner() const
-{
-  double cropRegion[6];
-  this->Internal->GetCropRegion(cropRegion);
-
-  if (this->Internal->sphericalRadioButton->isChecked())
-  {
-    return QVector3D(cropRegion[1], cropRegion[3], qMax(cropRegion[4], cropRegion[5]));
-  }
-  else
-  {
-    return QVector3D(qMax(cropRegion[0], cropRegion[1]), qMax(cropRegion[2], cropRegion[3]),
-      qMax(cropRegion[4], cropRegion[5]));
-  }
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::setFirstCorner(QVector3D corner)
-{
-  pqInternal* const d = this->Internal.data();
-  d->X1SpinBox->setValue(corner.x());
-  d->Y1SpinBox->setValue(corner.y());
-  d->Z1SpinBox->setValue(corner.z());
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::setSecondCorner(QVector3D corner)
-{
-  pqInternal* const d = this->Internal.data();
-  d->X2SpinBox->setValue(corner.x());
-  d->Y2SpinBox->setValue(corner.y());
-  d->Z2SpinBox->setValue(corner.z());
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::apply()
-{
-  QDialog::accept();
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::applyAndSave()
-{
-  this->Internal->saveSettings();
-  QDialog::accept();
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::onCartesianToggled()
-{
-  this->Internal->SetCartesianSettings();
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::onSphericalToggled()
-{
-  this->Internal->SetSphericalSettings();
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::onSliderBoxToggled()
-{
-  this->Internal->SwitchSliderMode(this->Internal->sliderModeCheckBox->isChecked());
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::pqInternal::SetSphericalSettings()
-{
-  this->ActivateSpinBox();
-  // change the labels
-  // list of unicode symbol : http://sites.psu.edu/symbolcodes/languages/ancient/greek/greekchart/
-  this->XLabel->setText("Rotational angle");
-  this->YLabel->setText("Vertical angle");
-  this->ZLabel->setText("Distance");
-
-  // Here we take the spherical coordinates used in mathematics (and not physic)
-  // (r,theta,phi)
-  double minR = 0, maxR = 300;
-  double minTheta = -360, maxTheta = 360; // Rotational Angle
-  double minPhi = -90, maxPhi = 90;    // Vertical Angle
-  // theta is between [minTheta,maxTheta] - Rotational Angle
-  this->X1SpinBox->setMinimum(minTheta);
-  this->X2SpinBox->setMinimum(minTheta);
-  this->XDoubleRangeSlider.setMinimum(minTheta);
-  this->X1SpinBox->setMaximum(maxTheta);
-  this->X2SpinBox->setMaximum(maxTheta);
-  this->XDoubleRangeSlider.setMaximum(maxTheta);
-  this->X1SpinBox->setValue(0);
-  this->X2SpinBox->setValue(360.0);
-  // phi is between [minPhi,maxPhi] - Vertical Angle
-  this->Y1SpinBox->setMinimum(minPhi);
-  this->Y2SpinBox->setMinimum(minPhi);
-  this->YDoubleRangeSlider.setMinimum(minPhi);
-  this->Y1SpinBox->setMaximum(maxPhi);
-  this->Y2SpinBox->setMaximum(maxPhi);
-  this->YDoubleRangeSlider.setMaximum(maxPhi);
-  this->Y1SpinBox->setValue(-90.0);
-  this->Y2SpinBox->setValue(90.0);
-  // R is positive
-  this->Z1SpinBox->setMinimum(minR);
-  this->Z2SpinBox->setMinimum(minR);
-  this->ZDoubleRangeSlider.setMinimum(minR);
-  this->Z1SpinBox->setMaximum(maxR);
-  this->Z2SpinBox->setMaximum(maxR);
-  this->ZDoubleRangeSlider.setMaximum(maxR);
-  this->Z1SpinBox->setValue(0.0);
-  this->Z2SpinBox->setValue(10.0);
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::pqInternal::SetCartesianSettings()
-{
-  double maxV = 300;
-  double minV = -maxV;
-  this->ActivateSpinBox();
-  // change the labels
-  this->XLabel->setText("X");
-  this->YLabel->setText("Y");
-  this->ZLabel->setText("Z");
-  // change the bounds
-  // X [-10000,10000]
-  this->X1SpinBox->setMinimum(minV);
-  this->X2SpinBox->setMinimum(minV);
-  this->XDoubleRangeSlider.setMinimum(minV);
-  this->X1SpinBox->setMaximum(maxV);
-  this->X2SpinBox->setMaximum(maxV);
-  this->XDoubleRangeSlider.setMaximum(maxV);
-  this->X1SpinBox->setValue(-5.0);
-  this->X2SpinBox->setValue(5.0);
-  // Y [-10000,10000]
-  this->Y1SpinBox->setMinimum(minV);
-  this->Y2SpinBox->setMinimum(minV);
-  this->YDoubleRangeSlider.setMinimum(minV);
-  this->Y1SpinBox->setMaximum(maxV);
-  this->Y2SpinBox->setMaximum(maxV);
-  this->YDoubleRangeSlider.setMaximum(maxV);
-  this->Y1SpinBox->setValue(-5.0);
-  this->Y2SpinBox->setValue(5.0);
-  // Z [-10000,10000]
-  this->Z1SpinBox->setMinimum(minV);
-  this->Z2SpinBox->setMinimum(minV);
-  this->ZDoubleRangeSlider.setMinimum(minV);
-  this->Z1SpinBox->setMaximum(maxV);
-  this->Z2SpinBox->setMaximum(maxV);
-  this->ZDoubleRangeSlider.setMaximum(maxV);
-  this->Z1SpinBox->setValue(-5.0);
-  this->Z2SpinBox->setValue(5.0);
-}
-
-//-----------------------------------------------------------------------------
-int vvFilterDialog::GetCropMode() const
-{
-  if (!this->Internal->CropGroupBox->isChecked())
-  {
-    return 0; // i.e. None
-  }
-  else if (this->Internal->cartesianRadioButton->isChecked())
-  {
-    return 1;
-  }
-  else if (this->Internal->sphericalRadioButton->isChecked())
-  {
-    return 2;
-  }
-  else
-  {
-    return 0;
-  }
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::pqInternal::ActivateSpinBox()
-{
-  this->XLabel->setDisabled(false);
-  this->YLabel->setDisabled(false);
-  this->ZLabel->setDisabled(false);
-
-  this->X1SpinBox->setDisabled(false);
-  this->X2SpinBox->setDisabled(false);
-
-  this->Y1SpinBox->setDisabled(false);
-  this->Y2SpinBox->setDisabled(false);
-
-  this->Z1SpinBox->setDisabled(false);
-  this->Z2SpinBox->setDisabled(false);
-
-  this->XDoubleRangeSlider.setDisabled(false);
-  this->YDoubleRangeSlider.setDisabled(false);
-  this->ZDoubleRangeSlider.setDisabled(false);
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::pqInternal::InitializeDoubleRangeSlider()
-{
-  this->XLayout->addWidget(&this->XDoubleRangeSlider);
-  this->XLayout->addWidget(&this->XRangeLabel);
-  this->XDoubleRangeSlider.setOrientation(Qt::Horizontal);
-  this->XDoubleRangeSlider.setVisible(false);
-  this->XRangeLabel.setVisible(false);
-
-  this->YLayout->addWidget(&this->YDoubleRangeSlider);
-  this->YLayout->addWidget(&this->YRangeLabel);
-  this->YDoubleRangeSlider.setOrientation(Qt::Horizontal);
-  this->YDoubleRangeSlider.setVisible(false);
-  this->YRangeLabel.setVisible(false);
-
-  this->ZLayout->addWidget(&this->ZDoubleRangeSlider);
-  this->ZLayout->addWidget(&this->ZRangeLabel);
-  this->ZDoubleRangeSlider.setOrientation(Qt::Horizontal);
-  this->ZDoubleRangeSlider.setVisible(false);
-  this->ZRangeLabel.setVisible(false);
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::pqInternal::SwitchSliderMode(bool isSliderMode)
-{
-  this->XDoubleRangeSlider.setVisible(isSliderMode);
-  this->YDoubleRangeSlider.setVisible(isSliderMode);
-  this->ZDoubleRangeSlider.setVisible(isSliderMode);
-  this->XRangeLabel.setVisible(isSliderMode);
-  this->YRangeLabel.setVisible(isSliderMode);
-  this->ZRangeLabel.setVisible(isSliderMode);
-
-  this->X1SpinBox->setVisible(!isSliderMode);
-  this->X2SpinBox->setVisible(!isSliderMode);
-  this->Y1SpinBox->setVisible(!isSliderMode);
-  this->Y2SpinBox->setVisible(!isSliderMode);
-  this->Z1SpinBox->setVisible(!isSliderMode);
-  this->Z2SpinBox->setVisible(!isSliderMode);
-
-  if (isSliderMode)
-  {
-    this->onXSliderChanged(this->xRange[0], this->xRange[1]);
-    this->onYSliderChanged(this->yRange[0], this->yRange[1]);
-    this->onZSliderChanged(this->zRange[0], this->zRange[1]);
-  }
-
-  this->XDoubleRangeSlider.setMinimumValue(this->xRange[0]);
-  this->YDoubleRangeSlider.setMinimumValue(this->yRange[0]);
-  this->ZDoubleRangeSlider.setMinimumValue(this->zRange[0]);
-  this->XDoubleRangeSlider.setMaximumValue(this->xRange[1]);
-  this->YDoubleRangeSlider.setMaximumValue(this->yRange[1]);
-  this->ZDoubleRangeSlider.setMaximumValue(this->zRange[1]);
-
-  this->X1SpinBox->setValue(this->xRange[0]);
-  this->X2SpinBox->setValue(this->xRange[1]);
-  this->Y1SpinBox->setValue(this->yRange[0]);
-  this->Y2SpinBox->setValue(this->yRange[1]);
-  this->Z1SpinBox->setValue(this->zRange[0]);
-  this->Z2SpinBox->setValue(this->zRange[1]);
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::pqInternal::GetCropRegion(double output[6])
-{
-  if (this->sliderModeCheckBox->isChecked())
-  {
-    output[0] = this->XDoubleRangeSlider.minimumValue();
-    output[1] = this->XDoubleRangeSlider.maximumValue();
-
-    output[2] = this->YDoubleRangeSlider.minimumValue();
-    output[3] = this->YDoubleRangeSlider.maximumValue();
-
-    output[4] = this->ZDoubleRangeSlider.minimumValue();
-    output[5] = this->ZDoubleRangeSlider.maximumValue();
-  }
-  else
-  {
-    output[0] = this->X1SpinBox->value();
-    output[1] = this->X2SpinBox->value();
-
-    output[2] = this->Y1SpinBox->value();
-    output[3] = this->Y2SpinBox->value();
-
-    output[4] = this->Z1SpinBox->value();
-    output[5] = this->Z2SpinBox->value();
-  }
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::pqInternal::DesactivateSpinBox()
-{
-  this->XLabel->setDisabled(true);
-  this->YLabel->setDisabled(true);
-  this->ZLabel->setDisabled(true);
-
-  this->X1SpinBox->setDisabled(true);
-  this->X2SpinBox->setDisabled(true);
-
-  this->Y1SpinBox->setDisabled(true);
-  this->Y2SpinBox->setDisabled(true);
-
-  this->Z1SpinBox->setDisabled(true);
-  this->Z2SpinBox->setDisabled(true);
-
-  this->XDoubleRangeSlider.setDisabled(true);
-  this->YDoubleRangeSlider.setDisabled(true);
-  this->ZDoubleRangeSlider.setDisabled(true);
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::onXSliderChanged(double vmin, double vmax)
-{
-  this->Internal->onXSliderChanged(vmin, vmax);
-  this->Internal->updateRangeValues(true);
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::onYSliderChanged(double vmin, double vmax)
-{
-  this->Internal->onYSliderChanged(vmin, vmax);
-  this->Internal->updateRangeValues(true);
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::onZSliderChanged(double vmin, double vmax)
-{
-  this->Internal->onZSliderChanged(vmin, vmax);
-  this->Internal->updateRangeValues(true);
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::pqInternal::onXSliderChanged(double vmin, double vmax)
-{
-  std::stringstream label;
-  label << "[" << vmin << ";" << vmax << "]";
-  this->XRangeLabel.setText(QString(label.str().c_str()));
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::pqInternal::onYSliderChanged(double vmin, double vmax)
-{
-  std::stringstream label;
-  label << "[" << vmin << ";" << vmax << "]";
-  this->YRangeLabel.setText(QString(label.str().c_str()));
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::pqInternal::onZSliderChanged(double vmin, double vmax)
-{
-  std::stringstream label;
-  label << "[" << vmin << ";" << vmax << "]";
-  this->ZRangeLabel.setText(QString(label.str().c_str()));
-}
-
-void vvFilterDialog::pqInternal::updateRangeValues(bool isSliderMode)
-{
-  if (isSliderMode)
-  {
-    this->xRange[0] = this->XDoubleRangeSlider.minimumValue();
-    this->xRange[1] = this->XDoubleRangeSlider.maximumValue();
-    this->yRange[0] = this->YDoubleRangeSlider.minimumValue();
-    this->yRange[1] = this->YDoubleRangeSlider.maximumValue();
-    this->zRange[0] = this->ZDoubleRangeSlider.minimumValue();
-    this->zRange[1] = this->ZDoubleRangeSlider.maximumValue();
-  }
-  else
-  {
-    this->xRange[0] = this->X1SpinBox->value();
-    this->xRange[1] = this->X2SpinBox->value();
-    this->yRange[0] = this->Y1SpinBox->value();
-    this->yRange[1] = this->Y2SpinBox->value();
-    this->zRange[0] = this->Z1SpinBox->value();
-    this->zRange[1] = this->Z2SpinBox->value();
-  }
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::onSpinBoxChanged(double vtkNotUsed(value))
-{
-  this->Internal->updateRangeValues(false);
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::onCropGroupBoxToggled()
-{
-  this->Internal->X1SpinBox->setDisabled(!this->Internal->CropGroupBox->isChecked());
-  this->Internal->X2SpinBox->setDisabled(!this->Internal->CropGroupBox->isChecked());
-  this->Internal->Y1SpinBox->setDisabled(!this->Internal->CropGroupBox->isChecked());
-  this->Internal->Y2SpinBox->setDisabled(!this->Internal->CropGroupBox->isChecked());
-  this->Internal->Z1SpinBox->setDisabled(!this->Internal->CropGroupBox->isChecked());
-  this->Internal->Z2SpinBox->setDisabled(!this->Internal->CropGroupBox->isChecked());
-  this->Internal->XDoubleRangeSlider.setDisabled(!this->Internal->CropGroupBox->isChecked());
-  this->Internal->YDoubleRangeSlider.setDisabled(!this->Internal->CropGroupBox->isChecked());
-  this->Internal->ZDoubleRangeSlider.setDisabled(!this->Internal->CropGroupBox->isChecked());
-  this->Internal->cartesianRadioButton->setDisabled(!this->Internal->CropGroupBox->isChecked());
-  this->Internal->sphericalRadioButton->setDisabled(!this->Internal->CropGroupBox->isChecked());
-  this->Internal->CropOutsideCheckBox->setDisabled(!this->Internal->CropGroupBox->isChecked());
-}
-
-//-----------------------------------------------------------------------------
-void vvFilterDialog::UpdateDialogWithCurrentSetting()
-{
-  this->onCropGroupBoxToggled();
 }

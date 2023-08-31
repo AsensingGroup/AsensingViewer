@@ -14,7 +14,7 @@
    <bool>true</bool>
   </property>
   <property name="windowTitle">
-   <string>AsensingView</string>
+   <string>AsensingViewer</string>
   </property>
   <property name="windowIcon">
    <iconset resource="vvResources.qrc">
@@ -31,7 +31,7 @@
      <x>0</x>
      <y>0</y>
      <width>1070</width>
-     <height>22</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
@@ -94,6 +94,8 @@
     <addaction name="separator"/>
     <addaction name="separator"/>
     <addaction name="actionFull_Screen"/>
+    <addaction name="actionFilterParser"/>
+    <addaction name="actionDIFOP_Monitor"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -789,6 +791,16 @@
    </property>
    <property name="text">
     <string>Full Screen</string>
+   </property>
+  </action>
+  <action name="actionFilterParser">
+   <property name="text">
+    <string>Filter Parser</string>
+   </property>
+  </action>
+  <action name="actionDIFOP_Monitor">
+   <property name="text">
+    <string>DIFOP Monitor</string>
    </property>
   </action>
  </widget>

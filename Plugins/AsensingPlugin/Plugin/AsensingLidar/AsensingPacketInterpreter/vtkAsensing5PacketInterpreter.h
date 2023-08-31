@@ -142,8 +142,10 @@ private:
   uint16_t current_seq_num = 0;
   uint16_t last_seq_num = 0;
   uint16_t seq_num_counter = 0;
+  int filter_point_id = -1;
 
   float m_angles[ANGLE_SIZE] = {-47.176, -23.548, 0, 23.548, 47.176, 17.8};
+  bool channels[10] = {0};
 
 #if USING_RT_MATRIX
   bool RTMatEnabled = false;

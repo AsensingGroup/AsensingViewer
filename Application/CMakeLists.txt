@@ -20,11 +20,13 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 set (source_files
+  difop_monitor.cpp
+  difop_monitor.h
+  difop_monitor.ui
+  vvMainWindow.cxx
   vvMainWindow.h
   vvMainWindow.ui
   vvResources.qrc
-  vvMainWindow.cxx
-  vvMainWindow.h
   )
 
 # Please make sure to adapt the AboutDialog text in the followin file
@@ -56,6 +58,8 @@ paraview_client_add(
   LIBRARY_DESTINATION ${LV_INSTALL_LIBRARY_DIR}
 )
 
+find_package(Qt5 COMPONENTS network REQUIRED)
+
 target_include_directories(${SOFTWARE_NAME} PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR})
@@ -65,6 +69,7 @@ target_link_libraries(${SOFTWARE_NAME} PUBLIC
   PythonQtPlugin # The plugin is needed to be loaded statically
   lqApplicationComponents #actually LVCore/ApplicationComponents
   ApplicationUi
+  Qt5::Network
   )
 
 # Bundle Icon on Apple

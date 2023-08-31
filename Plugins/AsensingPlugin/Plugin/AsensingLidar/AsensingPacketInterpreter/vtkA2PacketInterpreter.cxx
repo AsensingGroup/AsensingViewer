@@ -156,6 +156,11 @@ void vtkA2PacketInterpreter::LoadCalibration(const std::string& filename)
   cJSON* root = cJSON_Parse(jsonData);
   cJSON* elevations = cJSON_GetObjectItem(root, "elevation");
   cJSON* azimuths = cJSON_GetObjectItem(root, "azimuth");
+  cJSON* faces = cJSON_GetObjectItem(root, "face");
+  cJSON* elevation_mirror_offset = cJSON_GetObjectItem(root, "elevation_mirror_offset");
+  cJSON* channels = cJSON_GetObjectItem(root, "channel");
+  cJSON* filter_point_id = cJSON_GetObjectItem(root, "filter_point_id");
+  cJSON* elevation_mirror_offset_enable = cJSON_GetObjectItem(root, "elevation_mirror_offset_enable");
 
   if (cJSON_IsArray(elevations)) 
   {
@@ -189,6 +194,57 @@ void vtkA2PacketInterpreter::LoadCalibration(const std::string& filename)
     }
   }
 
+  if (cJSON_IsArray(faces))
+  {
+    printf("face offset:\n%s\n\n", cJSON_Print(faces));
+
+    int FaceSize = cJSON_GetArraySize(faces);
+    if (4 == FaceSize) {
+      for (int i = 0; i < 4; i++)
+      {
+        this->faces[i] = cJSON_GetArrayItem(faces, i)->valueint;
+      }
+    }
+    else {
+      vtkWarningMacro("[A2] Invalid calibration data");
+    }
+  }
+
+  if (cJSON_IsArray(elevation_mirror_offset))
+  {
+    printf("elevation offset:\n%s\n\n", cJSON_Print(elevation_mirror_offset));
+
+    int size = cJSON_GetArraySize(elevation_mirror_offset);
+    if (4 == size) {
+      for (int i = 0; i < 4; i++)
+      {
+        this->elevation_mirror_offset[i] = cJSON_GetArrayItem(elevation_mirror_offset, i)->valuedouble;
+      }
+    }
+    else {
+      vtkWarningMacro("[A2] Invalid calibration data");
+    }
+  }
+
+  if (cJSON_IsArray(channels))
+  {
+    printf("channels :\n%s\n\n", cJSON_Print(channels));
+
+    int channelSize = cJSON_GetArraySize(channels);
+    if (A2_CHANNEL_NUM == channelSize) {
+      for (int i = 0; i < A2_CHANNEL_NUM; i++)
+      {
+        this->channels[i] = cJSON_GetArrayItem(channels, i)->valueint;
+      }
+    }
+    else {
+      vtkWarningMacro("[A2] Invalid calibration data");
+    }
+  }
+
+  this->filter_point_id = filter_point_id->valueint;
+  this->elevation_mirror_offset_enable = elevation_mirror_offset_enable->valueint;
+
   cJSON_Delete(root);
   free(jsonData);
   fclose(fp);
@@ -206,6 +262,9 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
   }
 
   const A2Packet* dataPacket = reinterpret_cast<const A2Packet*>(data);
+  current_frame_id = dataPacket->header.GetFrameID();
+  auto face_id = current_frame_id % 4;
+  if(this->faces[face_id] == 0) return ;
 
   struct tm t;
   t.tm_year = dataPacket->header.GetUTCTime0();
@@ -232,8 +291,8 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
 
   channel_num = dataPacket->header.GetChannelNum();
   // echo_count = dataPacket->header.GetEchoCount();
-  current_frame_id = dataPacket->header.GetFrameID();
-  auto face_id = current_frame_id % 4;
+//  current_frame_id = dataPacket->header.GetFrameID();
+//  auto face_id = current_frame_id % 4;
   current_seq_num = dataPacket->header.GetSeqNum();
   seq_num_counter++;
 
@@ -282,13 +341,19 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
 
         double x, y, z, azimuth, pitch;
         double distance = static_cast<double>(unit.GetDistance()) * ASENSING_DISTANCE_UNIT;
+        auto confidence = unit.GetConfidence();
+
+        if (0 == currentBlock.GetAzimuth() && 0 == unit.GetDistance() && 0 == unit.GetIntensity()) {
+              continue;
+        }
 
       {
         // double azimuth_correction = this->AzimuthCorrection[chan];
         // double elevation_correction = this->ElevationCorrection[chan];
 
+        auto evevation_offset = dataPacket->header.GetReserved1() * ASENSING_ELEVATION_UNIT;
         azimuth = static_cast<float>(currentBlock.GetAzimuth()) * ASENSING_AZIMUTH_UNIT + azimuth_offset_[chan];
-        pitch = elevation_offset_[chan];
+        pitch = elevation_offset_[chan] + (this->elevation_mirror_offset_enable ? this->elevation_mirror_offset[face_id] : evevation_offset);
 
         if (pitch < 0)
         {
@@ -354,19 +419,56 @@ void vtkA2PacketInterpreter::ProcessPacket(unsigned char const* data, unsigned i
         this->seq_num_counter = 0;
         }
 
-        this->Points->SetPoint(current_pt_id, x, y, z);
-
-        TrySetValue(this->PointsX, current_pt_id, x);
-        TrySetValue(this->PointsY, current_pt_id, y);
-        TrySetValue(this->PointsZ, current_pt_id, z);
-        TrySetValue(this->Azimuth, current_pt_id, azimuth);
-        TrySetValue(this->Elevation, current_pt_id, pitch);
-        TrySetValue(this->PointID, current_pt_id, current_pt_id);
-        TrySetValue(this->FaceID, current_pt_id, face_id);
-        TrySetValue(this->Channel, current_pt_id, chan);
-        TrySetValue(this->Intensities, current_pt_id, intensity);
-        TrySetValue(this->Timestamps, current_pt_id, timestamp);
-        TrySetValue(this->Distances, current_pt_id, distance);
+        if(this->channels[chan] == 0) {
+            this->Points->SetPoint(current_pt_id, NAN, NAN, NAN);
+            TrySetValue(this->PointsX, current_pt_id, NAN);
+            TrySetValue(this->PointsY, current_pt_id, NAN);
+            TrySetValue(this->PointsZ, current_pt_id, NAN);
+            TrySetValue(this->Azimuth, current_pt_id, NAN);
+            TrySetValue(this->Elevation, current_pt_id, NAN);
+            TrySetValue(this->PointID, current_pt_id, current_pt_id);
+            TrySetValue(this->Seq, current_pt_id, NAN);
+            TrySetValue(this->FaceID, current_pt_id, NAN);
+            TrySetValue(this->Channel, current_pt_id, NAN);
+            TrySetValue(this->Confidence, current_pt_id, NAN);
+            TrySetValue(this->Intensities, current_pt_id, NAN);
+            TrySetValue(this->Timestamps, current_pt_id, NAN);
+            TrySetValue(this->Distances, current_pt_id, NAN);
+        }
+        else {
+            if((this->filter_point_id != -1 && filter_point_id == (int)current_pt_id) || this->filter_point_id == -1) {
+                this->Points->SetPoint(current_pt_id, x, y, z);
+                TrySetValue(this->PointsX, current_pt_id, x);
+                TrySetValue(this->PointsY, current_pt_id, y);
+                TrySetValue(this->PointsZ, current_pt_id, z);
+                TrySetValue(this->Azimuth, current_pt_id, azimuth);
+                TrySetValue(this->Elevation, current_pt_id, pitch);
+                TrySetValue(this->PointID, current_pt_id, current_pt_id);
+                TrySetValue(this->Seq, current_pt_id, current_seq_num);
+                TrySetValue(this->FaceID, current_pt_id, face_id);
+                TrySetValue(this->Channel, current_pt_id, chan);
+                TrySetValue(this->Confidence, current_pt_id, confidence);
+                TrySetValue(this->Intensities, current_pt_id, intensity);
+                TrySetValue(this->Timestamps, current_pt_id, timestamp);
+                TrySetValue(this->Distances, current_pt_id, distance);
+            }
+            else {
+                this->Points->SetPoint(current_pt_id, NAN, NAN, NAN);
+                TrySetValue(this->PointsX, current_pt_id, NAN);
+                TrySetValue(this->PointsY, current_pt_id, NAN);
+                TrySetValue(this->PointsZ, current_pt_id, NAN);
+                TrySetValue(this->Azimuth, current_pt_id, NAN);
+                TrySetValue(this->Elevation, current_pt_id, NAN);
+                TrySetValue(this->PointID, current_pt_id, current_pt_id);
+                TrySetValue(this->Seq, current_pt_id, NAN);
+                TrySetValue(this->FaceID, current_pt_id, NAN);
+                TrySetValue(this->Channel, current_pt_id, NAN);
+                TrySetValue(this->Confidence, current_pt_id, NAN);
+                TrySetValue(this->Intensities, current_pt_id, NAN);
+                TrySetValue(this->Timestamps, current_pt_id, NAN);
+                TrySetValue(this->Distances, current_pt_id, NAN);
+            }
+        }
         current_pt_id++;
       }
     }
@@ -438,10 +540,14 @@ vtkSmartPointer<vtkPolyData> vtkA2PacketInterpreter::CreateNewEmptyFrame(
 
   this->PointID = CreateDataArray<vtkUnsignedIntArray>(
     false, "PointID", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
+  this->Seq = CreateDataArray<vtkUnsignedIntArray>(
+    false, "Seq", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
   this->FaceID = CreateDataArray<vtkUnsignedCharArray>(
     false, "FaceID", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
   this->Channel = CreateDataArray<vtkUnsignedCharArray>(
     false, "Channel", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
+  this->Confidence = CreateDataArray<vtkUnsignedCharArray>(
+    false, "Confidence", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
   this->Intensities = CreateDataArray<vtkUnsignedCharArray>(
     false, "Intensity", numberOfPoints, defaultPrereservedNumberOfPointsPerFrame, polyData);
   this->Timestamps = CreateDataArray<vtkDoubleArray>(

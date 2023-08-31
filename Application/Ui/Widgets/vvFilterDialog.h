@@ -20,42 +20,9 @@
 class vvFilterDialog : public QDialog
 {
   Q_OBJECT
-  Q_PROPERTY(bool croppingEnabled READ croppingEnabled WRITE setCroppingEnabled)
-  Q_PROPERTY(bool cropOutside READ cropOutside WRITE setCropOutside)
-  Q_PROPERTY(QVector3D firstCorner READ firstCorner WRITE setFirstCorner)
-  Q_PROPERTY(QVector3D secondCorner READ secondCorner WRITE setSecondCorner)
-
 public:
   vvFilterDialog(QWidget* p = 0);
   virtual ~vvFilterDialog();
-
-  bool croppingEnabled() const;
-  bool cropOutside() const;
-
-  void setCroppingEnabled(bool);
-  void setCropOutside(bool);
-
-  QVector3D firstCorner() const;
-  QVector3D secondCorner() const;
-
-  void setFirstCorner(QVector3D);
-  void setSecondCorner(QVector3D);
-
-  Q_INVOKABLE void UpdateDialogWithCurrentSetting();
-
-  Q_INVOKABLE int GetCropMode() const;
-
-public slots:
-  virtual void apply();
-  virtual void applyAndSave();
-  void onCartesianToggled();
-  void onSphericalToggled();
-  void onSliderBoxToggled();
-  void onCropGroupBoxToggled();
-  void onSpinBoxChanged(double value);
-  void onXSliderChanged(double vmin, double vmax);
-  void onYSliderChanged(double vmin, double vmax);
-  void onZSliderChanged(double vmin, double vmax);
 
 private:
   class pqInternal;

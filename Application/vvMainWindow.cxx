@@ -27,12 +27,13 @@
 
 #include "vvMainWindow.h"
 #include "ui_vvMainWindow.h"
-
+#include "difop_monitor.h"
 #include "lqDockableSpreadSheetReaction.h"
 #include "lqEnableAdvancedArraysReaction.h"
 #include "lqLiveSourceScalarColoringBehavior.h"
 #include "lqLoadLidarStateReaction.h"
 #include "lqOpenPcapReaction.h"
+#include "lqFilterParserReaction.h"
 #include "lqOpenRecentFilesReaction.h"
 #include "lqOpenSensorReaction.h"
 #include "lqSaveLASReaction.h"
@@ -174,6 +175,12 @@ vvMainWindow::vvMainWindow()
   this->activateWindow();
 
   centralWidget()->installEventFilter(this);
+
+  auto dock = new DifopMonitor(this);
+  dock->setVisible(false);
+  dock->setWindowTitle("DIFOP Monitor");
+  dock->setObjectName("difopMonitor");
+  this->addDockWidget(Qt::RightDockWidgetArea, dock);
 }
 
 //-----------------------------------------------------------------------------
@@ -433,8 +440,22 @@ void vvMainWindow::setupGUICustom()
     widget->showFullScreen();
   });
 
+  // difop monitor
+  connect(this->Internals->actionDIFOP_Monitor, &QAction::triggered, this, [=]() {
+    static bool flag = false;
+    auto dock = findChild<DifopMonitor *>();
+    if(!flag) {
+        flag = true;
+    }
+    else {
+        flag = false;
+    }
+    dock->setVisible(flag);
+  });
+
   new lqOpenSensorReaction(this->Internals->actionOpen_Sensor_Stream);
   new lqOpenPcapReaction(this->Internals->actionOpenPcap);
+  new lqFilterParserReaction(this->Internals->actionFilterParser);
 
   new lqUpdateCalibrationReaction(this->Internals->actionChoose_Calibration_File); // Requires lqSensorListWidget init
   // Following is required if intend to use the lqSensorListWidget

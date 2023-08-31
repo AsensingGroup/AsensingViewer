@@ -1,7 +1,7 @@
 # Every Brand related names / resource paths should be declared here
 
 # Software Name / Vendor
-set(SOFTWARE_NAME   "AsensingView")
+set(SOFTWARE_NAME   "AsensingViewer")
 set(SOFTWARE_VENDOR "Asensing")
 
 # Software LOGO / ICON # Must be absolute to be used by packaging

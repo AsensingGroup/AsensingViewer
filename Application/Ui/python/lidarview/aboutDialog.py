@@ -48,7 +48,7 @@ def showDialog(mainWindow):
     w('copyrightLabel').setText(copyrightText)
     
     textBoxContent = '''<h4>License</h4>
-                        AsensingView is provided under the Apache License 2.0.<br /><br />
+                        AsensingViewer is provided under the Apache License 2.0.<br /><br />
                         The initial developer of some parts of the framework, which are 
                         copied from, derived from, or inspired by LidarView open source project.
                         <br />

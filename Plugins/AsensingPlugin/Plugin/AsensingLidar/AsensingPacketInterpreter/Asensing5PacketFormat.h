@@ -35,7 +35,7 @@
 #define ASENSING_AZIMUTH_UNIT        (0.01f)
 #define ASENSING_ELEVATION_UNIT      (0.01f)
 
-#define ASENSING_LASER_NUM           (LASER_MODULE_NUM * CHANNEL_NUM_PER_MODULE)  /* eg. 4 * 2 = 8 */
+#define ASENSING_LASER_NUM           (LASER_MODULE_NUM * CHANNEL_NUM_PER_MODULE)  /* eg. 5 * 2 = 10 */
 #define ASENSING_BLOCK_NUM           (12)                                         /* 12 blocks per packet */
 #define ASENSING_POINT_PER_PACKET    (ASENSING_BLOCK_NUM * ASENSING_LASER_NUM)    /* eg. 12 * 8 = 96, 12 * 10 = 120 */
 
