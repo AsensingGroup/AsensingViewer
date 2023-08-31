@@ -95,6 +95,7 @@
     <addaction name="separator"/>
     <addaction name="actionFull_Screen"/>
     <addaction name="actionFilterParser"/>
+    <addaction name="actionDIFOP_Monitor"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -795,6 +796,11 @@
   <action name="actionFilterParser">
    <property name="text">
     <string>Filter Parser</string>
+   </property>
+  </action>
+  <action name="actionDIFOP_Monitor">
+   <property name="text">
+    <string>DIFOP Monitor</string>
    </property>
   </action>
  </widget>

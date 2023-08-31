@@ -6,7 +6,7 @@
 
 static QMutex g_mutex;
 
-static char const *g_array[] = {
+static char const *g_array[1024] = {
     "MAINBOARD_TEMPERATURE_FATAL_LOW",
     "MAINBOARD_TEMPERATURE_WARN_LOW",
     "MAINBOARD_TEMPERATURE_FATAL_HIGH",

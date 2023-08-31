@@ -440,6 +440,19 @@ void vvMainWindow::setupGUICustom()
     widget->showFullScreen();
   });
 
+  // difop monitor
+  connect(this->Internals->actionDIFOP_Monitor, &QAction::triggered, this, [=]() {
+    static bool flag = false;
+    auto dock = findChild<DifopMonitor *>();
+    if(!flag) {
+        flag = true;
+    }
+    else {
+        flag = false;
+    }
+    dock->setVisible(flag);
+  });
+
   new lqOpenSensorReaction(this->Internals->actionOpen_Sensor_Stream);
   new lqOpenPcapReaction(this->Internals->actionOpenPcap);
   new lqFilterParserReaction(this->Internals->actionFilterParser);
