@@ -6,6 +6,77 @@
 
 static QMutex g_mutex;
 
+static char const *g_array[] = {
+    "MAINBOARD_TEMPERATURE_FATAL_LOW",
+    "MAINBOARD_TEMPERATURE_WARN_LOW",
+    "MAINBOARD_TEMPERATURE_FATAL_HIGH",
+    "MAINBOARD_TEMPERATURE_WARN_HIGH",
+    "MAINBOARD_HUMIDITY_FATAL_LOW",
+    "MAINBOARD_HUMIDITY_WARN_LOW",
+    "MAINBOARD_HUMIDITY_FATAL_HIGH",
+    "MAINBOARD_HUMIDITY_WARN_HIGH",
+    "WINDOW_TEMPERATURE_FATAL_LOW",
+    "WINDOW_TEMPERATURE_WARN_LOW",
+    "WINDOW_TEMPERATURE_FATAL_HIGH",
+    "WINDOW_TEMPERATURE_WARN_HIGH",
+    "LASER_NOT_CONNECTED",
+    "LASER_SYNC_POINT_ERROR",
+    "LASER_TEMPERATURE_FATAL_LOW",
+    "LASER_TEMPERATURE_WARN_LOW",
+    "LASER_TEMPERATURE_FATAL_HIGH",
+    "LASER_TEMPERATURE_WARN_HIGH",
+    "LASER_VOLTAGE_FATAL_LOW",
+    "LASER_VOLTAGE_WARN_LOW",
+    "LASER_VOLTAGE_FATAL_HIGH",
+    "LASER_VOLTAGE_WARN_HIGH",
+    "SIPM_NOT_CONNECTED",
+    "SIPM_TEMPERATURE_FATAL_LOW",
+    "SIPM_TEMPERATURE_WARN_LOW",
+    "SIPM_TEMPERATURE_FATAL_HIGH",
+    "SIPM_TEMPERATURE_WARN_HIGH",
+    "SIPM_VOLTAGE_FATAL_LOW",
+    "SIPM_VOLTAGE_WARN_LOW",
+    "SIPM_VOLTAGE_FATAL_HIGH",
+    "SIPM_VOLTAGE_WARN_HIGH",
+    "MEMS_TEMPERATURE_FATAL_LOW",
+    "MEMS_TEMPERATURE_WARN_LOW",
+    "MEMS_TEMPERATURE_FATAL_HIGH",
+    "MEMS_TEMPERATURE_WARN_HIGH",
+    "MEMS_VOLTAGE_FATAL_LOW",
+    "MEMS_VOLTAGE_WARN_LOW",
+    "MEMS_VOLTAGE_FATAL_HIGH",
+    "MEMS_VOLTAGE_WARN_HIGH",
+    "SCANNER_FREQ_ALERT",
+    "SCANNER_EXTRE_ANGLE_ALERT",
+    "SCANNER_MINUSCULE_ANGLE_ALERT",
+    "SCANNER_ZERO_ALERT",
+    "SCANNER_FOV_ALERT",
+    "LIDAR_CONFIG_NOT_EXIST",
+    "CALIBRATION_FILE_NOT_EXIST",
+    "SCANNER_CALIB_FILE_NOT_EXIST",
+    "SENSOR_CALIB_FILE_NOT_EXIST",
+    "TRANSMIT_CALIB_FILE_NOT_EXIST",
+    "PTP_CONFIG_FILE_NOT_EXIST",
+    "DIRTY_WIN_ACTIVE",
+    "ICE_WIN_ACTIVE",
+    "PC_SEND_TIMEOUT_ACTIVE",
+    "PC_RECV_TIMEOUT_ACTIVE",
+    "FRAME_DELAY_WARN_ACTIVE",
+    "ETH_IF_DOWN_ACTIVE",
+    "ETH_IF_TX_ERR_ACTIVE",
+    "ETH_IF_RX_ERR_ACTIVE",
+    "PCL_NO_DATA",
+    "PDATA_ADDR_NULL",
+    "TIME_TICK_ERROR",
+    "PDATA_DONE_ERROR",
+    "SENSOR_FRAME_NOT_ALINE",
+    "FPGA_ANGLE_ERROR",
+    "FPGA_NOT_READY",
+    "FPGA_SYNC_ERROR",
+    "MEMS_SCAN_FREQ_ERROR",
+    "MEMS_ANGLE_ERROR"
+};
+
 DifopMonitor::DifopMonitor(QWidget *parent) :
     QDockWidget(parent),
     ui(new Ui::DifopMonitor)
@@ -62,7 +133,7 @@ void DifopMonitor::updateUI(const DeviceInfoPackage *p)
     for(int i = 0; i < 64; i++) {
 		auto flag = temp & 0x01;
         if(flag) {
-            ui->listWidget->insertItem(row++, QString("Error code : %1").arg(i));
+            ui->listWidget->insertItem(row++, QString(g_array[i]));
         }
 		temp >>= 1;
     }
@@ -70,7 +141,7 @@ void DifopMonitor::updateUI(const DeviceInfoPackage *p)
 	for (int i = 0; i < 64; i++) {
 		auto flag = temp & 0x01;
 		if (flag) {
-			ui->listWidget->insertItem(row++, QString("Error code : %1").arg(i + 64));
+            ui->listWidget->insertItem(row++, QString(g_array[i]));
 		}
 		temp >>= 1;
 	}
