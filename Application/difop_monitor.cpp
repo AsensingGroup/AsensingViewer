@@ -112,7 +112,7 @@ void DifopMonitor::updateUI(const DeviceInfoPackage *p)
     ui->memsTemperature->setText(QString("%1°C").arg((int)p->funcSafeInfo.MEMSTmp));
     ui->sensorTemperature->setText(QString("%1°C").arg((int)p->funcSafeInfo.sensorTmp));
     ui->windowTemperature->setText(QString("%1°C").arg((int)p->funcSafeInfo.windowTmp));
-    ui->lidarHumidity->setText(QString("%1°C").arg((int)p->funcSafeInfo.lidarHumidity));
+    ui->lidarHumidity->setText(QString("%1%").arg((int)p->funcSafeInfo.lidarHumidity));
 
     // header
     ui->timestamp->setText(QString("%1").arg((int)p->difPackageHead.timeSyncInfo.Timestamp));

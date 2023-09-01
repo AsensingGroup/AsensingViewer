@@ -1,5 +1,13 @@
 # 更改日志
 
+## AsensingViewer V0.49.0
+
+- 软件更名为AsensingViewer
+- 支持点云的Filter功能，入口在菜单栏Tools下
+- 支持A2（elevation）原始角度文件标定，A2 spreadsheet新增置信度、包序号、面id、水平角、垂直角展示
+- 新增difop设备信息监控和参数告警界面，入口在菜单栏Tools下，默认是不打开
+- 覆盖安装的时候允许用户另安装路径
+
 ## AsensingView V0.48.1
 
 - 解决颜色配置冲突导致点云闪烁的问题

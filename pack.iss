@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "AsensingViewer"
-#define MyAppVersion "V0.48.1"
+#define MyAppVersion "V0.49.0"
 #define MyAppPublisher "Copyright @2023 广州导远电子科技有限公司"
 #define MyAppURL "https://www.asensing.com/"
 #define MyAppExeName "AsensingViewer.exe"
@@ -27,7 +27,7 @@ DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputDir=C:\Users\heaven\Desktop
-OutputBaseFilename=AsensingViewer-{#MyAppVersion}-Windows-AMD64-Filter
+OutputBaseFilename=AsensingViewer-{#MyAppVersion}-Windows-AMD64
 SetupIconFile=E:\workspace\AsensingViewer\Application\SoftwareInformation\logo.ico
 Compression=lzma
 SolidCompression=yes

@@ -442,15 +442,13 @@ void vvMainWindow::setupGUICustom()
 
   // difop monitor
   connect(this->Internals->actionDIFOP_Monitor, &QAction::triggered, this, [=]() {
-    static bool flag = false;
     auto dock = findChild<DifopMonitor *>();
-    if(!flag) {
-        flag = true;
+    if(dock->isVisible()) {
+        dock->setVisible(false);
     }
     else {
-        flag = false;
+        dock->setVisible(true);
     }
-    dock->setVisible(flag);
   });
 
   new lqOpenSensorReaction(this->Internals->actionOpen_Sensor_Stream);
