@@ -1,5 +1,9 @@
 # 更改日志
 
+## AsensingViewer V1.0.0
+
+- 默认点云点大小为2
+
 ## AsensingViewer V0.49.0
 
 - 软件更名为AsensingViewer

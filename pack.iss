@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "AsensingViewer"
-#define MyAppVersion "V0.49.0"
+#define MyAppVersion "V1.0.0"
 #define MyAppPublisher "Copyright @2023 广州导远电子科技有限公司"
 #define MyAppURL "https://www.asensing.com/"
 #define MyAppExeName "AsensingViewer.exe"
