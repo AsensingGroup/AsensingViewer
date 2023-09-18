@@ -58,7 +58,7 @@ paraview_client_add(
   LIBRARY_DESTINATION ${LV_INSTALL_LIBRARY_DIR}
 )
 
-find_package(Qt5 COMPONENTS network REQUIRED)
+find_package(Qt5 COMPONENTS Network REQUIRED)
 
 target_include_directories(${SOFTWARE_NAME} PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
