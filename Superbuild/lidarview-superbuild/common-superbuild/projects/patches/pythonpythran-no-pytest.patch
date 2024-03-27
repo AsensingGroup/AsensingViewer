@@ -1,0 +1,16 @@
+diff -u -Nru5 pythran-0.9.12.post1/setup.py pythran-0.9.12.post1.no-pytest/setup.py
+--- pythran-0.9.12.post1/setup.py	2020-01-26 12:39:13.000000000 -0500
++++ pythran-0.9.12.post1.no-pytest/setup.py	2021-08-04 10:54:54.499623206 -0400
+@@ -169,11 +169,11 @@
+       license="BSD 3-Clause",
+       install_requires=open('requirements.txt').read().splitlines(),
+       entry_points={'console_scripts':
+                     ['pythran = pythran.run:run',
+                      'pythran-config = pythran.config:run']},
+-      setup_requires=["pytest-runner"],
++      #setup_requires=["pytest-runner"],
+       tests_require=['pytest', 'flake8'],
+       extras_require={
+           'doc': open('docs/requirements.txt').read().splitlines(),
+       },
+       test_suite="pythran.tests.test_cases",

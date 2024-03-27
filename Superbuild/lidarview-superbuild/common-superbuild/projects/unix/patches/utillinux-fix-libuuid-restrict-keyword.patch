@@ -1,0 +1,15 @@
+diff -u -U5 -r util-linux-2.37.1/libuuid/src/unparse.c util-linux-2.37.1-fix-libuuid-restrict-keyword/libuuid/src/unparse.c
+--- util-linux-2.37.1/libuuid/src/unparse.c	2021-05-06 05:55:46.910423346 -0500
++++ util-linux-2.37.1-fix-libuuid-restrict-keyword/libuuid/src/unparse.c	2021-11-29 14:23:30.166826615 -0600
+@@ -31,10 +31,11 @@
+  * DAMAGE.
+  * %End-Header%
+  */
+ 
+ #include <stdio.h>
++#include "c.h"
+ 
+ #include "uuidP.h"
+ 
+ static char const hexdigits_lower[16] = "0123456789abcdef";
+ static char const hexdigits_upper[16] = "0123456789ABCDEF";

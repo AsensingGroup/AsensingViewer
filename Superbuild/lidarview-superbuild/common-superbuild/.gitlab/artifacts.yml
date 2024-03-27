@@ -1,0 +1,16 @@
+# Lists of paths for artifacts of various stages.
+
+.cmake_build_artifacts:
+    artifacts:
+        expire_in: 1d
+        when: always
+        reports:
+            junit:
+                - build/junit.xml
+        paths:
+            # The artifacts for debugging
+            - build/CMakeCache.txt
+            - build/superbuild/*.cmake
+
+            # logs for suppressed outputs
+            - build/superbuild/*/stamp/*.log

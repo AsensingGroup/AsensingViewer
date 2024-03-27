@@ -1,0 +1,81 @@
+# Windows-specific builder configurations and build commands
+
+## Base configurations
+
+.windows_core:
+    variables:
+        GIT_SUBMODULE_STRATEGY: none
+        GIT_CLONE_PATH: "$CI_BUILDS_DIR\\paraview-ci-ext\\$CI_CONCURRENT_ID"
+        # Avoid conflicting with other projects running on the same machine.
+        SCCACHE_SERVER_PORT: 4234
+
+### Build and test
+
+.windows_vs2019_addon:
+    variables:
+        VCVARSALL: "${VS160COMNTOOLS}\\..\\..\\VC\\Auxiliary\\Build\\vcvarsall.bat"
+        VCVARSPLATFORM: "x64"
+        VCVARSVERSION: "14.28.29910"
+
+.windows_vs2019:
+    extends:
+        - .windows_core
+        - .windows_vs2019_addon
+
+    variables:
+        CMAKE_CONFIGURATION: windows_vs2019
+
+.windows_openssl_vs2019:
+    extends:
+        - .windows_core
+        - .windows_vs2019_addon
+
+    variables:
+        CMAKE_CONFIGURATION: windows_openssl_vs2019
+
+## Tags
+
+.windows_builder_tags:
+    tags:
+        - paraview # Since this is a bare runner, pin to a project.
+        - msvc-19.28-16.9
+        - concurrent
+        - shell
+        - vs2019
+        - windows
+
+## Windows-specific scripts
+
+.before_script_windows: &before_script_windows
+    - $pwdpath = $pwd.Path
+    - powershell -File ".gitlab/ci/cmake.ps1"
+    - Set-Item -Force -Path "env:PATH" -Value "$pwdpath\.gitlab\cmake\bin;$env:PATH"
+    - powershell -File ".gitlab/ci/ninja.ps1"
+    - Set-Item -Force -Path "env:PATH" -Value "$pwdpath\.gitlab;$env:PATH"
+    - cmake --version
+    - ninja --version
+
+.before_script_windows_deps: &before_script_windows_deps
+    - cmake -P .gitlab/ci/download_qt.cmake
+    - Set-Item -Force -Path "env:PATH" -Value "$pwdpath\.gitlab\qt\bin;$env:PATH"
+    # Add the outputs to the PATH
+    - Set-Item -Force -Path "env:PATH" -Value "$pwdpath\build\install\Python;$env:PATH;$pwdpath\build\install\bin"
+    - Set-Item -Force -Path "env:PYTHONHOME" -Value "$pwdpath\build\install\Python"
+
+.cmake_build_windows:
+    stage: build
+
+    script:
+        - *before_script_windows
+        - *before_script_windows_deps
+        - Set-Item -Force -Path "env:GIT_CEILING_DIRECTORIES" -Value "$pwdpath"
+        - Set-Item -Force -Path "env:PATH" -Value "$env:PATH;$env:SCCACHE_PATH"
+        - Invoke-Expression -Command .gitlab/ci/vcvarsall.ps1
+        - sccache --start-server
+        - sccache --show-stats
+        - ctest -VV -S .gitlab/ci/ctest_configure.cmake
+        - ctest -VV -S .gitlab/ci/ctest_build.cmake
+        - ctest -V --output-on-failure -S .gitlab/ci/ctest_test.cmake
+        - sccache --show-stats
+        - sccache --stop-server
+    interruptible: true

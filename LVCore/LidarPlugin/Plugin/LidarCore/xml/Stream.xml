@@ -1,0 +1,224 @@
+<ServerManagerConfiguration>
+
+<!-- Begin Stream -->
+<ProxyGroup name="baseStream">
+<SourceProxy name="Stream"
+             class="vtkStream"
+             label="Stream">
+    <Documentation
+       short_help="Stream"
+       long_help="Stream">
+    </Documentation>
+
+    <IntVectorProperty
+        name="ListeningPort"
+        animateable="0"
+        command="SetListeningPort"
+        default_values="51180"
+        number_of_elements="1">
+      <Documentation>
+        Specify port on which to listen for packets
+      </Documentation>
+    </IntVectorProperty>
+
+    <!-- 224.0.0.0 could be a good default address,
+   but it is more convenient to listen to brodcast by default -->
+    <StringVectorProperty
+        name="MulticastAddress"
+        command="SetMulticastAddress"
+        default_values=""
+        number_of_elements="1">
+      <Documentation>
+        Specify multicast address on which to listen for Lidar packets.
+  The range of multicast IPv4 addresses is from 224.0.0.0 to 239.255.255.255.
+        Empty and non-multicast address are ignored.
+        Leave it empty to listen in broadcast or in unicast.
+      </Documentation>
+    </StringVectorProperty>
+
+    <StringVectorProperty
+        name="LocalListeningAddress"
+        command="SetLocalListeningAddress"
+        default_values="::"
+        number_of_elements="1">
+      <Documentation>
+        Specify listening address in case of multiple inferface.
+        If :: or invalid, it tries to listen to ALL/ANY local IPv6 and IPv4 address.
+        If 0.0.0.0, it tries to listen to ALL/ANY local IPv4 address.
+        On Unix/OSX receving broadcasted packets from only one interface needs the local broadcast receiver address (x.x.x.255) instead of the local address.
+        Joining multicast group won't work with multiple interfaces if no specific address is entered.
+      </Documentation>
+    </StringVectorProperty>
+
+    <IntVectorProperty
+        name="IsForwarding"
+        command="SetIsForwarding"
+        default_values="0"
+        number_of_elements="1">
+      <BooleanDomain name="bool" />
+    </IntVectorProperty>
+
+    <StringVectorProperty
+        name="ForwardedIpAddress"
+        command="SetForwardedIpAddress"
+        default_values="127.0.0.1"
+        number_of_elements="1">
+      <Documentation>
+        Specify the Ip address on which to forward all packets received by the stream
+      </Documentation>
+      <Hints>
+        <PropertyWidgetDecorator type="GenericDecorator"
+                                 mode="visibility"
+                                 property="IsForwarding"
+                                 value="1" />
+      </Hints>
+    </StringVectorProperty>
+
+    <IntVectorProperty
+        name="ForwardedPort"
+        animateable="0"
+        command="SetForwardedPort"
+        default_values="2369"
+        number_of_elements="1">
+      <Documentation>
+        Specify port on which to forward all packets received by the stream
+      </Documentation>
+      <Hints>
+        <PropertyWidgetDecorator type="GenericDecorator"
+                                 mode="visibility"
+                                 property="IsForwarding"
+                                 value="1" />
+      </Hints>
+    </IntVectorProperty>
+
+    <Property
+      name="Start"
+      command="Start" />
+
+    <Property
+      name="Stop"
+      command="Stop" />
+
+    <IntVectorProperty
+        name="IsCrashAnalysing"
+        command="SetIsCrashAnalysing"
+        default_values="0"
+        number_of_elements="1"
+        panel_visibility="advanced">
+      <BooleanDomain name="bool" />
+    </IntVectorProperty>
+
+ </SourceProxy>
+</ProxyGroup>
+<!-- End Stream -->
+
+
+<!-- Begin LidarStream -->
+<ProxyGroup name="sources">
+<SourceProxy name="LidarStream"
+             class="vtkLidarStream"
+             label="Lidar Stream"
+             base_proxygroup="baseStream"
+             base_proxyname="Stream">
+    <Documentation
+       short_help="Lidar Stream"
+       long_help="Lidar Stream">
+    </Documentation>
+
+    <OutputPort name="Frame"       index="0" id="port0" />
+    <OutputPort name="Calibration" index="1" id="port1" />
+
+    <IntVectorProperty
+      name="DummyProperty"
+      command="SetDummyProperty"
+      default_values="0"
+      number_of_elements="1"
+      panel_visibility="advanced">
+      <Documentation>
+        A dummy property to get the filter to refresh
+      </Documentation>
+    </IntVectorProperty>
+
+    <IntVectorProperty
+        name="DetectFrameDropping"
+        animateable="0"
+        command="SetDetectFrameDropping"
+        default_values="0"
+        number_of_elements="1"
+        panel_visibility="advanced">
+      <BooleanDomain name="bool" />
+      <Documentation>
+        Throw a warning to the user each time a frame is dropped
+      </Documentation>
+    </IntVectorProperty>
+
+    <!-- Please notice that this Property is duplicate so that:
+         it can be place in a user friendly location in the generate GUI -->
+    <StringVectorProperty
+      name="CalibrationFileName"
+      label="Calibration File"
+      animateable="0"
+      command="SetCalibrationFileName"
+      number_of_elements="1">
+      <FileListDomain name="files"/>
+      <Documentation>
+        The sensor calibration file.
+      </Documentation>
+    </StringVectorProperty>
+
+    <!-- Please notice that this Property is duplicate so that:
+         it can be place in a user friendly location in the generate GUI -->
+    <ProxyProperty
+      name="PacketInterpreter"
+      command="SetLidarInterpreter"
+      label="Interpreter">
+      <ProxyListDomain name="proxy_list">
+        <Group name="LidarPacketInterpreter"/>
+      </ProxyListDomain>
+    </ProxyProperty>
+
+    <Hints>
+      <LiveSource />
+    </Hints>
+
+ </SourceProxy>
+</ProxyGroup>
+<!-- End LidarStream -->
+
+<!-- Begin PositionOrientationStream -->
+<ProxyGroup name="sources">
+<SourceProxy name="PositionOrientationStream"
+             class="vtkPositionOrientationStream"
+             label="Position Orientation Stream"
+             base_proxygroup="baseStream"
+             base_proxyname="Stream">
+    <Documentation
+       short_help="Position Orientation Stream"
+       long_help="Position Orientation Stream">
+    </Documentation>
+
+    <OutputPort name="Position Orientation " index="0" id="port0" />
+    <OutputPort name="Raw informations" index="1" id="port1" />
+
+    <!-- Please notice that this Property is duplicate so that:
+         it can be place in a user friendly location in the generate GUI -->
+    <ProxyProperty
+      name="PacketInterpreter"
+      command="SetPosOrInterpreter"
+      label="Interpreter">
+      <ProxyListDomain name="proxy_list">
+        <Group name="PositionOrientationPacketInterpreter"/>
+      </ProxyListDomain>
+    </ProxyProperty>
+
+    <Hints>
+      <!-- Force the pipeline to try to update the stream every 10 millisecond in case new data are available.
+           This enable to have Lidar up to 100hz -->
+      <LiveSource interval="10"/>
+    </Hints>
+
+ </SourceProxy>
+</ProxyGroup>
+<!-- End PositionOrientationStream -->
+
+</ServerManagerConfiguration>

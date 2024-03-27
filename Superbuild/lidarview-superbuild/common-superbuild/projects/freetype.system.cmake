@@ -1,0 +1,6 @@
+find_package(Freetype REQUIRED)
+
+superbuild_add_extra_cmake_args(
+  -DFREETYPE_INCLUDE_DIR_ft2build:PATH=${FREETYPE_INCLUDE_DIR_ft2build}
+  -DFREETYPE_INCLUDE_DIR_freetype2:PATH=${FREETYPE_INCLUDE_DIR_freetype2}
+  -DFREETYPE_LIBRARY:FILEPATH=${FREETYPE_LIBRARY})

@@ -1,0 +1,57 @@
+diff -u -Nr -U5 qt-everywhere-src-5.10.1/qtgamepad/src/plugins/gamepads/evdev/qevdevgamepadbackend.cpp qt-everywhere-src-5.10.1.btn-trigger-defs/qtgamepad/src/plugins/gamepads/evdev/qevdevgamepadbackend.cpp
+--- qt-everywhere-src-5.10.1/qtgamepad/src/plugins/gamepads/evdev/qevdevgamepadbackend.cpp	2018-02-05 05:13:56.000000000 -0500
++++ qt-everywhere-src-5.10.1.btn-trigger-defs/qtgamepad/src/plugins/gamepads/evdev/qevdevgamepadbackend.cpp	2018-02-23 15:37:43.307466731 -0500
+@@ -42,10 +42,23 @@
+ #include <QtCore/QLoggingCategory>
+ #include <QtDeviceDiscoverySupport/private/qdevicediscovery_p.h>
+ #include <QtCore/private/qcore_unix_p.h>
+ #include <linux/input.h>
+ 
++#ifndef BTN_TRIGGER_HAPPY1
++#define BTN_TRIGGER_HAPPY1      0x2c0
++#endif
++#ifndef BTN_TRIGGER_HAPPY2
++#define BTN_TRIGGER_HAPPY2      0x2c1
++#endif
++#ifndef BTN_TRIGGER_HAPPY3
++#define BTN_TRIGGER_HAPPY3      0x2c2
++#endif
++#ifndef BTN_TRIGGER_HAPPY4
++#define BTN_TRIGGER_HAPPY4      0x2c3
++#endif
++
+ #include <cmath>
+ 
+ QT_BEGIN_NAMESPACE
+ 
+ Q_LOGGING_CATEGORY(lcEGB, "qt.gamepad")
+diff -u -Nr -U5 qt-everywhere-src-5.10.1/qtwebengine/src/3rdparty/chromium/ui/events/ozone/gamepad/static_gamepad_mapping.cc qt-everywhere-src-5.10.1.btn-trigger-defs/qtwebengine/src/3rdparty/chromium/ui/events/ozone/gamepad/static_gamepad_mapping.cc
+--- qt-everywhere-src-5.10.1/qtwebengine/src/3rdparty/chromium/ui/events/ozone/gamepad/static_gamepad_mapping.cc	2018-02-02 05:39:52.000000000 -0500
++++ qt-everywhere-src-5.10.1.btn-trigger-defs/qtwebengine/src/3rdparty/chromium/ui/events/ozone/gamepad/static_gamepad_mapping.cc	2018-02-23 15:38:47.028427505 -0500
+@@ -11,10 +11,26 @@
+ #include "base/macros.h"
+ #include "ui/events/ozone/evdev/event_device_info.h"
+ #include "ui/events/ozone/gamepad/static_gamepad_mapping.h"
+ #include "ui/events/ozone/gamepad/webgamepad_constants.h"
+ 
++#ifndef BTN_TRIGGER_HAPPY1
++#define BTN_TRIGGER_HAPPY1      0x2c0
++#endif
++#ifndef BTN_TRIGGER_HAPPY2
++#define BTN_TRIGGER_HAPPY2      0x2c1
++#endif
++#ifndef BTN_TRIGGER_HAPPY3
++#define BTN_TRIGGER_HAPPY3      0x2c2
++#endif
++#ifndef BTN_TRIGGER_HAPPY4
++#define BTN_TRIGGER_HAPPY4      0x2c3
++#endif
++#ifndef BTN_TRIGGER_HAPPY17
++#define BTN_TRIGGER_HAPPY17     0x2d0
++#endif
++
+ namespace ui {
+ 
+ typedef bool (*GamepadMapperFunction)(uint16_t key,
+                                       uint16_t code,
+                                       GamepadEventType* mapped_type,

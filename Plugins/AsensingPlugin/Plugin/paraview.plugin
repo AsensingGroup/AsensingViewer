@@ -1,0 +1,6 @@
+NAME
+  AsensingPlugin
+DESCRIPTION
+  Reader and other filter specific for Asensing
+REQUIRES_MODULES
+  VTK::CommonCore

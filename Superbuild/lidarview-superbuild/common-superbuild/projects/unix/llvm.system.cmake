@@ -1,0 +1,6 @@
+find_path(LLVM_PREFIX bin/llvm-config)
+if (NOT LLVM_PREFIX)
+  message(FATAL_ERROR "Unable to locate system llvm-config")
+endif ()
+message(STATUS "Found LLVM: ${LLVM_PREFIX}")
+set(llvm_dir "${LLVM_PREFIX}")

@@ -1,0 +1,11 @@
+<ServerManagerConfiguration>
+  <ProxyGroup name="LidarPacketInterpreter">
+    <SourceProxy name="A2PacketInterpreter"
+         class="vtkA2PacketInterpreter"
+         label="A2 Packet Interpreter"
+         base_proxygroup="base_LidarPacketInterpreter_g"
+         base_proxyname="base_LidarPacketInterpreter">
+
+    </SourceProxy>
+  </ProxyGroup>
+</ServerManagerConfiguration>

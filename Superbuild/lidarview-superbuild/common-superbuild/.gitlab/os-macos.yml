@@ -1,0 +1,90 @@
+# macOS-specific builder configurations and build commands
+
+## Base configurations
+
+.macos_core:
+    variables:
+        GIT_SUBMODULE_STRATEGY: none
+        GIT_CLONE_PATH: "$CI_BUILDS_DIR/paraview-ci-ext/$CI_CONCURRENT_ID"
+        # TODO: Factor this out so that each job selects the Xcode version to
+        # use so that different versions can be tested in a single pipeline.
+        DEVELOPER_DIR: "/Applications/Xcode-13.1.app/Contents/Developer"
+        # Avoid conflicting with other projects running on the same machine.
+        SCCACHE_SERVER_PORT: 4234
+
+### Build and test
+
+.macos_arm64:
+    extends: .macos_core
+
+    variables:
+        CMAKE_CONFIGURATION: macos_arm64
+        # No gfortran support on arm64 yet.
+        NO_FORTRAN: 1
+
+.macos_x86_64:
+    extends: .macos_core
+
+    variables:
+        CMAKE_CONFIGURATION: macos_x86_64
+
+.macos_x86_64_openssl:
+    extends: .macos_core
+
+    variables:
+        CMAKE_CONFIGURATION: macos_x86_64_openssl
+
+## Tags
+
+.macos_builder_tags:
+    tags:
+        - paraview
+        - macos
+        - shell
+        - xcode-13.1
+        - concurrent
+
+.macos_arm64_builder_tags:
+    tags:
+        - paraview
+        - macos-arm64
+        - shell
+        - xcode-13.1
+        - concurrent
+
+## macOS-specific scripts
+
+.before_script_macos: &before_script_macos
+    - .gitlab/ci/cmake.sh
+    - .gitlab/ci/ninja.sh
+    - '[ -z "$NO_FORTRAN" ] && .gitlab/ci/gfortran.sh'
+    # Make sure gfortran is last to avoid the gcc/g++ it ships with from interfering.
+    - export PATH=$PWD/.gitlab:$PWD/.gitlab/cmake/bin:$PATH:$PWD/.gitlab/gfortran/bin
+    - cmake --version
+    - ninja --version
+    - '[ -z "$NO_FORTRAN" ] && gfortran --version'
+    # Download Qt
+    - cmake -P .gitlab/ci/download_qt.cmake
+    - export CMAKE_PREFIX_PATH=$PWD/.gitlab/qt
+
+.cmake_build_macos:
+    stage: build
+
+    script:
+        - *before_script_macos
+        - export GIT_CEILING_DIRECTORIES=$PWD
+        - .gitlab/ci/sccache.sh
+        # Allow the server to already be running.
+        - "sccache --start-server || :"
+        - sccache --show-stats
+        - ctest -VV -S .gitlab/ci/ctest_configure.cmake
+        - ctest -VV -S .gitlab/ci/ctest_build.cmake
+        - ctest -V --output-on-failure -S .gitlab/ci/ctest_test.cmake
+        - sccache --show-stats
+
+    cache:
+        key: macos
+        paths:
+            # Cache downloaded tarballs.
+            - build/downloads/
+    interruptible: true

@@ -1,0 +1,167 @@
+From c18865edbdd1e0369718adc11086dee0a6560cc4 Mon Sep 17 00:00:00 2001
+From: Nicolas Cadart <nicolas.cadart@kitware.com>
+Date: Fri, 3 Jul 2020 12:05:25 +0200
+Subject: Remove constexpr declarations for MSVC 2015 compatibility
+
+MSVC 2015 only partially supports constexpr declarations.
+PCL relies on them being really evaluated at compile-time.
+Otherwise, PCL fails to compile from PCL-1.10.0.
+
+This removes these faulty constexpr expressions.
+This adds also one missing include in PolygonMesh.
+
+diff --git a/common/include/pcl/PolygonMesh.h b/common/include/pcl/PolygonMesh.h
+index f62d7b345..33870ca5c 100644
+--- a/common/include/pcl/PolygonMesh.h
++++ b/common/include/pcl/PolygonMesh.h
+@@ -4,6 +4,7 @@
+ #include <string>
+ #include <vector>
+ #include <ostream>
++#include <iterator>
+ 
+ // Include the correct Header path here
+ #include <pcl/PCLHeader.h>
+diff --git a/common/include/pcl/point_types.h b/common/include/pcl/point_types.h
+index 02c4d2bb1..b8078e1b0 100644
+--- a/common/include/pcl/point_types.h
++++ b/common/include/pcl/point_types.h
+@@ -804,13 +804,10 @@ namespace pcl
+     { };
+ 
+     template <typename PointT>
+-    constexpr auto has_xy_v = has_xy<PointT>::value;
++    using HasXY = std::enable_if_t<has_xy<PointT>::value, bool>;
+ 
+     template <typename PointT>
+-    using HasXY = std::enable_if_t<has_xy_v<PointT>, bool>;
+-
+-    template <typename PointT>
+-    using HasNoXY = std::enable_if_t<!has_xy_v<PointT>, bool>;
++    using HasNoXY = std::enable_if_t<!has_xy<PointT>::value, bool>;
+ 
+     /** Metafunction to check if a given point type has x, y, and z fields. */
+     template <typename PointT>
+@@ -820,13 +817,10 @@ namespace pcl
+     { };
+ 
+     template <typename PointT>
+-    constexpr auto has_xyz_v = has_xyz<PointT>::value;
+-
+-    template <typename PointT>
+-    using HasXYZ = std::enable_if_t<has_xyz_v<PointT>, bool>;
++    using HasXYZ = std::enable_if_t<has_xyz<PointT>::value, bool>;
+ 
+     template <typename PointT>
+-    using HasNoXYZ = std::enable_if_t<!has_xyz_v<PointT>, bool>;
++    using HasNoXYZ = std::enable_if_t<!has_xyz<PointT>::value, bool>;
+ 
+     /** Metafunction to check if a given point type has normal_x, normal_y, and
+       * normal_z fields. */
+@@ -837,13 +831,10 @@ namespace pcl
+     { };
+ 
+     template <typename PointT>
+-    constexpr auto has_normal_v = has_normal<PointT>::value;
++    using HasNormal = std::enable_if_t<has_normal<PointT>::value, bool>;
+ 
+     template <typename PointT>
+-    using HasNormal = std::enable_if_t<has_normal_v<PointT>, bool>;
+-
+-    template <typename PointT>
+-    using HasNoNormal = std::enable_if_t<!has_normal_v<PointT>, bool>;
++    using HasNoNormal = std::enable_if_t<!has_normal<PointT>::value, bool>;
+ 
+     /** Metafunction to check if a given point type has curvature field. */
+     template <typename PointT>
+@@ -851,13 +842,10 @@ namespace pcl
+     { };
+ 
+     template <typename PointT>
+-    constexpr auto has_curvature_v = has_curvature<PointT>::value;
+-
+-    template <typename PointT>
+-    using HasCurvature = std::enable_if_t<has_curvature_v<PointT>, bool>;
++    using HasCurvature = std::enable_if_t<has_curvature<PointT>::value, bool>;
+ 
+     template <typename PointT>
+-    using HasNoCurvature = std::enable_if_t<!has_curvature_v<PointT>, bool>;
++    using HasNoCurvature = std::enable_if_t<!has_curvature<PointT>::value, bool>;
+ 
+     /** Metafunction to check if a given point type has intensity field. */
+     template <typename PointT>
+@@ -865,13 +853,10 @@ namespace pcl
+     { };
+ 
+     template <typename PointT>
+-    constexpr auto has_intensity_v = has_intensity<PointT>::value;
+-
+-    template <typename PointT>
+-    using HasIntensity = std::enable_if_t<has_intensity_v<PointT>, bool>;
++    using HasIntensity = std::enable_if_t<has_intensity<PointT>::value, bool>;
+ 
+     template <typename PointT>
+-    using HasNoIntensity = std::enable_if_t<!has_intensity_v<PointT>, bool>;
++    using HasNoIntensity = std::enable_if_t<!has_intensity<PointT>::value, bool>;
+ 
+     /** Metafunction to check if a given point type has either rgb or rgba field. */
+     template <typename PointT>
+@@ -880,13 +865,10 @@ namespace pcl
+     { };
+ 
+     template <typename PointT>
+-    constexpr auto has_color_v = has_color<PointT>::value;
++    using HasColor = std::enable_if_t<has_color<PointT>::value, bool>;
+ 
+     template <typename PointT>
+-    using HasColor = std::enable_if_t<has_color_v<PointT>, bool>;
+-
+-    template <typename PointT>
+-    using HasNoColor = std::enable_if_t<!has_color_v<PointT>, bool>;
++    using HasNoColor = std::enable_if_t<!has_color<PointT>::value, bool>;
+ 
+     /** Metafunction to check if a given point type has label field. */
+     template <typename PointT>
+@@ -894,13 +876,10 @@ namespace pcl
+     { };
+ 
+     template <typename PointT>
+-    constexpr auto has_label_v = has_label<PointT>::value;
+-
+-    template <typename PointT>
+-    using HasLabel = std::enable_if_t<has_label_v<PointT>, bool>;
++    using HasLabel = std::enable_if_t<has_label<PointT>::value, bool>;
+ 
+     template <typename PointT>
+-    using HasNoLabel = std::enable_if_t<!has_label_v<PointT>, bool>;
++    using HasNoLabel = std::enable_if_t<!has_label<PointT>::value, bool>;
+   }
+ 
+ } // namespace pcl
+diff --git a/common/src/parse.cpp b/common/src/parse.cpp
+index 269176363..1627c941c 100644
+--- a/common/src/parse.cpp
++++ b/common/src/parse.cpp
+@@ -135,18 +135,17 @@ parse_argument (int argc, const char * const * argv, const char * str, unsigned
+ namespace detail
+ {
+ template <typename T, typename U>
+-constexpr auto legally_representable_v = (std::numeric_limits<T>::max () >= std::numeric_limits<U>::max ()) &&
+-                                       (std::numeric_limits<T>::lowest () <= std::numeric_limits<U>::lowest ());
+-template <typename T, typename U>
+ struct legally_representable {
+-    constexpr static bool value = legally_representable_v<T, U>;
++    constexpr static bool value = (std::numeric_limits<T>::max () >= std::numeric_limits< U>::max ()) &&
++                                  (std::numeric_limits<T>::lowest () <= std::numeric_limits< U>::lowest ());
+ };
+ 
+ // assumptions:
+ // * either long int or long long int is a valid type for storing Integral
+ // * unsigned long long int is handled specially
+ template <typename Integral>
+-using primary_legal_input_type = std::conditional_t<legally_representable_v<long int, Integral>,
++using primary_legal_input_type = std::conditional_t<(std::numeric_limits<long int>::max () >= std::numeric_limits< Integral>::max ()) &&
++                                                    (std::numeric_limits<long int>::lowest () <= std::numeric_limits< Integral>::lowest ()),
+                                                     long int, long long int>;
+ 
+ // special handling if unsigned [long] int is of same size as long long int

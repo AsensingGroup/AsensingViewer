@@ -1,0 +1,95 @@
+diff -u -Nru5 qt-everywhere-src-5.15.2/qtbase/src/corelib/global/qendian.h qt-everywhere-src-5.15.2.missing-includes/qtbase/src/corelib/global/qendian.h
+--- qt-everywhere-src-5.15.2/qtbase/src/corelib/global/qendian.h	2020-10-27 04:02:11.000000000 -0400
++++ qt-everywhere-src-5.15.2.missing-includes/qtbase/src/corelib/global/qendian.h	2021-12-16 17:33:02.210556606 -0500
+@@ -42,10 +42,12 @@
+ #define QENDIAN_H
+ 
+ #include <QtCore/qfloat16.h>
+ #include <QtCore/qglobal.h>
+ 
++#include <limits>
++
+ // include stdlib.h and hope that it defines __GLIBC__ for glibc-based systems
+ #include <stdlib.h>
+ #include <string.h>
+ 
+ #ifdef min // MSVC
+diff -u -Nru5 qt-everywhere-src-5.15.2/qtbase/src/corelib/global/qfloat16.h qt-everywhere-src-5.15.2.missing-includes/qtbase/src/corelib/global/qfloat16.h
+--- qt-everywhere-src-5.15.2/qtbase/src/corelib/global/qfloat16.h	2020-10-27 04:02:11.000000000 -0400
++++ qt-everywhere-src-5.15.2.missing-includes/qtbase/src/corelib/global/qfloat16.h	2021-12-16 18:35:23.381464893 -0500
+@@ -43,10 +43,12 @@
+ 
+ #include <QtCore/qglobal.h>
+ #include <QtCore/qmetatype.h>
+ #include <string.h>
+ 
++#include <limits>
++
+ #if defined(QT_COMPILER_SUPPORTS_F16C) && defined(__AVX2__) && !defined(__F16C__)
+ // All processors that support AVX2 do support F16C too. That doesn't mean
+ // we're allowed to use the intrinsics directly, so we'll do it only for
+ // the Intel and Microsoft's compilers.
+ #  if defined(Q_CC_INTEL) || defined(Q_CC_MSVC)
+diff -u -Nru5 qt-everywhere-src-5.15.2/qtbase/src/corelib/text/qbytearraymatcher.h qt-everywhere-src-5.15.2.missing-includes/qtbase/src/corelib/text/qbytearraymatcher.h
+--- qt-everywhere-src-5.15.2/qtbase/src/corelib/text/qbytearraymatcher.h	2020-10-27 04:02:11.000000000 -0400
++++ qt-everywhere-src-5.15.2.missing-includes/qtbase/src/corelib/text/qbytearraymatcher.h	2021-12-16 17:33:15.184294120 -0500
+@@ -40,10 +40,12 @@
+ #ifndef QBYTEARRAYMATCHER_H
+ #define QBYTEARRAYMATCHER_H
+ 
+ #include <QtCore/qbytearray.h>
+ 
++#include <limits>
++
+ QT_BEGIN_NAMESPACE
+ 
+ 
+ class QByteArrayMatcherPrivate;
+ 
+diff -u -Nru5 qt-everywhere-src-5.15.2/qtdeclarative/src/3rdparty/masm/yarr/Yarr.h qt-everywhere-src-5.15.2.missing-includes/qtdeclarative/src/3rdparty/masm/yarr/Yarr.h
+--- qt-everywhere-src-5.15.2/qtdeclarative/src/3rdparty/masm/yarr/Yarr.h	2020-10-27 04:02:12.000000000 -0400
++++ qt-everywhere-src-5.15.2.missing-includes/qtdeclarative/src/3rdparty/masm/yarr/Yarr.h	2021-12-16 20:32:16.683252647 -0500
+@@ -25,11 +25,11 @@
+  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  */
+ 
+ #pragma once
+ 
+-#include <limits.h>
++#include <limits>
+ #include "YarrErrorCode.h"
+ 
+ namespace JSC { namespace Yarr {
+ 
+ #define YarrStackSpaceForBackTrackInfoPatternCharacter 2 // Only for !fixed quantifiers.
+diff -u -Nru5 qt-everywhere-src-5.15.2/qtdeclarative/src/qmldebug/qqmlprofilerevent_p.h qt-everywhere-src-5.15.2.missing-includes/qtdeclarative/src/qmldebug/qqmlprofilerevent_p.h
+--- qt-everywhere-src-5.15.2/qtdeclarative/src/qmldebug/qqmlprofilerevent_p.h	2020-10-27 04:02:12.000000000 -0400
++++ qt-everywhere-src-5.15.2.missing-includes/qtdeclarative/src/qmldebug/qqmlprofilerevent_p.h	2021-12-16 19:34:21.431066429 -0500
+@@ -46,10 +46,11 @@
+ #include <QtCore/qbytearray.h>
+ #include <QtCore/qvarlengtharray.h>
+ #include <QtCore/qmetatype.h>
+ 
+ #include <initializer_list>
++#include <limits>
+ #include <type_traits>
+ 
+ //
+ //  W A R N I N G
+ //  -------------
+diff -u -Nru5 qt-everywhere-src-5.15.2/qtdeclarative/src/qmldebug/qqmlprofilereventreceiver_p.h qt-everywhere-src-5.15.2.missing-includes/qtdeclarative/src/qmldebug/qqmlprofilereventreceiver_p.h
+--- qt-everywhere-src-5.15.2/qtdeclarative/src/qmldebug/qqmlprofilereventreceiver_p.h	2020-10-27 04:02:12.000000000 -0400
++++ qt-everywhere-src-5.15.2.missing-includes/qtdeclarative/src/qmldebug/qqmlprofilereventreceiver_p.h	2021-12-16 19:18:01.333792844 -0500
+@@ -43,10 +43,12 @@
+ #include "qqmlprofilerevent_p.h"
+ #include "qqmlprofilereventtype_p.h"
+ 
+ #include <QtCore/qobject.h>
+ 
++#include <limits>
++
+ //
+ //  W A R N I N G
+ //  -------------
+ //
+ // This file is not part of the Qt API. It exists purely as an

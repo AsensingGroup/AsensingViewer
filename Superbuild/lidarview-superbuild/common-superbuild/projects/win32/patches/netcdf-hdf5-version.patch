@@ -1,0 +1,28 @@
+From 78f9f5fbac47d5fafd02b89adafa05a103d6de44 Mon Sep 17 00:00:00 2001
+From: Ben Boeckel <ben.boeckel@kitware.com>
+Date: Mon, 16 Aug 2021 13:49:09 -0400
+Subject: [PATCH] cmake: extract the HDF5 version when finding HDF5 manually
+
+---
+ CMakeLists.txt | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index cfefc6982..0140b2928 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -620,6 +620,14 @@ IF(USE_HDF5)
+     INCLUDE_DIRECTORIES(${HDF5_INCLUDE_DIR})
+     MESSAGE(STATUS "Using HDF5 C Library: ${HDF5_C_LIBRARY}")
+     MESSAGE(STATUS "Using HDF5 HL LIbrary: ${HDF5_HL_LIBRARY}")
++    if (EXISTS "${HDF5_INCLUDE_DIR}/H5pubconf.h")
++      file(READ "${HDF5_INCLUDE_DIR}/H5pubconf.h" _hdf5_version_lines
++        REGEX "#define[ \t]+H5_VERSION")
++      string(REGEX REPLACE ".*H5_VERSION .*\"\(.*\)\".*" "\\1" _hdf5_version "${_hdf5_version_lines}")
++      set(HDF5_VERSION "${_hdf5_version}")
++      unset(_hdf5_version)
++      unset(_hdf5_version_lines)
++    endif ()
+   ELSE(HDF5_C_LIBRARY AND HDF5_HL_LIBRARY AND HDF5_INCLUDE_DIR) # We are seeking out HDF5 with Find Package.
+     ###
+     # For now we assume that if we are building netcdf

@@ -1,0 +1,22 @@
+--- a/libsrc/ncx.c
++++ b/libsrc/ncx.c
+@@ -94,17 +94,19 @@
+ #include <assert.h>
+ #define UCHAR_MIN 0
+ #define Min(a,b) ((a) < (b) ? (a) : (b))
+ #define Max(a,b) ((a) > (b) ? (a) : (b))
+ 
++#if HAVE_UCHAR
+ #ifndef SIZEOF_UCHAR
+ #ifdef  SIZEOF_UNSIGNED_CHAR
+ #define SIZEOF_UCHAR SIZEOF_UNSIGNED_CHAR
+ #else
+ #error "unknown SIZEOF_UCHAR"
+ #endif
+ #endif
++#endif
+ 
+ #ifndef SIZEOF_USHORT
+ #ifdef  SIZEOF_UNSIGNED_SHORT_INT
+ #define SIZEOF_USHORT SIZEOF_UNSIGNED_SHORT_INT
+ #elif defined(SIZEOF_UNSIGNED_SHORT)

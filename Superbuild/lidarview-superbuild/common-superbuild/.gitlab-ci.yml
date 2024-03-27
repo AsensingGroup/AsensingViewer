@@ -1,0 +1,97 @@
+include:
+    # Metadata shared by many jobs
+    - local: .gitlab/rules.yml
+    - local: .gitlab/artifacts.yml
+
+    # OS builds.
+    - local: .gitlab/os-linux.yml
+    - local: .gitlab/os-macos.yml
+    - local: .gitlab/os-windows.yml
+
+stages:
+    - build
+
+################################################################################
+# Job declarations
+#
+# Each job must pull in each of the following keys:
+#
+#   - a "base image"
+#   - a build script
+#   - tags for the jobs
+#     - already provided for upload and CI update jobs
+#   - rules for when to run the job
+#
+# Additionally, jobs may also contain:
+#
+#   - artifacts
+#   - dependency/needs jobs for required jobs
+################################################################################
+
+# Linux
+
+## Normal build
+
+linux:build:
+    extends:
+        - .linux
+        - .cmake_build_linux
+        - .cmake_build_artifacts
+        - .linux_builder_tags
+        - .run_manually
+
+linux-openssl:build:
+    extends:
+        - .linux_openssl
+        - .cmake_build_linux
+        - .cmake_build_artifacts
+        - .linux_builder_tags
+        - .run_manually
+
+# macOS
+
+## Normal build
+
+macos-arm64:build:
+    extends:
+        - .macos_arm64
+        - .cmake_build_macos
+        - .cmake_build_artifacts
+        - .macos_arm64_builder_tags
+        - .run_manually
+
+macos-x86_64:build:
+    extends:
+        - .macos_x86_64
+        - .cmake_build_macos
+        - .cmake_build_artifacts
+        - .macos_builder_tags
+        - .run_manually
+
+macos-x86_64-openssl:build:
+    extends:
+        - .macos_x86_64_openssl
+        - .cmake_build_macos
+        - .cmake_build_artifacts
+        - .macos_builder_tags
+        - .run_manually
+
+# Windows
+
+## Normal build
+
+windows-vs2019:build:
+    extends:
+        - .windows_vs2019
+        - .cmake_build_windows
+        - .cmake_build_artifacts
+        - .windows_builder_tags
+        - .run_manually
+
+windows-openssl-vs2019:build:
+    extends:
+        - .windows_openssl_vs2019
+        - .cmake_build_windows
+        - .cmake_build_artifacts
+        - .windows_builder_tags
+        - .run_manually

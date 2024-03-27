@@ -1,0 +1,48 @@
+# Handle the environment when running a primary step (configure, build,
+# install) of a project.
+
+set(environment "@process_environment@")
+set(list_separator "@_superbuild_list_separator@")
+set(command "@step_command@")
+
+set(env_separator ":")
+# These environment variables are prepended to using `env_separator`.
+set(prepend_envvars
+  PATH CMAKE_PREFIX_PATH PKG_CONFIG_PATH)
+if (WIN32)
+  set(env_separator ";")
+elseif (APPLE)
+  list(APPEND prepend_envvars
+    DYLD_LIBRARY_PATH)
+elseif (UNIX)
+  list(APPEND prepend_envvars
+    LD_LIBRARY_PATH)
+endif ()
+
+set(key)
+foreach (arg IN LISTS environment)
+  if (NOT key)
+    set(key "${arg}")
+  else ()
+    list(FIND prepend_envvars "${key}" index)
+    if (index EQUAL "-1")
+      set(value "${arg}")
+    else ()
+      set(value "${arg}${env_separator}$ENV{${key}}")
+    endif ()
+    string(REPLACE "${list_separator}" ";" value "${value}")
+    set("ENV{${key}}" "${value}")
+
+    unset(key)
+  endif ()
+endforeach ()
+
+string(REPLACE "${list_separator}" "\;" command "${command}")
+
+execute_process(
+  COMMAND ${command}
+  RESULT_VARIABLE rv)
+
+if (rv)
+  message(FATAL_ERROR "Failed with exit code ${rv}")
+endif ()

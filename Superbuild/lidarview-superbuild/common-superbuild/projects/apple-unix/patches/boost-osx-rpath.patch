@@ -1,0 +1,12 @@
+diff -Nr -U5 boost_1_59_0/tools/build/src/tools/clang-darwin.jam boost_1_59_0.osx-rpath/tools/build/src/tools/clang-darwin.jam
+--- boost_1_59_0/tools/build/src/tools/clang-darwin.jam	2015-08-11 09:53:51.000000000 -0400
++++ boost_1_59_0.osx-rpath/tools/build/src/tools/clang-darwin.jam	2015-12-09 18:11:47.051499473 -0500
+@@ -183,7 +183,7 @@
+     "$(CONFIG_COMMAND)" $(USER_OPTIONS) -L"$(LINKPATH)" -o "$(<)" "$(>)" "$(LIBRARIES)" $(START-GROUP) $(FINDLIBS-ST-PFX) -l$(FINDLIBS-ST) $(FINDLIBS-SA-PFX) -l$(FINDLIBS-SA) $(END-GROUP) $(OPTIONS)
+ }
+ 
+ actions link.dll bind LIBRARIES
+ {
+-    "$(CONFIG_COMMAND)" $(USER_OPTIONS) -L"$(LINKPATH)" -o "$(<)" -single_module -dynamiclib -install_name "@rpath/$(<[1]:D=)" "$(>)"  "$(LIBRARIES)" $(START-GROUP) $(FINDLIBS-ST-PFX) -l$(FINDLIBS-ST) $(FINDLIBS-SA-PFX) -l$(FINDLIBS-SA) $(END-GROUP) $(OPTIONS)
++    "$(CONFIG_COMMAND)" $(USER_OPTIONS) -L"$(LINKPATH)" -o "$(<)" -single_module -dynamiclib -headerpad_max_install_names -install_name "$(<[1]:D=)" "$(>)"  "$(LIBRARIES)" $(START-GROUP) $(FINDLIBS-ST-PFX) -l$(FINDLIBS-ST) $(FINDLIBS-SA-PFX) -l$(FINDLIBS-SA) $(END-GROUP) $(OPTIONS)
+ }
