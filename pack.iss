@@ -3,7 +3,7 @@
 
 #define MyAppName "AsensingViewer"
 #define MyAppVersion "V1.1.0"
-#define MyAppPublisher "Copyright @2023 广州导远电子科技有限公司"
+#define MyAppPublisher "Copyright @2024 广州导远电子科技有限公司"
 #define MyAppURL "https://www.asensing.com/"
 #define MyAppExeName "AsensingViewer.exe"
 #define MyAppAssocName MyAppName + " File"
@@ -26,9 +26,9 @@ ChangesAssociations=yes
 DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
-OutputDir=C:\Users\heaven\Desktop
+OutputDir=D:\Workspace\Project\AsensingViewer\release
 OutputBaseFilename=AsensingViewer-{#MyAppVersion}-Windows-AMD64
-SetupIconFile=E:\workspace\AsensingViewer\Application\SoftwareInformation\logo.ico
+SetupIconFile=D:\Workspace\Project\AsensingViewer\src\Application\SoftwareInformation\logo.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -41,8 +41,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "E:\release\install\bin\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\release\install\bin\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "D:\build\install\bin\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "D:\build\install\bin\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]
