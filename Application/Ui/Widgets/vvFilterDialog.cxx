@@ -33,14 +33,14 @@
 
 #ifdef __linux__
 #ifndef A0_JSON_FILE
-#define A0_JSON_FILE "../share/A0-Correction-5.json"
+#define A0_JSON_FILE "../share/A0-Correction.json"
 #endif
 #ifndef A2_JSON_FILE
 #define A2_JSON_FILE "../share/A2-Correction.json"
 #endif
 #else
 #ifndef A0_JSON_FILE
-#define A0_JSON_FILE "./share/A0-Correction-5.json"
+#define A0_JSON_FILE "./share/A0-Correction.json"
 #endif
 #ifndef A2_JSON_FILE
 #define A2_JSON_FILE "./share/A2-Correction.json"

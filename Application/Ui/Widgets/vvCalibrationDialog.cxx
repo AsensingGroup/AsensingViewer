@@ -39,12 +39,12 @@ public:
   pqInternal()
     : Settings(pqApplicationCore::instance()->settings())
   {
-    const unsigned int nFile = 4; // WARNING update this accordingly.
+    const unsigned int nFile = 2; // WARNING update this accordingly.
     const char* filenames[nFile] = {
       //"HDL-32.xml", "VLP-16.xml", "VLP-32c.xml", "Puck Hi-Res.xml",
       //"Puck LITE.xml", "Alpha Prime.xml",
       //"PandarXT.csv", "Pandar128.csv", // HESAI Calibration
-      "A0-Correction.json", "A0-Correction-5.json", "A2-Correction.json", "A4-Correction.json"
+      "A0-Correction.json", "A2-Correction.json"
     };
     std::vector<QString> calibrationBuiltIn(filenames, filenames + nFile);
     QString prefix;
