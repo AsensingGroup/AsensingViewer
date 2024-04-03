@@ -53,9 +53,7 @@ target_include_directories(AsensingLidar
 
 set(calib_files
   A0-Correction.json
-  A0-Correction-5.json
   A2-Correction.json
-  A4-Correction.json
 )
 
 # Copy the calibration to the build folder
