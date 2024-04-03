@@ -1,17 +1,32 @@
 # AsensingViewer
 
-AsensingViewer 是一个激光雷达点云数据可视化软件，通常称为“上位机”，对应的需要与下位机（LiDAR）配合使用。
+AsensingViewer is a [LiDAR](https://www.asensing.com/technical/58) point cloud visualization software developed by Asensing Group based on [LidarView](https://gitlab.kitware.com/LidarView/lidarview). The picture below is a screenshot of the main user interface of AsensingViewer.
+
+![AsensingViewer Main UI](Docs/images/AsensingViewer-Main-UI.jpg)
+
+
+
+## Overview
+
+AsensingViewer  supports two modes, online mode and playback mode. Online mode requires a connection to the LiDAR via Ethernet, and the playback mode requires importing a pre-recorded pcap file.
 
 ![](Docs/images/working-principle.png)
 
-## 软件架构
+
+
+## Architecture
 
 ![](Docs/images/LidarView-Framework.png)
 
-## 软件主界面
 
-![](Docs/images/AsensingViewer-Main-UI.png)
 
-## 软件维护
+## How to build
 
-- luhuadong@asensing.com
+See [Docs/BUILD.md](Docs/BUILD.md).
+
+
+
+## Contact
+
+- Maintenance: luhuadong@asensing.com
+
